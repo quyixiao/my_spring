@@ -131,11 +131,14 @@ public class PropertyPlaceholderHelper {
 
 	protected String parseStringValue(
 			String strVal, PlaceholderResolver placeholderResolver, Set<String> visitedPlaceholders) {
+		log.info(" strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders);
 
 		StringBuilder result = new StringBuilder(strVal);
 
 		int startIndex = strVal.indexOf(this.placeholderPrefix);
+		log.info("  placeholderPrefix :" + this.placeholderPrefix + " ,index = " + startIndex);
 		while (startIndex != -1) {
+
 			int endIndex = findPlaceholderEndIndex(result, startIndex);
 			if (endIndex != -1) {
 				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);
