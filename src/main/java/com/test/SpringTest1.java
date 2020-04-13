@@ -14,9 +14,7 @@ public class SpringTest1 {
         ClassPathXmlApplicationContext classPathXmlApplicationContext
                 = new ClassPathXmlApplicationContext("classpath:spring.xml");
         UserService userService = classPathXmlApplicationContext.getBean(UserService.class);
-
         userService.query();
-
         log.info("xxxxxxxxx");
     }
 }

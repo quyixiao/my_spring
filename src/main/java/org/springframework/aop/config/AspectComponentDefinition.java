@@ -30,7 +30,8 @@ import org.springframework.beans.factory.parsing.CompositeComponentDefinition;
  * @see #getNestedComponents()
  * @see PointcutComponentDefinition
  */
-public class AspectComponentDefinition extends CompositeComponentDefinition {
+public class
+AspectComponentDefinition extends CompositeComponentDefinition {
 
 	private final BeanDefinition[] beanDefinitions;
 

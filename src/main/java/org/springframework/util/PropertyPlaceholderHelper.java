@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -35,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
  * @author Rob Harrop
  * @since 3.0
  */
+@Slf4j
 public class PropertyPlaceholderHelper {
 
 	private static final Log logger = LogFactory.getLog(PropertyPlaceholderHelper.class);
@@ -80,7 +82,8 @@ public class PropertyPlaceholderHelper {
 	 */
 	public PropertyPlaceholderHelper(String placeholderPrefix, String placeholderSuffix,
 			String valueSeparator, boolean ignoreUnresolvablePlaceholders) {
-
+		log.info("\n【placeholderPrefix =" + placeholderPrefix  + " 】\n【 placeholderSuffix = " + placeholderSuffix + " 】\n【 valueSeparator = " + valueSeparator
+		+ " 】\n【ignoreUnresolvablePlaceholders = " + ignoreUnresolvablePlaceholders + "】") ;
 		Assert.notNull(placeholderPrefix, "'placeholderPrefix' must not be null");
 		Assert.notNull(placeholderSuffix, "'placeholderSuffix' must not be null");
 		this.placeholderPrefix = placeholderPrefix;
