@@ -131,7 +131,7 @@ public class PropertyPlaceholderHelper {
 
 	protected String parseStringValue(
 			String strVal, PlaceholderResolver placeholderResolver, Set<String> visitedPlaceholders) {
-		log.info(" strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders);
+		log.info(" start strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders + "  strVal  = " + strVal);
 
 		StringBuilder result = new StringBuilder(strVal);
 
@@ -186,7 +186,7 @@ public class PropertyPlaceholderHelper {
 				startIndex = -1;
 			}
 		}
-
+		log.info(" end strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders);
 		return result.toString();
 	}
 
