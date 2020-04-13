@@ -57,6 +57,19 @@ public class ServletContextResourcePatternResolver extends PathMatchingResourceP
 		super(new ServletContextResourceLoader(servletContext));
 	}
 
+
+
+	/**
+	 * Create a new ServletContextResourcePatternResolver.
+	 * @param servletContext the ServletContext to load resources with
+	 * @see ServletContextResourceLoader#ServletContextResourceLoader(javax.servlet.ServletContext)
+	 */
+	public ServletContextResourcePatternResolver(javax.servlet2.ServletContext servletContext) {
+		super(new ServletContextResourceLoader(servletContext));
+	}
+
+
+
 	/**
 	 * Create a new ServletContextResourcePatternResolver.
 	 * @param resourceLoader the ResourceLoader to load root directories and

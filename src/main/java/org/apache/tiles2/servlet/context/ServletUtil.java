@@ -23,10 +23,10 @@ package org.apache.tiles2.servlet.context;
 
 import java.io.IOException;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletException;
+import javax.servlet2.ServletRequest;
+import javax.servlet2.http.HttpServletRequest;
 
 import org.apache.tiles2.ArrayStack;
 import org.apache.tiles2.TilesApplicationContext;

@@ -20,9 +20,9 @@
  */
 package org.apache.tiles2.web.startup;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletContextEvent;
+import javax.servlet2.ServletContextListener;
 
 import org.apache.tiles2.TilesException;
 import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
@@ -56,7 +56,8 @@ public abstract class AbstractTilesListener implements ServletContextListener {
      *
      * @param event The intercepted event.
      */
-    public void contextInitialized(ServletContextEvent event) {
+    public void contextInitialized(ServletContextEvent
+                                           event) {
         ServletContext servletContext = event.getServletContext();
         initializer = createTilesInitializer();
         initializer.initialize(new ServletTilesApplicationContext(

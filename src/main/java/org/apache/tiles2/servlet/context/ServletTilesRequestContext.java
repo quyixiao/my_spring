@@ -27,11 +27,11 @@ import java.io.Writer;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet2.RequestDispatcher;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletException;
+import javax.servlet2.http.HttpServletRequest;
+import javax.servlet2.http.HttpServletResponse;
 
 import org.apache.tiles2.TilesApplicationContext;
 import org.apache.tiles2.context.TilesApplicationContextWrapper;

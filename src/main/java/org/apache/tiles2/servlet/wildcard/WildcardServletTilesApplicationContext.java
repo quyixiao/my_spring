@@ -26,7 +26,7 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
+import javax.servlet2.ServletContext;
 
 import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
 import org.springframework.core.io.Resource;

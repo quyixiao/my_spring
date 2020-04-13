@@ -28,7 +28,7 @@ import org.apache.tiles2.context.TilesContextFactory;
 import org.apache.tiles2.context.TilesRequestContext;
 import org.apache.tiles2.context.TilesRequestContextFactory;
 
-import javax.servlet.ServletContext;
+import javax.servlet2.ServletContext;
 import java.util.Map;
 
 /**

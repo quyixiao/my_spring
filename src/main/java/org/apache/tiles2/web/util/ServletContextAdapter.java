@@ -27,11 +27,11 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Set;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import javax.servlet2.RequestDispatcher;
+import javax.servlet2.Servlet;
+import javax.servlet2.ServletConfig;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletException;
 
 /**
  * Adapts a servlet config and a servlet context to become a unique servlet
@@ -60,7 +60,7 @@ public class ServletContextAdapter implements ServletContext {
      * @param config The servlet configuration object.
      */
     @SuppressWarnings("unchecked")
-    public ServletContextAdapter(ServletConfig config) {
+    public ServletContextAdapter(javax.servlet2.ServletConfig config) {
         this.rootContext = config.getServletContext();
         initParameters = new Hashtable<String, String>();
         Enumeration<String> enumeration = rootContext

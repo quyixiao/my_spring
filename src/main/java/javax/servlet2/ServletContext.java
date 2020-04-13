@@ -27,9 +27,10 @@
 
 package javax.servlet2;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
+import javax.servlet2.RequestDispatcher;
+import javax.servlet2.Servlet;
+import javax.servlet2.ServletConfig;
+import javax.servlet2.ServletException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -56,13 +57,13 @@ import java.util.Set;
  * a database instead.
  *
  * <p>The <code>ServletContext</code> object is contained within 
- * the {@link ServletConfig} object, which the Web server provides the
+ * the {@link javax.servlet.ServletConfig} object, which the Web server provides the
  * servlet when the servlet is initialized.
  *
  * @author 	Various
  *
- * @see 	Servlet#getServletConfig
- * @see 	ServletConfig#getServletContext
+ * @see 	javax.servlet.Servlet#getServletConfig
+ * @see 	javax.servlet.ServletConfig#getServletContext
  *
  */
 
@@ -101,7 +102,7 @@ public interface ServletContext {
      *
      * <p>This method allows servlets to gain
      * access to the context for various parts of the server, and as
-     * needed obtain {@link RequestDispatcher} objects from the context.
+     * needed obtain {@link javax.servlet.RequestDispatcher} objects from the context.
      * The given path must be begin with "/", is interpreted relative 
      * to the server's document root and is matched against the context roots of
      * other web applications hosted on this container.
@@ -116,7 +117,7 @@ public interface ServletContext {
 			none exists or the container wishes to restrict 
      * 			this access.
      *
-     * @see 		RequestDispatcher
+     * @see        javax.servlet.RequestDispatcher
      *
      */
 
@@ -289,7 +290,7 @@ public interface ServletContext {
 
     /**
      * 
-     * Returns a {@link RequestDispatcher} object that acts
+     * Returns a {@link javax.servlet.RequestDispatcher} object that acts
      * as a wrapper for the resource located at the given path.
      * A <code>RequestDispatcher</code> object can be used to forward 
      * a request to the resource or to include the resource in a response.
@@ -310,23 +311,23 @@ public interface ServletContext {
      *			the <code>ServletContext</code> cannot return
      *			a <code>RequestDispatcher</code>
      *
-     * @see 		RequestDispatcher
+     * @see        javax.servlet.RequestDispatcher
      * @see 		ServletContext#getContext
      *
      */
 
-    public RequestDispatcher getRequestDispatcher(String path);
+    public javax.servlet2.RequestDispatcher getRequestDispatcher(String path);
 
 
 
     /**
-     * Returns a {@link RequestDispatcher} object that acts
+     * Returns a {@link javax.servlet.RequestDispatcher} object that acts
      * as a wrapper for the named servlet.
      *
      * <p>Servlets (and JSP pages also) may be given names via server 
      * administration or via a web application deployment descriptor.
      * A servlet instance can determine its name using 
-     * {@link ServletConfig#getServletName}.
+     * {@link javax.servlet.ServletConfig#getServletName}.
      *
      * <p>This method returns <code>null</code> if the 
      * <code>ServletContext</code>
@@ -340,9 +341,9 @@ public interface ServletContext {
      *			or <code>null</code> if the <code>ServletContext</code>
      *			cannot return a <code>RequestDispatcher</code>
      *
-     * @see 		RequestDispatcher
+     * @see        javax.servlet.RequestDispatcher
      * @see 		ServletContext#getContext
-     * @see 		ServletConfig#getServletName
+     * @see 		javax.servlet.ServletConfig#getServletName
      *
      */
 
@@ -538,7 +539,7 @@ public interface ServletContext {
      * @return 		a <code>String</code> containing at least the 
      *			servlet container name and version number
      *
-     * @see ServletConfig#getInitParameter
+     * @see javax.servlet.ServletConfig#getInitParameter
      */
 
     public String getInitParameter(String name);

@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet2.http.HttpServletRequest;
 
 import org.apache.tiles2.context.MapEntry;
 

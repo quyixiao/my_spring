@@ -20,7 +20,8 @@
  */
 package org.apache.tiles2.web.startup;
 
-import javax.servlet.ServletContext;
+import javax.servlet.ServletContextEvent;
+import javax.servlet2.ServletContext;
 
 import org.apache.tiles2.TilesApplicationContext;
 import org.apache.tiles2.TilesContainer;
@@ -61,4 +62,6 @@ public class TilesListener extends AbstractTilesListener {
                 .getTilesContainerFactory(applicationContext);
         return factory.createContainer(applicationContext);
     }
+
+
 }

@@ -20,9 +20,9 @@
  */
 package org.apache.tiles2.web.startup;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletException;
+import javax.servlet2.http.HttpServlet;
 
 import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
 import org.apache.tiles2.web.util.ServletContextAdapter;

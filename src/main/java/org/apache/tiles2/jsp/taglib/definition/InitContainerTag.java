@@ -21,6 +21,22 @@
 
 package org.apache.tiles2.jsp.taglib.definition;
 
+import org.apache.tiles2.*;
+import org.apache.tiles2.context.AbstractTilesApplicationContextFactory;
+import org.apache.tiles2.factory.AbstractTilesContainerFactory;
+import org.apache.tiles2.factory.TilesContainerFactory;
+import org.apache.tiles2.jsp.context.JspUtil;
+import org.apache.tiles2.jsp.taglib.TilesBodyTag;
+import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
+import org.apache.tiles2.startup.TilesInitializer;
+import org.apache.tiles2.web.startup.TilesServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet2.RequestDispatcher;
+import javax.servlet2.Servlet;
+import javax.servlet2.ServletContext;
+import javax.servlet2.ServletException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -28,25 +44,6 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Set;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-
-import org.apache.tiles2.ArrayStack;
-import org.apache.tiles2.TilesApplicationContext;
-import org.apache.tiles2.context.AbstractTilesApplicationContextFactory;
-import org.apache.tiles2.factory.TilesContainerFactory;
-import org.apache.tiles2.jsp.context.JspUtil;
-import org.apache.tiles2.jsp.taglib.TilesBodyTag;
-import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
-import org.apache.tiles2.*;
-import org.apache.tiles2.factory.AbstractTilesContainerFactory;
-import org.apache.tiles2.startup.TilesInitializer;
-import org.apache.tiles2.web.startup.TilesServlet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Init definitions impl.
@@ -113,7 +110,9 @@ public class InitContainerTag extends TilesBodyTag {
         this.containerKey = containerKey;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void reset() {
         super.reset();
@@ -121,21 +120,25 @@ public class InitContainerTag extends TilesBodyTag {
         containerKey = null;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     public int doStartTag() {
         ArrayStack<Object> composeStack = JspUtil.getComposeStack(pageContext);
         composeStack.push(new BasicAttributeContext());
         return EVAL_BODY_INCLUDE;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * {@inheritDoc}
+     */
     // TODO Add a MutableContainer so that this can be done?
     public int doEndTag() {
         ArrayStack<Object> composeStack = JspUtil.getComposeStack(pageContext);
         org.apache.tiles2.AttributeContext attributeContext = (AttributeContext) composeStack.pop();
 
         org.apache.tiles2.TilesContainer container =
-            JspUtil.getContainer(pageContext, containerKey);
+                JspUtil.getContainer(pageContext, containerKey);
 
         if (container != null) {
             log.warn("TilesContainer already instantiated for this context under key '"
@@ -143,13 +146,13 @@ public class InitContainerTag extends TilesBodyTag {
             return SKIP_BODY;
         }
 
-        RuntimeConfiguredContext context =
-            new RuntimeConfiguredContext(pageContext.getServletContext());
+        RuntimeConfiguredContext context = null;
+                //new RuntimeConfiguredContext(pageContext.getServletContext());
 
         if (containerFactory != null) {
             context.setInitParameter(
-                org.apache.tiles2.factory.AbstractTilesContainerFactory.CONTAINER_FACTORY_INIT_PARAM,
-                containerFactory);
+                    org.apache.tiles2.factory.AbstractTilesContainerFactory.CONTAINER_FACTORY_INIT_PARAM,
+                    containerFactory);
         }
 
         // This is to provide compatibility with Tiles 2.0.x
@@ -175,8 +178,6 @@ public class InitContainerTag extends TilesBodyTag {
 
         return EVAL_PAGE;
     }
-
-
 
 
     /**
@@ -213,90 +214,124 @@ public class InitContainerTag extends TilesBodyTag {
             }
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public ServletContext getContext(String string) {
             return rootContext.getContext(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public int getMajorVersion() {
             return rootContext.getMajorVersion();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public int getMinorVersion() {
             return rootContext.getMinorVersion();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public String getMimeType(String string) {
             return rootContext.getMimeType(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public Set getResourcePaths(String string) {
             return rootContext.getResourcePaths(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public URL getResource(String string) throws MalformedURLException {
             return rootContext.getResource(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public InputStream getResourceAsStream(String string) {
             return rootContext.getResourceAsStream(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public RequestDispatcher getRequestDispatcher(String string) {
             return rootContext.getRequestDispatcher(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public RequestDispatcher getNamedDispatcher(String string) {
             return rootContext.getNamedDispatcher(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public Servlet getServlet(String string) throws ServletException {
             return rootContext.getServlet(string);
         }
 
-        /** {@inheritDoc} */
-        @SuppressWarnings({ "unchecked" })
+        /**
+         * {@inheritDoc}
+         */
+        @SuppressWarnings({"unchecked"})
         public Enumeration getServlets() {
             return rootContext.getServlets();
         }
 
-        /** {@inheritDoc} */
-        @SuppressWarnings({ "unchecked" })
+        /**
+         * {@inheritDoc}
+         */
+        @SuppressWarnings({"unchecked"})
         public Enumeration getServletNames() {
             return rootContext.getServletNames();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public void log(String string) {
             rootContext.log(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public void log(Exception exception, String string) {
             rootContext.log(exception, string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public void log(String string, Throwable throwable) {
             rootContext.log(string, throwable);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public String getRealPath(String string) {
             return rootContext.getRealPath(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public String getServerInfo() {
             return rootContext.getServerInfo();
         }
@@ -316,7 +351,7 @@ public class InitContainerTag extends TilesBodyTag {
         /**
          * Sets an init parameter value.
          *
-         * @param name The name of the parameter.
+         * @param name  The name of the parameter.
          * @param value The value of the parameter.
          */
         public void setInitParameter(String name, String value) {
@@ -338,33 +373,45 @@ public class InitContainerTag extends TilesBodyTag {
             return initParameters.keys();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public Object getAttribute(String string) {
             return rootContext.getAttribute(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         @SuppressWarnings("unchecked")
         public Enumeration getAttributeNames() {
             return rootContext.getAttributeNames();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public void setAttribute(String string, Object object) {
             rootContext.setAttribute(string, object);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public void removeAttribute(String string) {
             rootContext.removeAttribute(string);
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public String getServletContextName() {
             return rootContext.getServletContextName();
         }
 
-        /** {@inheritDoc} */
+        /**
+         * {@inheritDoc}
+         */
         public String getContextPath() {
             return rootContext.getContextPath();
         }
@@ -389,7 +436,7 @@ public class InitContainerTag extends TilesBodyTag {
             /**
              * Constructor.
              *
-             * @param first The first enumeration to consider.
+             * @param first  The first enumeration to consider.
              * @param second The second enumeration to consider.
              */
             public CompositeEnumeration(Enumeration first, Iterator second) {
@@ -397,12 +444,16 @@ public class InitContainerTag extends TilesBodyTag {
                 this.second = second;
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             */
             public boolean hasMoreElements() {
                 return first.hasMoreElements() || second.hasNext();
             }
 
-            /** {@inheritDoc} */
+            /**
+             * {@inheritDoc}
+             */
             public Object nextElement() {
                 if (first.hasMoreElements()) {
                     return first.nextElement();

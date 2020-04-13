@@ -27,7 +27,7 @@ import org.apache.tiles2.context.AbstractTilesApplicationContextFactory;
 import org.apache.tiles2.startup.AbstractTilesInitializer;
 import org.apache.tiles2.startup.TilesInitializer;
 
-import javax.servlet.ServletContext;
+import javax.servlet2.ServletContext;
 import java.util.Map;
 
 /**
