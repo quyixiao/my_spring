@@ -17,15 +17,13 @@
 package org.springframework.web.servlet.view.tiles2;
 
 import java.util.Locale;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
 
-import org.apache.tiles2.context.TilesRequestContext;
-import org.apache.tiles2.definition.UrlDefinitionsFactory;
-import org.apache.tiles2.jsp.context.JspTilesRequestContext;
-import org.apache.tiles2.locale.impl.DefaultLocaleResolver;
-import org.apache.tiles2.servlet.context.ServletTilesRequestContext;
 
+import org.apache.tiles.locale.impl.DefaultLocaleResolver;
+import org.apache.tiles.request.Request;
 import org.springframework.web.servlet.support.RequestContextUtils;
 
 /**
@@ -45,19 +43,37 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 @Deprecated
 public class SpringLocaleResolver extends DefaultLocaleResolver {
 
+/*
 	@Override
 	public Locale resolveLocale(TilesRequestContext context) {
 		if (context instanceof JspTilesRequestContext) {
 			PageContext pc = ((JspTilesRequestContext) context).getPageContext();
-			return RequestContextUtils.getLocale((HttpServletRequest) pc.getRequest());
+			//return RequestContextUtils.getLocale((HttpServletRequest) pc.getRequest());
+			return null;
 		}
 		else if (context instanceof ServletTilesRequestContext) {
 			HttpServletRequest request = ((ServletTilesRequestContext) context).getRequest();
 			if (request != null) {
-				return RequestContextUtils.getLocale(request);
+				//return RequestContextUtils.getLocale(request);
+				return null;
 			}
 		}
 		return super.resolveLocale(context);
+	}
+*/
+
+	/** {@inheritDoc} */
+	public Locale resolveLocale(Request request) {
+		Locale retValue = null;
+		Map<String, Object> session = request.getContext("session");
+		if (session != null) {
+			retValue = (Locale) session.get(DefaultLocaleResolver.LOCALE_KEY);
+		}
+		if (retValue == null) {
+			retValue = request.getRequestLocale();
+		}
+
+		return retValue;
 	}
 
 }

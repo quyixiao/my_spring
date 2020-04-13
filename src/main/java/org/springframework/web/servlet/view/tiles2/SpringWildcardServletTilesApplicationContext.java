@@ -22,7 +22,6 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.servlet.ServletContext;
 
-import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -38,11 +37,11 @@ import org.springframework.web.context.support.ServletContextResourcePatternReso
  * @deprecated as of Spring 4.2, in favor of Tiles 3
  */
 @Deprecated
-public class SpringWildcardServletTilesApplicationContext extends ServletTilesApplicationContext {
+public class SpringWildcardServletTilesApplicationContext /*extends ServletTilesApplicationContext*/{
 
-	private final ResourcePatternResolver resolver;
+	//private final ResourcePatternResolver resolver;
 
-
+/*
 	public SpringWildcardServletTilesApplicationContext(ServletContext servletContext) {
 		super(servletContext);
 		this.resolver = new ServletContextResourcePatternResolver(servletContext);
@@ -69,6 +68,6 @@ public class SpringWildcardServletTilesApplicationContext extends ServletTilesAp
 			}
 		}
 		return urlSet;
-	}
+	}*/
 
 }

@@ -19,12 +19,10 @@ package org.springframework.web.servlet.view.tiles2;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.tiles2.TilesException;
-import org.apache.tiles2.preparer.NoSuchPreparerException;
-import org.apache.tiles2.preparer.PreparerException;
-import org.apache.tiles2.preparer.ViewPreparer;
-
-import org.apache.tiles2.preparer.PreparerFactory;
+import org.apache.tiles.TilesException;
+import org.apache.tiles.preparer.PreparerException;
+import org.apache.tiles.preparer.ViewPreparer;
+import org.apache.tiles.preparer.factory.NoSuchPreparerException;
 import org.springframework.web.context.WebApplicationContext;
 
 /**

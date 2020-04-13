@@ -16,60 +16,15 @@
 
 package org.springframework.web.servlet.view.tiles2;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.servlet.ServletContext;
-import javax.servlet.jsp.JspFactory;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.tiles2.TilesApplicationContext;
-import org.apache.tiles2.TilesException;
-import org.apache.tiles2.awareness.TilesApplicationContextAware;
-import org.apache.tiles2.context.TilesRequestContextFactory;
-import org.apache.tiles2.definition.DefinitionsFactory;
-import org.apache.tiles2.definition.DefinitionsFactoryException;
-import org.apache.tiles2.definition.DefinitionsReader;
-import org.apache.tiles2.definition.Refreshable;
-import org.apache.tiles2.definition.UnresolvingLocaleDefinitionsFactory;
-import org.apache.tiles2.definition.dao.BaseLocaleUrlDefinitionDAO;
-import org.apache.tiles2.definition.dao.CachingLocaleUrlDefinitionDAO;
-import org.apache.tiles2.definition.digester.DigesterDefinitionsReader;
-import org.apache.tiles2.el.ELAttributeEvaluator;
-import org.apache.tiles2.evaluator.AttributeEvaluator;
-import org.apache.tiles2.evaluator.AttributeEvaluatorFactory;
-import org.apache.tiles2.evaluator.BasicAttributeEvaluatorFactory;
-import org.apache.tiles2.evaluator.impl.DirectAttributeEvaluator;
-import org.apache.tiles2.extras.complete.CompleteAutoloadTilesContainerFactory;
-import org.apache.tiles2.extras.complete.CompleteAutoloadTilesInitializer;
-import org.apache.tiles2.factory.AbstractTilesContainerFactory;
-import org.apache.tiles2.factory.BasicTilesContainerFactory;
-import org.apache.tiles2.impl.BasicTilesContainer;
-import org.apache.tiles2.impl.mgmt.CachingTilesContainer;
-import org.apache.tiles2.locale.LocaleResolver;
-import org.apache.tiles2.mgmt.MutableTilesContainer;
-import org.apache.tiles2.preparer.PreparerFactory;
-import org.apache.tiles2.startup.AbstractTilesInitializer;
-import org.apache.tiles2.startup.DefaultTilesInitializer;
-import org.apache.tiles2.startup.TilesInitializer;
-
-import org.apache.tiles2.extras.complete.CompleteAutoloadTilesListener;
-import org.apache.tiles2.preparer.BasicPreparerFactory;
-import org.apache.tiles2.preparer.ViewPreparer;
-import org.apache.tiles2.web.startup.AbstractTilesListener;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.context.ServletContextAware;
+
+import javax.servlet.ServletContext;
+import java.net.URL;
 
 /**
  * Helper class to configure Tiles 2.x for the Spring Framework. See
@@ -124,7 +79,22 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
-	private TilesInitializer tilesInitializer;
+	@Override
+	public void destroy() throws Exception {
+
+	}
+
+	@Override
+	public void afterPropertiesSet() throws Exception {
+
+	}
+
+	@Override
+	public void setServletContext(ServletContext servletContext) {
+
+	}
+
+/*	private TilesInitializer tilesInitializer;
 
 	private String[] definitions;
 
@@ -141,19 +111,19 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	private ServletContext servletContext;
 
 
-	/**
+	*//**
 	 * Configure Tiles using a custom TilesInitializer, typically specified as an inner bean.
 	 * <p>Default is a variant of {@link DefaultTilesInitializer},
 	 * respecting the "definitions", "preparerFactoryClass" etc properties on this configurer.
 	 * <p><b>NOTE: Specifying a custom TilesInitializer effectively disables all other bean
 	 * properties on this configurer.</b> The entire initialization procedure is then left
 	 * to the TilesInitializer as specified.
-	 */
+	 *//*
 	public void setTilesInitializer(TilesInitializer tilesInitializer) {
 		this.tilesInitializer = tilesInitializer;
 	}
 
-	/**
+	*//**
 	 * Specify whether to apply Tiles 2.2's "complete-autoload" configuration.
 	 * <p>See {@link CompleteAutoloadTilesContainerFactory}
 	 * for details on the complete-autoload mode.
@@ -162,7 +132,7 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	 * to {@link CompleteAutoloadTilesInitializer}.
 	 * @see CompleteAutoloadTilesContainerFactory
 	 * @see CompleteAutoloadTilesInitializer
-	 */
+	 *//*
 	public void setCompleteAutoload(boolean completeAutoload) {
 		if (completeAutoload) {
 			try {
@@ -177,30 +147,30 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 		}
 	}
 
-	/**
+	*//**
 	 * Set the Tiles definitions, i.e. the list of files containing the definitions.
 	 * Default is "/WEB-INF/tiles.xml".
-	 */
+	 *//*
 	public void setDefinitions(String... definitions) {
 		this.definitions = definitions;
 	}
 
-	/**
+	*//**
 	 * Set whether to check Tiles definition files for a refresh at runtime.
 	 * Default is "false".
-	 */
+	 *//*
 	public void setCheckRefresh(boolean checkRefresh) {
 		this.checkRefresh = checkRefresh;
 	}
 
-	/**
+	*//**
 	 * Set whether to validate the Tiles XML definitions. Default is "true".
-	 */
+	 *//*
 	public void setValidateDefinitions(boolean validateDefinitions) {
 		this.validateDefinitions = validateDefinitions;
 	}
 
-	/**
+	*//**
 	 * Set the {@link DefinitionsFactory} implementation to use.
 	 * Default is {@link UnresolvingLocaleDefinitionsFactory},
 	 * operating on definition resource URLs.
@@ -208,12 +178,12 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	 * to customize the creation of Tiles Definition objects. Note that such a
 	 * DefinitionsFactory has to be able to handle {@link URL} source objects,
 	 * unless you configure a different TilesContainerFactory.
-	 */
+	 *//*
 	public void setDefinitionsFactoryClass(Class<? extends DefinitionsFactory> definitionsFactoryClass) {
 		this.definitionsFactoryClass = definitionsFactoryClass;
 	}
 
-	/**
+	*//**
 	 * Set the {@link PreparerFactory} implementation to use.
 	 * Default is {@link BasicPreparerFactory}, creating
 	 * shared instances for specified preparer classes.
@@ -231,17 +201,17 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	 * Spring bean definition per preparer name (as used in your Tiles definitions).
 	 * @see SimpleSpringPreparerFactory
 	 * @see SpringBeanPreparerFactory
-	 */
+	 *//*
 	public void setPreparerFactoryClass(Class<? extends PreparerFactory> preparerFactoryClass) {
 		this.preparerFactoryClass = preparerFactoryClass;
 	}
 
-	/**
+	*//**
 	 * Set whether to use a MutableTilesContainer (typically the CachingTilesContainer
 	 * implementation) for this application. Default is "false".
 	 * @see MutableTilesContainer
 	 * @see CachingTilesContainer
-	 */
+	 *//*
 	public void setUseMutableTilesContainer(boolean useMutableTilesContainer) {
 		this.useMutableTilesContainer = useMutableTilesContainer;
 	}
@@ -251,11 +221,11 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 		this.servletContext = servletContext;
 	}
 
-	/**
+	*//**
 	 * Creates and exposes a TilesContainer for this web application,
 	 * delegating to the TilesInitializer.
 	 * @throws TilesException in case of setup failure
-	 */
+	 *//*
 	@Override
 	public void afterPropertiesSet() throws TilesException {
 		TilesApplicationContext preliminaryContext =
@@ -266,19 +236,19 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 		this.tilesInitializer.initialize(preliminaryContext);
 	}
 
-	/**
+	*//**
 	 * Creates a new instance of {@code SpringTilesInitializer}.
 	 * <p>Override it to use a different initializer.
 	 * @see AbstractTilesListener#createTilesInitializer()
-	 */
+	 *//*
 	protected TilesInitializer createTilesInitializer() {
 		return new SpringTilesInitializer();
 	}
 
-	/**
+	*//**
 	 * Removes the TilesContainer from this web application.
 	 * @throws TilesException in case of cleanup failure
-	 */
+	 *//*
 	@Override
 	public void destroy() throws TilesException {
 		this.tilesInitializer.destroy();
@@ -441,6 +411,6 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 			evaluator.init(Collections.<String, String>emptyMap());
 			return evaluator;
 		}
-	}
+	}*/
 
 }

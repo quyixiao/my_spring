@@ -46,8 +46,6 @@ import org.apache.tiles.request.ApplicationContextAware;
 import org.apache.tiles.request.ApplicationResource;
 import org.apache.tiles.startup.DefaultTilesInitializer;
 import org.apache.tiles.startup.TilesInitializer;
-import org.apache.tiles2.extras.complete.CompleteAutoloadTilesContainerFactory;
-import org.apache.tiles2.extras.complete.CompleteAutoloadTilesInitializer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;

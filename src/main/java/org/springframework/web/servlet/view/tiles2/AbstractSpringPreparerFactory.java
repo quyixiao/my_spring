@@ -16,11 +16,11 @@
 
 package org.springframework.web.servlet.view.tiles2;
 
-import org.apache.tiles2.TilesException;
-import org.apache.tiles2.context.TilesRequestContext;
-import org.apache.tiles2.preparer.PreparerFactory;
-import org.apache.tiles2.preparer.ViewPreparer;
 
+import org.apache.tiles.TilesException;
+import org.apache.tiles.preparer.ViewPreparer;
+import org.apache.tiles.preparer.factory.PreparerFactory;
+import org.apache.tiles.request.Request;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
@@ -38,6 +38,7 @@ import org.springframework.web.servlet.DispatcherServlet;
  */
 @Deprecated
 public abstract class AbstractSpringPreparerFactory implements PreparerFactory {
+/*
 
 	@Override
 	public ViewPreparer getPreparer(String name, TilesRequestContext context) throws TilesException {
@@ -52,6 +53,20 @@ public abstract class AbstractSpringPreparerFactory implements PreparerFactory {
 		}
 		return getPreparer(name, webApplicationContext);
 	}
+*/
+
+	/**
+	 * Create the named {link ViewPreparer} for the specified context.
+	 *
+	 * @param name    ViewPreparer name, commonly the qualified classname.
+	 * @param context the context within which the preparerInstance will be invoked.
+	 * @return instance of the ViewPreparer
+	 */
+	public ViewPreparer getPreparer(String name, Request context){
+
+		return null;
+	}
+
 
 	/**
 	 * Obtain a preparer instance for the given preparer name,

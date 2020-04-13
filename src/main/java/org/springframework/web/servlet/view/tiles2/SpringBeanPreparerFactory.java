@@ -16,10 +16,8 @@
 
 package org.springframework.web.servlet.view.tiles2;
 
-import org.apache.tiles2.TilesException;
-import org.apache.tiles2.preparer.ViewPreparer;
-
-import org.apache.tiles2.preparer.PreparerFactory;
+import org.apache.tiles.TilesException;
+import org.apache.tiles.preparer.ViewPreparer;
 import org.springframework.web.context.WebApplicationContext;
 
 /**

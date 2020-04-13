@@ -50,13 +50,7 @@ public class ServletContextResourceLoader extends DefaultResourceLoader {
 		this.servletContext = servletContext;
 	}
 
-	/**
-	 * Create a new ServletContextResourceLoader.
-	 * @param servletContext the ServletContext to load resources with
-	 */
-	public ServletContextResourceLoader(javax.servlet2.ServletContext servletContext) {
-		this.servletContext = (javax.servlet.ServletContext)servletContext;
-	}
+
 
 	/**
 	 * This implementation supports file paths beneath the root of the web application.

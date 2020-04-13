@@ -18,22 +18,19 @@ package org.springframework.web.servlet.view.tiles2;
 
 import java.util.Locale;
 import java.util.Map;
+
+
+import org.apache.tiles.TilesContainer;
+import org.apache.tiles.impl.BasicTilesContainer;
+import org.apache.tiles.request.servlet.ServletUtil;
+import org.springframework.web.servlet.support.JstlUtils;
+import org.springframework.web.servlet.support.RequestContext;
+import org.springframework.web.servlet.view.AbstractUrlBasedView;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.apache.tiles2.TilesApplicationContext;
-import org.apache.tiles2.TilesContainer;
-import org.apache.tiles2.context.TilesRequestContext;
-import org.apache.tiles2.impl.BasicTilesContainer;
-import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
-import org.apache.tiles2.servlet.context.ServletTilesRequestContext;
-import org.apache.tiles2.servlet.context.ServletUtil;
-
-import org.springframework.web.servlet.support.JstlUtils;
-import org.springframework.web.servlet.support.RequestContext;
-import org.springframework.web.servlet.view.AbstractUrlBasedView;
 
 /**
  * {@link org.springframework.web.servlet.View} implementation that retrieves a
@@ -71,7 +68,12 @@ public class TilesView extends AbstractUrlBasedView {
 		this.alwaysInclude = alwaysInclude;
 	}
 
+	@Override
+	protected void renderMergedOutputModel(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
+	}
+
+/*
 	@Override
 	public boolean checkResource(final Locale locale) throws Exception {
 		TilesContainer container = ServletUtil.getContainer(getServletContext());
@@ -107,6 +109,6 @@ public class TilesView extends AbstractUrlBasedView {
 			ServletUtil.setForceInclude(request, true);
 		}
 		container.render(getUrl(), request, response);
-	}
+	}*/
 
 }
