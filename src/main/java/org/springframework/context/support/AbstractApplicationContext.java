@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -120,6 +121,8 @@ import org.springframework.util.ObjectUtils;
  * @see org.springframework.context.ApplicationListener
  * @see org.springframework.context.MessageSource
  */
+
+@Slf4j
 public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		implements ConfigurableApplicationContext, DisposableBean {
 
@@ -503,51 +506,79 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			log.info("start prepareRefresh");
 			prepareRefresh();
+			log.info("end prepareRefresh");
 
 			// Tell the subclass to refresh the internal bean factory.
+			log.info("start obtainFreshBeanFactory");
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+			log.info("end obtainFreshBeanFactory");
 
+			log.info("start prepareBeanFactory");
 			// Prepare the bean factory for use in this context.
 			prepareBeanFactory(beanFactory);
+			log.info("end prepareBeanFactory");
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				log.info("start postProcessBeanFactory");
 				postProcessBeanFactory(beanFactory);
+				log.info("end prepareBeanFactory");
 
 				// Invoke factory processors registered as beans in the context.
+				log.info("start invokeBeanFactoryPostProcessors");
 				invokeBeanFactoryPostProcessors(beanFactory);
+				log.info("end invokeBeanFactoryPostProcessors");
 
 				// Register bean processors that intercept bean creation.
+				log.info("start registerBeanPostProcessors");
 				registerBeanPostProcessors(beanFactory);
+				log.info("end registerBeanPostProcessors");
 
 				// Initialize message source for this context.
+				log.info("start initMessageSource");
 				initMessageSource();
+				log.info("end initMessageSource");
 
 				// Initialize event multicaster for this context.
+				log.info("start initApplicationEventMulticaster");
 				initApplicationEventMulticaster();
+				log.info("end initApplicationEventMulticaster");
 
 				// Initialize other special beans in specific context subclasses.
+				log.info("start onRefresh");
 				onRefresh();
+				log.info("end onRefresh");
 
 				// Check for listener beans and register them.
+				log.info("start registerListeners");
 				registerListeners();
+				log.info("end registerListeners");
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				log.info("start finishBeanFactoryInitialization");
 				finishBeanFactoryInitialization(beanFactory);
+				log.info("end finishBeanFactoryInitialization");
 
 				// Last step: publish corresponding event.
+				log.info("start finishRefresh");
 				finishRefresh();
+				log.info("end finishRefresh");
 			}
 
 			catch (BeansException ex) {
 				logger.warn("Exception encountered during context initialization - cancelling refresh attempt", ex);
 
 				// Destroy already created singletons to avoid dangling resources.
+				log.info("start destroyBeans");
 				destroyBeans();
+				log.info("end destroyBeans");
 
 				// Reset 'active' flag.
+				log.info("start cancelRefresh");
 				cancelRefresh(ex);
+				log.info("end cancelRefresh");
 
 				// Propagate exception to caller.
 				throw ex;
@@ -556,7 +587,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			finally {
 				// Reset common introspection caches in Spring's core, since we
 				// might not ever need metadata for singleton beans anymore...
+				log.info("start resetCommonCaches");
 				resetCommonCaches();
+				log.info("end resetCommonCaches");
 			}
 		}
 	}
@@ -574,7 +607,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment
+		log.info(" start initPropertySources");
 		initPropertySources();
+		log.info(" end initPropertySources");
 
 		// Validate that all properties marked as required are resolvable
 		// see ConfigurablePropertyResolver#setRequiredProperties
@@ -591,6 +626,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see org.springframework.web.context.support.WebApplicationContextUtils#initServletPropertySources
 	 */
 	protected void initPropertySources() {
+		log.info("initPropertySources ing ");
 		// For subclasses: do nothing by default.
 	}
 

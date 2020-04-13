@@ -16,6 +16,7 @@
 
 package org.springframework.context.support;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
@@ -48,7 +49,7 @@ import org.springframework.util.Assert;
  * @see #getResourceByPath
  * @see GenericApplicationContext
  */
-
+@Slf4j
 public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContext {
 
 	private Resource[] configResources;
@@ -135,9 +136,13 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	public ClassPathXmlApplicationContext(String[] configLocations, boolean refresh, ApplicationContext parent)
 			throws BeansException {
 		super(parent);
+		log.info(" start setConfigLocations");
 		setConfigLocations(configLocations);
+		log.info(" end setConfigLocations");
 		if (refresh) {
+			log.info(" start refresh ");
 			refresh();
+			log.info(" end refresh ");
 		}
 	}
 
