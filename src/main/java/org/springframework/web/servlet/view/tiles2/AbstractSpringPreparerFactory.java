@@ -16,16 +16,16 @@
 
 package org.springframework.web.servlet.view.tiles2;
 
-import org.apache.tiles.TilesException;
-import org.apache.tiles.context.TilesRequestContext;
-import org.apache.tiles.preparer.PreparerFactory;
-import org.apache.tiles.preparer.ViewPreparer;
+import org.apache.tiles2.TilesException;
+import org.apache.tiles2.context.TilesRequestContext;
+import org.apache.tiles2.preparer.PreparerFactory;
+import org.apache.tiles2.preparer.ViewPreparer;
 
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
 /**
- * Abstract implementation of the Tiles2 {@link org.apache.tiles.preparer.PreparerFactory}
+ * Abstract implementation of the Tiles2 {@link PreparerFactory}
  * interface, obtaining the current Spring WebApplicationContext and delegating to
  * {@link #getPreparer(String, WebApplicationContext)}.
  *

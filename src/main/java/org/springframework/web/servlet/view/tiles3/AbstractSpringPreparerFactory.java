@@ -25,7 +25,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.DispatcherServlet;
 
 /**
- * Abstract implementation of the Tiles3 {@link org.apache.tiles.preparer.PreparerFactory}
+ * Abstract implementation of the Tiles3 {@link org.apache.tiles2.preparer.PreparerFactory}
  * interface, obtaining the current Spring WebApplicationContext and delegating to
  * {@link #getPreparer(String, WebApplicationContext)}.
  *

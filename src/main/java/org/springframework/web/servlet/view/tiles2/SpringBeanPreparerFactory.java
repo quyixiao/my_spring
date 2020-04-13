@@ -16,13 +16,14 @@
 
 package org.springframework.web.servlet.view.tiles2;
 
-import org.apache.tiles.TilesException;
-import org.apache.tiles.preparer.ViewPreparer;
+import org.apache.tiles2.TilesException;
+import org.apache.tiles2.preparer.ViewPreparer;
 
+import org.apache.tiles2.preparer.PreparerFactory;
 import org.springframework.web.context.WebApplicationContext;
 
 /**
- * Tiles2 {@link org.apache.tiles.preparer.PreparerFactory} implementation
+ * Tiles2 {@link PreparerFactory} implementation
  * that expects preparer bean names and obtains preparer beans from the
  * Spring ApplicationContext. The full bean creation process will be in
  * the control of the Spring application context in this case, allowing

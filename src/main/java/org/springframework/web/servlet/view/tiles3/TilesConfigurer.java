@@ -34,6 +34,7 @@ import org.apache.tiles.TilesContainer;
 import org.apache.tiles.TilesException;
 import org.apache.tiles.definition.DefinitionsFactory;
 import org.apache.tiles.definition.DefinitionsReader;
+import org.apache.tiles.definition.UnresolvingLocaleDefinitionsFactory;
 import org.apache.tiles.definition.dao.BaseLocaleUrlDefinitionDAO;
 import org.apache.tiles.definition.dao.CachingLocaleUrlDefinitionDAO;
 import org.apache.tiles.definition.digester.DigesterDefinitionsReader;
@@ -45,8 +46,6 @@ import org.apache.tiles.evaluator.AttributeEvaluator;
 import org.apache.tiles.evaluator.AttributeEvaluatorFactory;
 import org.apache.tiles.evaluator.BasicAttributeEvaluatorFactory;
 import org.apache.tiles.evaluator.impl.DirectAttributeEvaluator;
-import org.apache.tiles.extras.complete.CompleteAutoloadTilesContainerFactory;
-import org.apache.tiles.extras.complete.CompleteAutoloadTilesInitializer;
 import org.apache.tiles.factory.AbstractTilesContainerFactory;
 import org.apache.tiles.factory.BasicTilesContainerFactory;
 import org.apache.tiles.impl.mgmt.CachingTilesContainer;
@@ -55,9 +54,13 @@ import org.apache.tiles.preparer.factory.PreparerFactory;
 import org.apache.tiles.request.ApplicationContext;
 import org.apache.tiles.request.ApplicationContextAware;
 import org.apache.tiles.request.ApplicationResource;
+import org.apache.tiles.mgmt.MutableTilesContainer;
 import org.apache.tiles.startup.DefaultTilesInitializer;
 import org.apache.tiles.startup.TilesInitializer;
 
+import org.apache.tiles.preparer.ViewPreparer;
+import org.apache.tiles2.extras.complete.CompleteAutoloadTilesContainerFactory;
+import org.apache.tiles2.extras.complete.CompleteAutoloadTilesInitializer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.PropertyAccessorFactory;
@@ -76,7 +79,7 @@ import org.springframework.web.context.ServletContextAware;
  * containing definitions, to be accessed by {@link TilesView} instances. This is a
  * Spring-based alternative (for usage in Spring configuration) to the Tiles-provided
  * {@code ServletContextListener}
- * (e.g. {@link org.apache.tiles.extras.complete.CompleteAutoloadTilesListener}
+ * (e.g. {@link org.apache.tiles2.extras.complete.CompleteAutoloadTilesListener}
  * for usage in {@code web.xml}.
  *
  * <p>TilesViews can be managed by any {@link org.springframework.web.servlet.ViewResolver}.
@@ -149,7 +152,7 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 
 	/**
 	 * Configure Tiles using a custom TilesInitializer, typically specified as an inner bean.
-	 * <p>Default is a variant of {@link org.apache.tiles.startup.DefaultTilesInitializer},
+	 * <p>Default is a variant of {@link DefaultTilesInitializer},
 	 * respecting the "definitions", "preparerFactoryClass" etc properties on this configurer.
 	 * <p><b>NOTE: Specifying a custom TilesInitializer effectively disables all other bean
 	 * properties on this configurer.</b> The entire initialization procedure is then left
@@ -161,13 +164,13 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 
 	/**
 	 * Specify whether to apply Tiles 3.0's "complete-autoload" configuration.
-	 * <p>See {@link org.apache.tiles.extras.complete.CompleteAutoloadTilesContainerFactory}
+	 * <p>See {@link CompleteAutoloadTilesContainerFactory}
 	 * for details on the complete-autoload mode.
 	 * <p><b>NOTE: Specifying the complete-autoload mode effectively disables all other bean
 	 * properties on this configurer.</b> The entire initialization procedure is then left
-	 * to {@link org.apache.tiles.extras.complete.CompleteAutoloadTilesInitializer}.
-	 * @see org.apache.tiles.extras.complete.CompleteAutoloadTilesContainerFactory
-	 * @see org.apache.tiles.extras.complete.CompleteAutoloadTilesInitializer
+	 * to {@link CompleteAutoloadTilesInitializer}.
+	 * @see CompleteAutoloadTilesContainerFactory
+	 * @see CompleteAutoloadTilesInitializer
 	 */
 	public void setCompleteAutoload(boolean completeAutoload) {
 		if (completeAutoload) {
@@ -207,8 +210,8 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	}
 
 	/**
-	 * Set the {@link org.apache.tiles.definition.DefinitionsFactory} implementation to use.
-	 * Default is {@link org.apache.tiles.definition.UnresolvingLocaleDefinitionsFactory},
+	 * Set the {@link DefinitionsFactory} implementation to use.
+	 * Default is {@link UnresolvingLocaleDefinitionsFactory},
 	 * operating on definition resource URLs.
 	 * <p>Specify a custom DefinitionsFactory, e.g. a UrlDefinitionsFactory subclass,
 	 * to customize the creation of Tiles Definition objects. Note that such a
@@ -224,7 +227,7 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	 * Default is {@link org.apache.tiles.preparer.factory.BasicPreparerFactory}, creating
 	 * shared instances for specified preparer classes.
 	 * <p>Specify {@link SimpleSpringPreparerFactory} to autowire
-	 * {@link org.apache.tiles.preparer.ViewPreparer} instances based on specified
+	 * {@link ViewPreparer} instances based on specified
 	 * preparer classes, applying Spring's container callbacks as well as applying
 	 * configured Spring BeanPostProcessors. If Spring's context-wide annotation-config
 	 * has been activated, annotations in ViewPreparer classes will be automatically
@@ -245,8 +248,8 @@ public class TilesConfigurer implements ServletContextAware, InitializingBean, D
 	/**
 	 * Set whether to use a MutableTilesContainer (typically the CachingTilesContainer
 	 * implementation) for this application. Default is "false".
-	 * @see org.apache.tiles.mgmt.MutableTilesContainer
-	 * @see org.apache.tiles.impl.mgmt.CachingTilesContainer
+	 * @see MutableTilesContainer
+	 * @see CachingTilesContainer
 	 */
 	public void setUseMutableTilesContainer(boolean useMutableTilesContainer) {
 		this.useMutableTilesContainer = useMutableTilesContainer;

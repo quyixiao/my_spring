@@ -23,13 +23,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.tiles.TilesApplicationContext;
-import org.apache.tiles.TilesContainer;
-import org.apache.tiles.context.TilesRequestContext;
-import org.apache.tiles.impl.BasicTilesContainer;
-import org.apache.tiles.servlet.context.ServletTilesApplicationContext;
-import org.apache.tiles.servlet.context.ServletTilesRequestContext;
-import org.apache.tiles.servlet.context.ServletUtil;
+import org.apache.tiles2.TilesApplicationContext;
+import org.apache.tiles2.TilesContainer;
+import org.apache.tiles2.context.TilesRequestContext;
+import org.apache.tiles2.impl.BasicTilesContainer;
+import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
+import org.apache.tiles2.servlet.context.ServletTilesRequestContext;
+import org.apache.tiles2.servlet.context.ServletUtil;
 
 import org.springframework.web.servlet.support.JstlUtils;
 import org.springframework.web.servlet.support.RequestContext;

@@ -20,10 +20,11 @@ import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.PageContext;
 
-import org.apache.tiles.context.TilesRequestContext;
-import org.apache.tiles.jsp.context.JspTilesRequestContext;
-import org.apache.tiles.locale.impl.DefaultLocaleResolver;
-import org.apache.tiles.servlet.context.ServletTilesRequestContext;
+import org.apache.tiles2.context.TilesRequestContext;
+import org.apache.tiles2.definition.UrlDefinitionsFactory;
+import org.apache.tiles2.jsp.context.JspTilesRequestContext;
+import org.apache.tiles2.locale.impl.DefaultLocaleResolver;
+import org.apache.tiles2.servlet.context.ServletTilesRequestContext;
 
 import org.springframework.web.servlet.support.RequestContextUtils;
 
@@ -38,7 +39,7 @@ import org.springframework.web.servlet.support.RequestContextUtils;
  *
  * @author Juergen Hoeller
  * @since 2.5
- * @see org.apache.tiles.definition.UrlDefinitionsFactory#LOCALE_RESOLVER_IMPL_PROPERTY
+ * @see UrlDefinitionsFactory#LOCALE_RESOLVER_IMPL_PROPERTY
  * @deprecated as of Spring 4.2, in favor of Tiles 3
  */
 @Deprecated

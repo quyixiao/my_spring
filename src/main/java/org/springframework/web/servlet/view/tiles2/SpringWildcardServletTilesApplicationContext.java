@@ -22,7 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.servlet.ServletContext;
 
-import org.apache.tiles.servlet.context.ServletTilesApplicationContext;
+import org.apache.tiles2.servlet.context.ServletTilesApplicationContext;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;

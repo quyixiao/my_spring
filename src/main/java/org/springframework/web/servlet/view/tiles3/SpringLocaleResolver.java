@@ -32,7 +32,7 @@ import java.util.Locale;
  * <p>This adapter gets automatically registered by {@link TilesConfigurer}.
  *
  * @author Nicolas Le Bas
- * @see org.apache.tiles.definition.UrlDefinitionsFactory#LOCALE_RESOLVER_IMPL_PROPERTY
+ * @see org.apache.tiles2.definition.UrlDefinitionsFactory#LOCALE_RESOLVER_IMPL_PROPERTY
  * @since 3.2
  */
 public class SpringLocaleResolver extends DefaultLocaleResolver {
