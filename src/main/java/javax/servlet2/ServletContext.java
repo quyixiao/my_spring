@@ -25,8 +25,11 @@
  * Portions Copyright Apache Software Foundation.
  */
 
-package javax.servlet;
+package javax.servlet2;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
