@@ -321,7 +321,9 @@ public class InitContainerTag extends TilesBodyTag {
          */
         public void setInitParameter(String name, String value) {
             initParameters.put(name, value);
+
         }
+
 
         /**
          * Returns init parameter names, including the custom and the original
