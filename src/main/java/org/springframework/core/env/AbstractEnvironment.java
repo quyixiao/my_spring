@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -52,6 +53,7 @@ import static org.springframework.util.StringUtils.*;
  * @see ConfigurableEnvironment
  * @see StandardEnvironment
  */
+@Slf4j
 public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	/**
@@ -493,6 +495,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	@Override
 	public void validateRequiredProperties() throws MissingRequiredPropertiesException {
+		log.info(" validateRequiredProperties ");
 		this.propertyResolver.validateRequiredProperties();
 	}
 

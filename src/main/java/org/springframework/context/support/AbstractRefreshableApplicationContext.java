@@ -18,6 +18,7 @@ package org.springframework.context.support;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -61,6 +62,7 @@ import org.springframework.context.ApplicationContextException;
  * @see FileSystemXmlApplicationContext
  * @see org.springframework.context.annotation.AnnotationConfigApplicationContext
  */
+@Slf4j
 public abstract class AbstractRefreshableApplicationContext extends AbstractApplicationContext {
 
 	private Boolean allowBeanDefinitionOverriding;
@@ -118,12 +120,17 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
+		log.info(" refreshBeanFactory ");
 		if (hasBeanFactory()) {
+			log.info(" destroyBeans ");
 			destroyBeans();
+			log.info(" closeBeanFactory ");
 			closeBeanFactory();
 		}
 		try {
+			log.info(" start createBeanFactory ");
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+			log.info(" end createBeanFactory ");
 			beanFactory.setSerializationId(getId());
 			customizeBeanFactory(beanFactory);
 			loadBeanDefinitions(beanFactory);
@@ -165,6 +172,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 
 	@Override
 	public final ConfigurableListableBeanFactory getBeanFactory() {
+		log.info("getBeanFactory");
 		synchronized (this.beanFactoryMonitor) {
 			if (this.beanFactory == null) {
 				throw new IllegalStateException("BeanFactory not initialized or already closed - " +
