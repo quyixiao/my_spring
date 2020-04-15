@@ -18,6 +18,9 @@ package org.springframework.beans.factory.xml;
 
 import java.io.IOException;
 
+import ch.qos.logback.classic.util.LoggerNameUtil;
+import com.mchange.v2.log.LogUtils;
+import com.test.LoggerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
@@ -60,7 +63,7 @@ public class DelegatingEntityResolver implements EntityResolver {
 	 * (can be {@code null}) to use the default ClassLoader)
 	 */
 	public DelegatingEntityResolver(ClassLoader classLoader) {
-		log.info(" create BeansDtdResolver");
+		LoggerUtils.info(" create BeansDtdResolver",3);
 		this.dtdResolver = new BeansDtdResolver();
 		log.info(" create PluggableSchemaResolver");
 		this.schemaResolver = new PluggableSchemaResolver(classLoader);

@@ -16,6 +16,7 @@
 
 package org.springframework.util;
 
+import com.test.LoggerUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.beans.Introspector;
@@ -161,7 +162,7 @@ public abstract class ClassUtils {
 		ClassLoader cl = null;
 		try {
 			cl = Thread.currentThread().getContextClassLoader();
-			log.info("getContextClassLoader");
+			LoggerUtils.info("getContextClassLoader" ,10);
 		}
 		catch (Throwable ex) {
 			// Cannot access thread context ClassLoader - falling back...

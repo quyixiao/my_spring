@@ -20,6 +20,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
@@ -44,6 +45,7 @@ import org.springframework.util.xml.XmlValidationModeDetector;
  * @author Juergen Hoeller
  * @since 2.0
  */
+@Slf4j
 public class DefaultDocumentLoader implements DocumentLoader {
 
 	/**
@@ -67,12 +69,14 @@ public class DefaultDocumentLoader implements DocumentLoader {
 	@Override
 	public Document loadDocument(InputSource inputSource, EntityResolver entityResolver,
 			ErrorHandler errorHandler, int validationMode, boolean namespaceAware) throws Exception {
-
+		log.info(" loadDocument createDocumentBuilderFactory entityResolver :{} ,errorHandler :{}",entityResolver.getClass().getName(),
+				errorHandler.getClass().getName());
 		DocumentBuilderFactory factory = createDocumentBuilderFactory(validationMode, namespaceAware);
 		if (logger.isDebugEnabled()) {
 			logger.debug("Using JAXP provider [" + factory.getClass().getName() + "]");
 		}
 		DocumentBuilder builder = createDocumentBuilder(factory, entityResolver, errorHandler);
+
 		return builder.parse(inputSource);
 	}
 
@@ -88,6 +92,7 @@ public class DefaultDocumentLoader implements DocumentLoader {
 			throws ParserConfigurationException {
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
 		factory.setNamespaceAware(namespaceAware);
 
 		if (validationMode != XmlValidationModeDetector.VALIDATION_NONE) {
@@ -129,11 +134,13 @@ public class DefaultDocumentLoader implements DocumentLoader {
 
 		DocumentBuilder docBuilder = factory.newDocumentBuilder();
 		if (entityResolver != null) {
+			log.info(" createDocumentBuilder setEntityResolver ");
 			docBuilder.setEntityResolver(entityResolver);
 		}
 		if (errorHandler != null) {
 			docBuilder.setErrorHandler(errorHandler);
 		}
+
 		return docBuilder;
 	}
 

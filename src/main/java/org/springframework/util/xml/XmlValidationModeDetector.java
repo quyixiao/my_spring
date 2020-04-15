@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 /**
@@ -31,6 +32,7 @@ import org.springframework.util.StringUtils;
  * @author Juergen Hoeller
  * @since 2.0
  */
+@Slf4j
 public class XmlValidationModeDetector {
 
 	/**
@@ -93,11 +95,14 @@ public class XmlValidationModeDetector {
 			boolean isDtdValidated = false;
 			String content;
 			while ((content = reader.readLine()) != null) {
+				log.info("detectValidationMode  line : " + content);
 				content = consumeCommentTokens(content);
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
+
 				if (hasDoctype(content)) {
+					log.info(" detectValidationMode 含有 DOCTYPE  content : {} " + content);
 					isDtdValidated = true;
 					break;
 				}
@@ -106,6 +111,7 @@ public class XmlValidationModeDetector {
 					break;
 				}
 			}
+			log.info(isDtdValidated ? " detectValidationMode 是DTD 文档 " : " detectValidationMode 是XSD 文档");
 			return (isDtdValidated ? VALIDATION_DTD : VALIDATION_XSD);
 		}
 		catch (CharConversionException ex) {

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.test.LoggerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -248,6 +249,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * for custom entity resolution, for example relative to some specific base path.
 	 */
 	public void setEntityResolver(EntityResolver entityResolver) {
+
 		this.entityResolver = entityResolver;
 	}
 
@@ -256,16 +258,21 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * if none specified.
 	 */
 	protected EntityResolver getEntityResolver() {
+		log.info("EntityResolver getEntityResolver");
 		if (this.entityResolver == null) {
+			log.info(" entityResolver is null");
 			// Determine default EntityResolver to use.
 			ResourceLoader resourceLoader = getResourceLoader();
 			if (resourceLoader != null) {
+				log.info("getEntityResolver ResourceEntityResolver");
 				this.entityResolver = new ResourceEntityResolver(resourceLoader);
 			}
 			else {
+				log.info("getEntityResolver DelegatingEntityResolver");
 				this.entityResolver = new DelegatingEntityResolver(getBeanClassLoader());
 			}
 		}
+
 		return this.entityResolver;
 	}
 
@@ -398,7 +405,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
+			log.info("doLoadBeanDefinitions  ...");
 			Document doc = doLoadDocument(inputSource, resource);
+
 			return registerBeanDefinitions(doc, resource);
 		}
 		catch (BeanDefinitionStoreException ex) {
@@ -436,8 +445,15 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see DocumentLoader#loadDocument
 	 */
 	protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
-		return this.documentLoader.loadDocument(inputSource, getEntityResolver(), this.errorHandler,
-				getValidationModeForResource(resource), isNamespaceAware());
+		EntityResolver entityResolver = getEntityResolver();
+		boolean isNamespaceAware = isNamespaceAware();
+		log.info("entityResolver simpleName : " + entityResolver.getClass().getName() + " isNamespaceAware : " +isNamespaceAware);
+		return this.documentLoader.loadDocument(inputSource,
+				entityResolver,
+				this.errorHandler,
+				getValidationModeForResource(resource), //返回是是DTD 文档还是XSD文档
+				isNamespaceAware
+		);
 	}
 
 
@@ -450,16 +466,22 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected int getValidationModeForResource(Resource resource) {
 		int validationModeToUse = getValidationMode();
+		log.info("validationModeToUse : {} ,VALIDATION_AUTO :{}",validationModeToUse,VALIDATION_AUTO);
 		if (validationModeToUse != VALIDATION_AUTO) {
+			log.info(" getValidationModeForResource validationModeToUse != VALIDATION_AUTO ");
 			return validationModeToUse;
 		}
+
 		int detectedMode = detectValidationMode(resource);
+		log.info(" getValidationModeForResource detectedMode : {},VALIDATION_AUTO :{} " , detectedMode ,VALIDATION_AUTO);
 		if (detectedMode != VALIDATION_AUTO) {
+			log.info(" getValidationModeForResource detectedMode != VALIDATION_AUTO  return detectedMode value is {}",detectedMode );
 			return detectedMode;
 		}
 		// Hmm, we didn't get a clear indication... Let's assume XSD,
 		// since apparently no DTD declaration has been found up until
 		// detection stopped (before finding the document's root tag).
+		log.info(" getValidationModeForResource VALIDATION_XSD value is {} " ,VALIDATION_XSD);
 		return VALIDATION_XSD;
 	}
 
@@ -471,6 +493,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * of the {@link #VALIDATION_AUTO} mode.
 	 */
 	protected int detectValidationMode(Resource resource) {
+		LoggerUtils.info(" detectValidationMode get resource ");
 		if (resource.isOpen()) {
 			throw new BeanDefinitionStoreException(
 					"Passed-in Resource [" + resource + "] contains an open stream: " +
