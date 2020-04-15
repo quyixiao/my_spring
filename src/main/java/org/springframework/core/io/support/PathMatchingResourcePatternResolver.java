@@ -189,7 +189,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
      * @see org.springframework.core.io.DefaultResourceLoader
      */
     public PathMatchingResourcePatternResolver() {
-		log.info(" resourceLoader init by DefaultResourceLoader no params");
+		LoggerUtils.info(" resourceLoader init by DefaultResourceLoader no params",10);
         this.resourceLoader = new DefaultResourceLoader();
 
     }
@@ -203,7 +203,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
      */
     public PathMatchingResourcePatternResolver(ResourceLoader resourceLoader) {
         Assert.notNull(resourceLoader, "ResourceLoader must not be null");
-		LoggerUtils.info(" resourceLoader init by resourceLoader",9);
+		LoggerUtils.info(" resourceLoader init by resourceLoader",10);
         this.resourceLoader = resourceLoader;
     }
 

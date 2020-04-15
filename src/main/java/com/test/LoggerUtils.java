@@ -1,8 +1,6 @@
 package com.test;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.log4j.Logger;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -17,14 +15,14 @@ import java.io.StringWriter;
 public class LoggerUtils {
 
 
-
     /**
      * 不需要传递参数
+     *
      * @param msg
      */
     public static void info(String msg) {
         Throwable throwable = new Throwable();
-        StringBuffer sb = getStringBuffer(msg,throwable,getLevel(throwable));
+        StringBuffer sb = getStringBuffer(msg, throwable, getLevel(throwable));
         log.info(sb.toString());
     }
 
@@ -33,256 +31,62 @@ public class LoggerUtils {
      *
      * @param msg
      */
-    public static void info(String msg,int level) {
+    public static void info(String msg, int level) {
         Throwable throwable = new Throwable();
-        StringBuffer sb = getStringBuffer(msg,throwable,level);
+        StringBuffer sb = getStringBuffer(msg, throwable, level);
+
         log.info(sb.toString());
     }
 
     public static void error(Exception e) {
         Throwable throwable = new Throwable();
-        StringBuffer sb = getStringBuffer("",throwable,getLevel(throwable));
-        log.error(sb.append("error=").toString() ,e);
+        StringBuffer sb = getStringBuffer("", throwable, getLevel(throwable));
+        log.error(sb.append("error=").toString(), e);
     }
 
     public static void error(String msg, Exception e) {
         Throwable throwable = new Throwable();
         StringBuffer sb = getStringBuffer(msg, throwable, getLevel(throwable));
-        log.error(sb.append("error=").toString() ,e);
+        log.error(sb.append("error=").toString(), e);
     }
 
     public static int getLevel(Throwable throwable) {
-        return throwable.getStackTrace().length -1;
+        return throwable.getStackTrace().length - 1;
     }
 
-    private static StringBuffer getStringBuffer(String msg,Throwable throwable, int level) {
-        long start = System.currentTimeMillis();
-        StringBuilder cml = getRelate(throwable,level);
-
-        long end = System.currentTimeMillis();
-        StringBuffer sb = appendSb("",
-                "	", "relate=" + cml.toString(),
-                "	", "exet=" + (end - start),
-                "	",msg
-        );
+    private static StringBuffer getStringBuffer(String msg, Throwable throwable, int level) {
+        StringBuilder cml = getRelate(throwable, level);
+        String result = cml.toString().trim();
+        if (result.endsWith("=>")) {
+            result = result.substring(0,result.lastIndexOf("=>"));
+        }
+        StringBuffer sb = appendSb("	", result,"	", msg);
         return sb;
     }
 
-    public static StringBuilder getRelate(Throwable throwable,int level) {
+    public static StringBuilder getRelate(Throwable throwable, int level) {
         StringBuilder cml = new StringBuilder();
-        if (throwable.getStackTrace().length >= 8 && level >= 7) {
-            cml.append(getClassName(throwable.getStackTrace()[7].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[7].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[7].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[6].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[6].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[6].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[5].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[5].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[5].getMethodName());
-            cml.append("->");
-
-
-            cml.append(getClassName(throwable.getStackTrace()[4].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[4].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[4].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[3].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[3].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[3].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-        } else if (throwable.getStackTrace().length >= 7 && level ==6) {
-
-            cml.append(getClassName(throwable.getStackTrace()[6].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[6].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[6].getMethodName());
-
-            cml.append("->");
-
-
-            cml.append(getClassName(throwable.getStackTrace()[5].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[5].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[5].getMethodName());
-
-            cml.append("->");
-
-
-            cml.append(getClassName(throwable.getStackTrace()[4].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[4].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[4].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[3].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[3].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[3].getMethodName());
-
-            cml.append("->");
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-        } else if (throwable.getStackTrace().length >= 6 && level == 5) {
-            cml.append(getClassName(throwable.getStackTrace()[5].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[5].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[5].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[4].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[4].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[4].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[3].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[3].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[3].getMethodName());
-
-            cml.append("->");
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-        } else if (throwable.getStackTrace().length >= 5 && level == 4) {
-            cml.append(getClassName(throwable.getStackTrace()[4].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[4].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[4].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[3].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[3].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[3].getMethodName());
-
-            cml.append("->");
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-        } else if (throwable.getStackTrace().length >= 4 && level == 3) {
-            cml.append(getClassName(throwable.getStackTrace()[3].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[3].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[3].getMethodName());
-            cml.append("->");
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-
-        } else if (throwable.getStackTrace().length >= 3 && level == 2) {
-            cml.append(getClassName(throwable.getStackTrace()[2].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[2].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[2].getMethodName());
-            cml.append("->");
-
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
-        } else if (throwable.getStackTrace().length >= 2) {
-            cml.append(getClassName(throwable.getStackTrace()[1].getClassName()));
-            cml.append(":");
-            cml.append(throwable.getStackTrace()[1].getLineNumber());
-            cml.append(".");
-            cml.append(throwable.getStackTrace()[1].getMethodName());
-
+        if (throwable.getStackTrace().length >= level + 1 && level >= level) {
+            getLationByN(throwable, cml, level);
+        } else {
+            getLationByN(throwable, cml, 1);
         }
         return cml;
+    }
+
+    private static void getLationByN(Throwable throwable, StringBuilder cml, int n) {
+        for (int i = n; i > 0; i--) {
+            getNLation(throwable, cml, i);
+            cml.append(" => ");
+        }
+    }
+
+    private static void getNLation(Throwable throwable, StringBuilder cml, int i) {
+        cml.append(getClassName(throwable.getStackTrace()[i].getClassName()));
+        cml.append(":");
+        cml.append(throwable.getStackTrace()[i].getLineNumber());
+        cml.append(".");
+        cml.append(throwable.getStackTrace()[i].getMethodName());
     }
 
 
@@ -311,19 +115,8 @@ public class LoggerUtils {
 
     public static void test1() {
         try {
-            LoggerUtils.info("我要测试",2);
+            LoggerUtils.info("我要测试", 2);
 
-        } catch (Exception e) {
-            error(e);
-        }
-    }
-
-    public static void test2() {
-        try {
-            //info("我要{}测{}试",new String []{"value",""},new Object[]{1,2});
-            int i = 0;
-            int b = 0;
-            int c = i / b;
         } catch (Exception e) {
             error(e);
         }
@@ -376,7 +169,6 @@ public class LoggerUtils {
     public static void main(String[] args) {
         test3();
     }
-
 
 
 }
