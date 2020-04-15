@@ -58,16 +58,16 @@ public class LoggerUtils {
         StringBuilder cml = getRelate(throwable, level);
         String result = cml.toString().trim();
         if (result.endsWith("=>")) {
-            result = result.substring(0,result.lastIndexOf("=>"));
+            result = result.substring(0, result.lastIndexOf("=>"));
         }
-        StringBuffer sb = appendSb("	", result,"	", msg);
+        StringBuffer sb = appendSb("	", result, "	", msg);
         return sb;
     }
 
     public static StringBuilder getRelate(Throwable throwable, int level) {
         StringBuilder cml = new StringBuilder();
-        if(level >= throwable.getStackTrace().length){
-            level = throwable.getStackTrace().length -1;
+        if (level >= throwable.getStackTrace().length) {
+            level = throwable.getStackTrace().length - 1;
         }
         getLationByN(throwable, cml, level);
         return cml;
