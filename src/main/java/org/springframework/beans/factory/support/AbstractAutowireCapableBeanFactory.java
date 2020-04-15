@@ -39,6 +39,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -114,6 +115,7 @@ import org.springframework.util.StringUtils;
  * @see DefaultListableBeanFactory
  * @see BeanDefinitionRegistry
  */
+@Slf4j
 public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory
 		implements AutowireCapableBeanFactory {
 
@@ -168,7 +170,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @param parentBeanFactory parent bean factory, or {@code null} if none
 	 */
 	public AbstractAutowireCapableBeanFactory(BeanFactory parentBeanFactory) {
+
 		this();
+		log.info("AbstractAutowireCapableBeanFactory construct");
 		setParentBeanFactory(parentBeanFactory);
 	}
 

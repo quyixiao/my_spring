@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -205,7 +206,9 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
 	 */
 	protected DefaultListableBeanFactory createBeanFactory() {
-		return new DefaultListableBeanFactory(getInternalParentBeanFactory());
+		BeanFactory beanFactory = getInternalParentBeanFactory();
+		log.info("DefaultListableBeanFactory  createBeanFactory BeanFactory =  {}  " ,beanFactory);
+		return new DefaultListableBeanFactory(beanFactory);
 	}
 
 	/**

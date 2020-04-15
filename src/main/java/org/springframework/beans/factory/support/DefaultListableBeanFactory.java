@@ -44,6 +44,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Provider;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.beans.TypeConverter;
@@ -110,6 +111,7 @@ import org.springframework.util.StringUtils;
  * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
  */
 @SuppressWarnings("serial")
+@Slf4j
 public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFactory
 		implements ConfigurableListableBeanFactory, BeanDefinitionRegistry, Serializable {
 
@@ -192,6 +194,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	 */
 	public DefaultListableBeanFactory(BeanFactory parentBeanFactory) {
 		super(parentBeanFactory);
+		log.info("xxxxxxxxxxx1111111");
 	}
 
 
