@@ -66,11 +66,10 @@ public class LoggerUtils {
 
     public static StringBuilder getRelate(Throwable throwable, int level) {
         StringBuilder cml = new StringBuilder();
-        if (throwable.getStackTrace().length >= level + 1 && level >= level) {
-            getLationByN(throwable, cml, level);
-        } else {
-            getLationByN(throwable, cml, 1);
+        if(level >= throwable.getStackTrace().length){
+            level = throwable.getStackTrace().length -1;
         }
+        getLationByN(throwable, cml, level);
         return cml;
     }
 
@@ -113,16 +112,6 @@ public class LoggerUtils {
     }
 
 
-    public static void test1() {
-        try {
-            LoggerUtils.info("我要测试", 2);
-
-        } catch (Exception e) {
-            error(e);
-        }
-    }
-
-
     public static String getClassName(String className) {
         if (isNotBlank(className) && className.contains(".")) {
             String classNames[] = className.split("\\.", className.length());
@@ -160,15 +149,5 @@ public class LoggerUtils {
         }
         return sb;
     }
-
-
-    public static void test3() {
-        test1();
-    }
-
-    public static void main(String[] args) {
-        test3();
-    }
-
 
 }
