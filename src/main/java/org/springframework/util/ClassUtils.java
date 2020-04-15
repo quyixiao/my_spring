@@ -16,6 +16,8 @@
 
 package org.springframework.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.beans.Introspector;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -45,6 +47,7 @@ import java.util.Set;
  * @see TypeUtils
  * @see ReflectionUtils
  */
+@Slf4j
 public abstract class ClassUtils {
 
 	/** Suffix for array class names: "[]" */
@@ -158,6 +161,7 @@ public abstract class ClassUtils {
 		ClassLoader cl = null;
 		try {
 			cl = Thread.currentThread().getContextClassLoader();
+			log.info("getContextClassLoader");
 		}
 		catch (Throwable ex) {
 			// Cannot access thread context ClassLoader - falling back...
@@ -165,9 +169,12 @@ public abstract class ClassUtils {
 		if (cl == null) {
 			// No thread context class loader -> use class loader of this class.
 			cl = ClassUtils.class.getClassLoader();
+			log.info("getClassLoader");
 			if (cl == null) {
+
 				// getClassLoader() returning null indicates the bootstrap ClassLoader
 				try {
+					log.info("getSystemClassLoader");
 					cl = ClassLoader.getSystemClassLoader();
 				}
 				catch (Throwable ex) {

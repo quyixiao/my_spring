@@ -17,8 +17,10 @@
 package org.springframework.beans.factory.support;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Set;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -44,6 +46,7 @@ import org.springframework.util.Assert;
  * @since 11.12.2003
  * @see BeanDefinitionReaderUtils
  */
+@Slf4j
 public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable, BeanDefinitionReader {
 
 	/** Logger available to subclasses */
@@ -83,17 +86,21 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 
 		// Determine ResourceLoader to use.
 		if (this.registry instanceof ResourceLoader) {
+			log.info(" registry instanceof  ResourceLoader ");
 			this.resourceLoader = (ResourceLoader) this.registry;
 		}
 		else {
+			log.info(" registry not instanceof  ResourceLoader ,create PathMatchingResourcePatternResolver");
 			this.resourceLoader = new PathMatchingResourcePatternResolver();
 		}
 
 		// Inherit Environment if possible
 		if (this.registry instanceof EnvironmentCapable) {
+			log.info(" registry  instanceof  EnvironmentCapable ");
 			this.environment = ((EnvironmentCapable) this.registry).getEnvironment();
 		}
 		else {
+			log.info(" registry  create  StandardEnvironment ");
 			this.environment = new StandardEnvironment();
 		}
 	}
@@ -205,7 +212,9 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	 */
 	public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
 		ResourceLoader resourceLoader = getResourceLoader();
+		log.info(" loadBeanDefinitions " + resourceLoader.getClass().getName() );
 		if (resourceLoader == null) {
+
 			throw new BeanDefinitionStoreException(
 					"Cannot import bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
@@ -213,7 +222,10 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
+
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
+
+				log.info(" loadBeanDefinitions " + Arrays.toString(resources));
 				int loadCount = loadBeanDefinitions(resources);
 				if (actualResources != null) {
 					for (Resource resource : resources) {
@@ -247,6 +259,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
 	@Override
 	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
 		Assert.notNull(locations, "Location array must not be null");
+		log.info(" loadBeanDefinitions " + Arrays.toString(locations));
 		int counter = 0;
 		for (String location : locations) {
 			counter += loadBeanDefinitions(location);

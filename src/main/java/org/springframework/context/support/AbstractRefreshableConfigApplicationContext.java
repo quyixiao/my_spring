@@ -23,6 +23,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * {@link AbstractRefreshableApplicationContext} subclass that adds common handling
  * of specified config locations. Serves as base class for XML-based application
@@ -77,9 +79,11 @@ public abstract class AbstractRefreshableConfigApplicationContext extends Abstra
 	 */
 	public void setConfigLocations(String... locations) {
 		if (locations != null) {
+			log.info("  setConfigLocations , " + Arrays.toString(locations));
 			Assert.noNullElements(locations, "Config locations must not be null");
 			this.configLocations = new String[locations.length];
 			for (int i = 0; i < locations.length; i++) {
+				log.info(" add to configLocations :" + locations[i]);
 				this.configLocations[i] = resolvePath(locations[i]).trim();
 			}
 		}

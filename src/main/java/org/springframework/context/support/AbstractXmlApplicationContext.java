@@ -17,7 +17,9 @@
 package org.springframework.context.support;
 
 import java.io.IOException;
+import java.util.Arrays;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.ResourceEntityResolver;
@@ -42,6 +44,7 @@ import org.springframework.core.io.Resource;
  * @see #getConfigLocations
  * @see XmlBeanDefinitionReader
  */
+@Slf4j
 public abstract class AbstractXmlApplicationContext extends AbstractRefreshableConfigApplicationContext {
 
 	private boolean validating = true;
@@ -79,17 +82,21 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
+		// 为指定beanFactory创建XmlBeanDefinitionReader
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
 		// resource loading environment.
+		// 对beanDefinitionReader进行环境变量的设置
 		beanDefinitionReader.setEnvironment(this.getEnvironment());
 		beanDefinitionReader.setResourceLoader(this);
 		beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
 
 		// Allow a subclass to provide custom initialization of the reader,
 		// then proceed with actually loading the bean definitions.
+		//  对beanDefinitionReader进行设置，可以覆盖
 		initBeanDefinitionReader(beanDefinitionReader);
+
 		loadBeanDefinitions(beanDefinitionReader);
 	}
 
@@ -120,10 +127,12 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
 	protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
 		Resource[] configResources = getConfigResources();
 		if (configResources != null) {
+			log.info("loadBeanDefinitions configResources is not null ,arrays =  " + Arrays.toString(configResources));
 			reader.loadBeanDefinitions(configResources);
 		}
 		String[] configLocations = getConfigLocations();
 		if (configLocations != null) {
+			log.info("loadBeanDefinitions configLocations is not null ,arrays =  " + Arrays.toString(configLocations));
 			reader.loadBeanDefinitions(configLocations);
 		}
 	}

@@ -18,6 +18,7 @@ package org.springframework.beans.factory.xml;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -35,6 +36,7 @@ import org.springframework.util.Assert;
  * @see BeansDtdResolver
  * @see PluggableSchemaResolver
  */
+@Slf4j
 public class DelegatingEntityResolver implements EntityResolver {
 
 	/** Suffix for DTD files */
@@ -58,7 +60,9 @@ public class DelegatingEntityResolver implements EntityResolver {
 	 * (can be {@code null}) to use the default ClassLoader)
 	 */
 	public DelegatingEntityResolver(ClassLoader classLoader) {
+		log.info(" create BeansDtdResolver");
 		this.dtdResolver = new BeansDtdResolver();
+		log.info(" create PluggableSchemaResolver");
 		this.schemaResolver = new PluggableSchemaResolver(classLoader);
 	}
 

@@ -40,7 +40,8 @@ import org.springframework.core.io.Resource;
  * @since 04.06.2003
  * @see ResourceEntityResolver
  */
-public class BeansDtdResolver implements EntityResolver {
+public class
+BeansDtdResolver implements EntityResolver {
 
 	private static final String DTD_EXTENSION = ".dtd";
 

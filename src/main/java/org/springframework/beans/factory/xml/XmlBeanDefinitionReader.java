@@ -18,10 +18,12 @@ package org.springframework.beans.factory.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
@@ -74,6 +76,7 @@ import org.springframework.util.xml.XmlValidationModeDetector;
  * @see org.springframework.beans.factory.support.DefaultListableBeanFactory
  * @see org.springframework.context.support.GenericApplicationContext
  */
+@Slf4j
 public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 	/**
@@ -301,6 +304,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	@Override
 	public int loadBeanDefinitions(Resource resource) throws BeanDefinitionStoreException {
+		log.info(" loadBeanDefinitions resource:"+resource);
 		return loadBeanDefinitions(new EncodedResource(resource));
 	}
 
@@ -312,19 +316,25 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @throws BeanDefinitionStoreException in case of loading or parsing errors
 	 */
 	public int loadBeanDefinitions(EncodedResource encodedResource) throws BeanDefinitionStoreException {
+		log.info("loadBeanDefinitions " );
 		Assert.notNull(encodedResource, "EncodedResource must not be null");
 		if (logger.isInfoEnabled()) {
-			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
+			log.info("Loading XML bean definitions from " + encodedResource.getResource());
 		}
-
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
 			currentResources = new HashSet<EncodedResource>(4);
+			log.info(" resourcesCurrentlyBeingLoaded set  currentResources" );
 			this.resourcesCurrentlyBeingLoaded.set(currentResources);
 		}
+
 		if (!currentResources.add(encodedResource)) {
 			throw new BeanDefinitionStoreException(
 					"Detected cyclic loading of " + encodedResource + " - check your import definitions!");
+		}
+		log.info("currentResources  size = " + currentResources.size());
+		for(EncodedResource resource :currentResources){
+			log.info(" EncodedResource: " + resource);
 		}
 		try {
 			InputStream inputStream = encodedResource.getResource().getInputStream();
