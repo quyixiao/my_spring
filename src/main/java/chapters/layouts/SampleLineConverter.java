@@ -6,7 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SampleClassConverter extends ClassicConverter {
+public class SampleLineConverter extends ClassicConverter {
 
     @Override
     public String convert(ILoggingEvent event) {
@@ -14,17 +14,15 @@ public class SampleClassConverter extends ClassicConverter {
         if (cda != null && cda.length > 0) {
             String a = cda[0].getClassName();
             if(a.endsWith("LoggerUtils")){
-                a =  cda[1].getClassName();
+                return Integer.toString(cda[1].getLineNumber());
             }
-            try {
-                return a.substring(a.lastIndexOf(".") + 1);
-            } catch (Exception e) {
-                log.info(" SampleClassConverter exception className :", a);
-            }
-            return "";
+            return Integer.toString(cda[0].getLineNumber());
         } else {
             return CallerData.NA;
         }
+
+
+
     }
 
 
