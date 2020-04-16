@@ -21,9 +21,7 @@ public class LoggerUtils {
      * @param msg
      */
     public static void info(String msg) {
-        Throwable throwable = new Throwable();
-        StringBuffer sb = getStringBuffer(msg, throwable, getLevel(throwable));
-        log.info(sb.toString());
+        log.info(msg);
     }
 
     /**

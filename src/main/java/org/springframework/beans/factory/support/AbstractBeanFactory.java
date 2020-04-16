@@ -384,8 +384,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@Override
 	public boolean containsBean(String name) {
-		LoggerUtils.info("containsBean name " + name);
+
+		LoggerUtils.info("containsBean name " + name,3);
 		String beanName = transformedBeanName(name);
+
+		LoggerUtils.info("containsBean beanName : " + beanName);
 		if (containsSingleton(beanName) || containsBeanDefinition(beanName)) {
 			return (!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(name));
 		}
