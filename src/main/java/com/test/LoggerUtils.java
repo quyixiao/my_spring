@@ -29,6 +29,18 @@ public class LoggerUtils {
      *
      * @param msg
      */
+    public static void all(String msg) {
+        Throwable throwable = new Throwable();
+        StringBuffer sb = getStringBuffer(msg, throwable, -1);
+        sb.append("\t").append(msg);
+        log.info(sb.toString());
+    }
+
+    /**
+     * 不需要传递参数
+     *
+     * @param msg
+     */
     public static void info(String msg, int level) {
         Throwable throwable = new Throwable();
         StringBuffer sb = getStringBuffer(msg, throwable, level);
@@ -64,9 +76,10 @@ public class LoggerUtils {
 
     public static StringBuilder getRelate(Throwable throwable, int level) {
         StringBuilder cml = new StringBuilder();
-        if (level >= throwable.getStackTrace().length) {
+        if (level <= 0 || level >= throwable.getStackTrace().length) {
             level = throwable.getStackTrace().length - 1;
         }
+
         getLationByN(throwable, cml, level);
         return cml;
     }
