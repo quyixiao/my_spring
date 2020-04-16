@@ -667,11 +667,65 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return this.parentBeanFactory;
 	}
 
+	/**
+	 * Does this bean factory contain a bean definition or externally registered singleton
+	 * instance with the given name?
+	 * <p>If the given name is an alias, it will be translated back to the corresponding
+	 * canonical bean name.
+	 * <p>If this factory is hierarchical, will ask any parent factory if the bean cannot
+	 * be found in this factory instance.
+	 * <p>If a bean definition or singleton instance matching the given name is found,
+	 * this method will return {@code true} whether the named bean definition is concrete
+	 * or abstract, lazy or eager, in scope or not. Therefore, note that a {@code true}
+	 * return value from this method does not necessarily indicate that {@link #getBean}
+	 * will be able to obtain an instance for the same name.
+	 *
+	 * bean工厂是否包含一个给定name的bean definition，或者外部被注册的单例bean？
+	 * 如果name是一个别名，会被转换成对应的beanName
+	 * 如果工厂是有层级的，那么当工厂实例中找不到这个bean时，就会去父工厂中查找
+	 * 如果找到匹配name的bean definition或者单例，那么这个方法会返回true
+	 * 不管这个bean definition是具体的还是抽象的，提前加载还是懒加载，是否在范围中。
+	 * 因此，注意从这个方法中返回的true值并不代表从getBean方法中能够获取一个同名称的实例
+	 */
 	@Override
 	public boolean containsLocalBean(String name) {
+		//1.1对name进行必要的转换
 		String beanName = transformedBeanName(name);
-		LoggerUtils.info("containsLocalBean beanName : " + beanName);
+		LoggerUtils.info("containsLocalBean beanName : " + beanName ,5);
+
+
+		boolean containsSingleton = false;
+		try {
+			containsSingleton = containsSingleton(beanName);
+		} catch (Exception e) {
+		}
+		LoggerUtils.info("containsLocalBean containsSingleton :" + containsSingleton);
+		boolean containsBeanDefinition = false;
+		try {
+			containsBeanDefinition = containsBeanDefinition(beanName);
+		} catch (Exception e) {
+		}
+
+
+		LoggerUtils.info("containsLocalBean  containsBeanDefinition :" + containsBeanDefinition);
+		boolean isFactoryDereference = false;
+		try {
+			isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name) ;
+		} catch (Exception e) {
+		}
+		LoggerUtils.info("containsLocalBean   isFactoryDereference :" + isFactoryDereference);
+		boolean isFactoryBean = false;
+		try {
+			isFactoryBean = isFactoryBean(beanName);
+		} catch (NoSuchBeanDefinitionException e) {		}
+		LoggerUtils.info("containsLocalBean  isFactoryBean :" +isFactoryBean);
+
+
+		//singletonObjects或者beanDefinitionMap中已注册beanName则进入条件
+		//说明该beanName有对应的bean definition，或者单例bean
 		return ((containsSingleton(beanName) || containsBeanDefinition(beanName)) &&
+				//name开头不为&返回true，如果带了&但是是FactoryBean也返回true
+				//要注意下FactoryBean和BeanFactory的区别，可以看下文参考链接
 				(!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(beanName)));
 	}
 
@@ -1086,8 +1140,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * and resolving aliases to canonical names.
 	 * @param name the user-specified name
 	 * @return the transformed bean name
+	 *
+	 *  返回bean name，剥离factory dereference 前缀，并将别名解析为bean name
+	 *
 	 */
 	protected String transformedBeanName(String name) {
+		//总的来说，如果name代表factory，那么name前就带有&前缀，去掉此前缀
+		//如果这个name是beanName，则直接返回，如果name是alias，在aliasMap中查找对应的beanName，再返回
 		return canonicalName(BeanFactoryUtils.transformedBeanName(name));
 	}
 

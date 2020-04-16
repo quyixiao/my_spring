@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.test.LoggerUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -120,16 +121,30 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	/** Map between depending bean names: bean name --> Set of bean names for the bean's dependencies */
 	private final Map<String, Set<String>> dependenciesForBeanMap = new ConcurrentHashMap<String, Set<String>>(64);
 
+	// 2.1调用父类方法，注册单例
 
+	/**
+	 *  在给定的bean name下，将存在的对象作为单例注册在工厂中
+	 *  给定的实例应该是完全初始化；工厂不执行任何初始化回调（特别是，他不会调用InitializingBean的
+	 *  afterPropertiesSet方法）
+	 *  给定的实例也不接收任何销毁回调（像DisposableBean的destroy方法）
+	 *  当在完整的BeanFactory运行时：
+	 *  如果你的bean需要接收初始化或者销毁的回调，注册一个bean definition替代一个存在的实例
+	 *  通常此方法在工厂配置时被调用，也能在运行时单例注册时被调用。
+	 *  作为结果，工厂的实现应该同步单例的访问；如果支持BeanFactory的单例的延迟初始化就不得不这样做
+	 */
 	@Override
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		LoggerUtils.info("registerSingleton " ,5);
 		Assert.notNull(beanName, "'beanName' must not be null");
 		synchronized (this.singletonObjects) {
 			Object oldObject = this.singletonObjects.get(beanName);
+			//不能注册两次
 			if (oldObject != null) {
 				throw new IllegalStateException("Could not register object [" + singletonObject +
 						"] under bean name '" + beanName + "': there is already object [" + oldObject + "] bound");
 			}
+			//进入这个方法
 			addSingleton(beanName, singletonObject);
 		}
 	}
@@ -142,9 +157,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 */
 	protected void addSingleton(String beanName, Object singletonObject) {
 		synchronized (this.singletonObjects) {
+			//singletonObjects是一个ConcurrentHashMap
+			//用来缓存单例对象
 			this.singletonObjects.put(beanName, (singletonObject != null ? singletonObject : NULL_OBJECT));
+			//singletonFactories是一个HashMap
+			//里面缓存着单例工厂
 			this.singletonFactories.remove(beanName);
+			//早期单例对象
+			//earlySingletonObjects是一个HashMap
 			this.earlySingletonObjects.remove(beanName);
+			//registeredSingletons是一个LinkedHashSet
+			//被注册单例的集合，以注册的顺序包含着bean name
 			this.registeredSingletons.add(beanName);
 		}
 	}

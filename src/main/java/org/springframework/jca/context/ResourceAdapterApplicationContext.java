@@ -19,6 +19,7 @@ package org.springframework.jca.context;
 import javax.resource.spi.BootstrapContext;
 import javax.resource.spi.work.WorkManager;
 
+import com.test.LoggerUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -54,6 +55,7 @@ public class ResourceAdapterApplicationContext extends GenericApplicationContext
 
 	@Override
 	protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		LoggerUtils.info("postProcessBeanFactory method");
 		beanFactory.addBeanPostProcessor(new BootstrapContextAwareProcessor(this.bootstrapContext));
 		beanFactory.ignoreDependencyInterface(BootstrapContextAware.class);
 		beanFactory.registerResolvableDependency(BootstrapContext.class, this.bootstrapContext);

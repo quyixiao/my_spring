@@ -673,6 +673,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * @param beanFactory the BeanFactory to configure
      */
     protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        log.info("prepareBeanFactory beanFactory name :" + beanFactory.getClass().getName() );
         // Tell the internal bean factory to use the context's class loader etc.
         //设置类加载器：存在则直接设置/不存在则新建一个默认类加载器
         beanFactory.setBeanClassLoader(getClassLoader());
@@ -725,18 +726,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
         // 判断目前这个bean工厂中是否包含指定name的bean，忽略父工厂
         if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
+            //虽然XmlWebApplicationContext中持有默认实现的StandardServletEnvironment
+            //但是没有注册到beanFactory中，通过getEnvironment方法拿到持有的引用
+            //2.注册environment单例
             ConfigurableEnvironment configurableEnvironment = getEnvironment();
             LoggerUtils.info("prepareBeanFactory beanFactory not contains environment, registerSingleton environment " + configurableEnvironment.getClass().getName());
             beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, configurableEnvironment);
         }
         if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
+            //注册systemProperties单例
             Map<String, Object> maps = getEnvironment().getSystemProperties();
-            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemProperties, registerSingleton systemProperties  " + JSON.toJSONString(maps));
+            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemProperties, registerSingleton systemProperties  " );
             beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, maps);
         }
         if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
+            //注册systemEnvironment单例
             Map<String, Object> maps = getEnvironment().getSystemEnvironment();
-            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemEnvironment , registerSingleton systemEnvironment " + JSON.toJSONString(maps));
+            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemEnvironment , registerSingleton systemEnvironment " );
             beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, maps);
         }
     }
@@ -751,6 +757,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * @param beanFactory the bean factory used by the application context
      */
     protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+        LoggerUtils.info("postProcessBeanFactory ",5 );
     }
 
     /**
