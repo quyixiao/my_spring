@@ -558,6 +558,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	public XmlReaderContext createReaderContext(Resource resource) {
 		return new XmlReaderContext(resource, this.problemReporter, this.eventListener,
 				this.sourceExtractor, this, getNamespaceHandlerResolver());
+
 	}
 
 	/**
