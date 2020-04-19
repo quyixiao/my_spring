@@ -24,6 +24,7 @@ import java.util.Set;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.test.LogUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -60,6 +61,7 @@ public class LiveBeansView implements LiveBeansViewMBean, ApplicationContextAwar
 
 	static void registerApplicationContext(ConfigurableApplicationContext applicationContext) {
 		String mbeanDomain = applicationContext.getEnvironment().getProperty(MBEAN_DOMAIN_PROPERTY_NAME);
+		LogUtils.info("registerApplicationContext mbeanDomain " + mbeanDomain);
 		if (mbeanDomain != null) {
 			synchronized (applicationContexts) {
 				if (applicationContexts.isEmpty()) {
@@ -72,6 +74,7 @@ public class LiveBeansView implements LiveBeansViewMBean, ApplicationContextAwar
 						throw new ApplicationContextException("Failed to register LiveBeansView MBean", ex);
 					}
 				}
+
 				applicationContexts.add(applicationContext);
 			}
 		}

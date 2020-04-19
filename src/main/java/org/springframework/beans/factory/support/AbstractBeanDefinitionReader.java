@@ -16,7 +16,7 @@
 
 package org.springframework.beans.factory.support;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -216,7 +216,7 @@ public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable
      */
     public int loadBeanDefinitions(String location, Set<Resource> actualResources) throws BeanDefinitionStoreException {
         ResourceLoader resourceLoader = getResourceLoader();
-        LoggerUtils.info(" loadBeanDefinitions ennter " + resourceLoader.getClass().getName(),8);
+        LogUtils.info(" loadBeanDefinitions ennter " + resourceLoader.getClass().getName(),8);
         if (resourceLoader == null) {
 
             throw new BeanDefinitionStoreException(

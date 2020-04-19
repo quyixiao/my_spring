@@ -18,12 +18,11 @@ package org.springframework.beans.factory.xml;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.xml.parsers.ParserConfigurationException;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
@@ -493,7 +492,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * of the {@link #VALIDATION_AUTO} mode.
 	 */
 	protected int detectValidationMode(Resource resource) {
-		LoggerUtils.info(" detectValidationMode get resource ");
+		LogUtils.info(" detectValidationMode get resource ");
 		if (resource.isOpen()) {
 			throw new BeanDefinitionStoreException(
 					"Passed-in Resource [" + resource + "] contains an open stream: " +

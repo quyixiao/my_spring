@@ -13,6 +13,9 @@ public class SpringTest1 {
     public static void main(String[] args) {
         ClassPathXmlApplicationContext classPathXmlApplicationContext
                 = new ClassPathXmlApplicationContext("classpath:spring.xml");
+
+        LogUtils.info(" bean init finish .......................");
+
         UserService userService = classPathXmlApplicationContext.getBean(UserService.class);
         userService.query();
         log.info("xxxxxxxxx");

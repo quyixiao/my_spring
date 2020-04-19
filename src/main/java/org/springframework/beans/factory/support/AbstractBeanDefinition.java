@@ -23,6 +23,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.alibaba.fastjson.JSON;
+import com.test.LogUtils;
 import org.springframework.beans.BeanMetadataAttributeAccessor;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -734,6 +736,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * Never returns null.
 	 */
 	public MethodOverrides getMethodOverrides() {
+		LogUtils.info( " getMethodOverrides methodOverrides :" + JSON.toJSONString(this.methodOverrides),3);
 		return this.methodOverrides;
 	}
 
@@ -755,6 +758,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	@Override
 	public String getFactoryMethodName() {
+		LogUtils.info("getFactoryMethodName factoryMethodName :" + this.factoryMethodName,3);
 		return this.factoryMethodName;
 	}
 
@@ -919,8 +923,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 					"Cannot combine static factory method with method overrides: " +
 					"the static factory method must create the instance");
 		}
-
-		if (hasBeanClass()) {
+		boolean hasBeanClass = hasBeanClass();
+		LogUtils.info("validate hasBeanClass: " + hasBeanClass ,3);
+		if (hasBeanClass) {
 			prepareMethodOverrides();
 		}
 	}

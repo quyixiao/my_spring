@@ -16,7 +16,7 @@
 
 package org.springframework.core.io.support;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -189,7 +189,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
      * @see org.springframework.core.io.DefaultResourceLoader
      */
     public PathMatchingResourcePatternResolver() {
-		LoggerUtils.info(" resourceLoader init by DefaultResourceLoader no params",10);
+		LogUtils.info(" resourceLoader init by DefaultResourceLoader no params",10);
         this.resourceLoader = new DefaultResourceLoader();
 
     }
@@ -203,7 +203,7 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
      */
     public PathMatchingResourcePatternResolver(ResourceLoader resourceLoader) {
         Assert.notNull(resourceLoader, "ResourceLoader must not be null");
-		LoggerUtils.info(" resourceLoader init by resourceLoader",10);
+		LogUtils.info(" resourceLoader init by resourceLoader",10);
         this.resourceLoader = resourceLoader;
     }
 

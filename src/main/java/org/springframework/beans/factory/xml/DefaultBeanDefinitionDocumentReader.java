@@ -21,12 +21,10 @@ import java.net.URISyntaxException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
+import org.w3c.dom.*;
 
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -90,7 +88,18 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
+
 		Element root = doc.getDocumentElement();
+
+		NamedNodeMap attributes = root.getAttributes();
+
+		LogUtils.info("registerBeanDefinitions length :"  + attributes.getLength());
+
+		for (int i = 0; i < attributes.getLength(); i++) {
+			Node node = attributes.item(i);
+			LogUtils.info("registerBeanDefinitions node name :" + node.getNodeName());
+		}
+
 		doRegisterBeanDefinitions(root);
 	}
 
@@ -157,11 +166,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	protected void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
 		if (delegate.isDefaultNamespace(root)) {
 			NodeList nl = root.getChildNodes();
+			LogUtils.info("parseBeanDefinitions root child length :" +nl.getLength() );
 			for (int i = 0; i < nl.getLength(); i++) {
 				Node node = nl.item(i);
 				if (node instanceof Element) {
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
+
 						parseDefaultElement(ele, delegate);
 					}
 					else {
@@ -179,10 +190,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
+
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
+
 		else if (delegate.nodeNameEquals(ele, BEAN_ELEMENT)) {
+			LogUtils.all("parseDefaultElement delegate bean ");
 			processBeanDefinition(ele, delegate);
 		}
 		else if (delegate.nodeNameEquals(ele, NESTED_BEANS_ELEMENT)) {
@@ -197,6 +211,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
+		LogUtils.info(" importBeanDefinitionResource location  :" + location);
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
@@ -294,6 +309,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		if (bdHolder != null) {
+			LogUtils.info("processBeanDefinition bdHolder is not null ,bdHolder Name :" + bdHolder.getClass().getName());
 			bdHolder = delegate.decorateBeanDefinitionIfRequired(ele, bdHolder);
 			try {
 				// Register the final decorated instance.
@@ -320,6 +336,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @see #getReaderContext()
 	 */
 	protected void preProcessXml(Element root) {
+
+		LogUtils.info("preProcessXml");
+
 	}
 
 	/**
@@ -333,6 +352,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * @see #getReaderContext()
 	 */
 	protected void postProcessXml(Element root) {
+		LogUtils.info("postProcessXml ");
 	}
 
 }

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -125,7 +125,7 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(ConfigurationClass configClass,
 			TrackedConditionEvaluator trackedConditionEvaluator) {
-		LoggerUtils.all("loadBeanDefinitionsForConfigurationClass ");
+		LogUtils.all("loadBeanDefinitionsForConfigurationClass ");
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
 			String beanName = configClass.getBeanName();
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
@@ -168,7 +168,7 @@ class ConfigurationClassBeanDefinitionReader {
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(configBeanDef, configBeanName);
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 		//注册我们的bean定义到我们的容器中
-		LoggerUtils.all("registerBeanDefinitionForImportedConfigurationClass registerBeanDefinition beanName :" + definitionHolder.getBeanName());
+		LogUtils.all("registerBeanDefinitionForImportedConfigurationClass registerBeanDefinition beanName :" + definitionHolder.getBeanName());
 		this.registry.registerBeanDefinition(definitionHolder.getBeanName(), definitionHolder.getBeanDefinition());
 
 		configClass.setBeanName(configBeanName);

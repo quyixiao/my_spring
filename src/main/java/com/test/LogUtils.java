@@ -12,7 +12,7 @@ import java.io.StringWriter;
  */
 
 @Slf4j
-public class LoggerUtils {
+public class LogUtils {
 
 
     /**

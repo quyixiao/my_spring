@@ -16,8 +16,7 @@
 
 package org.springframework.context.support;
 
-import com.alibaba.fastjson.JSON;
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -583,7 +582,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
                 // Last step: publish corresponding event.
                 log.info("start finishRefresh");
                 finishRefresh();
-                log.info("end finishRefresh");
+                LogUtils.info("end finishRefresh" ,3);
             } catch (BeansException ex) {
                 logger.warn("Exception encountered during context initialization - cancelling refresh attempt", ex);
 
@@ -673,7 +672,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * @param beanFactory the BeanFactory to configure
      */
     protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-        log.info("prepareBeanFactory beanFactory name :" + beanFactory.getClass().getName() );
+        log.info("prepareBeanFactory beanFactory name :" + beanFactory.getClass().getName());
         // Tell the internal bean factory to use the context's class loader etc.
         //设置类加载器：存在则直接设置/不存在则新建一个默认类加载器
         beanFactory.setBeanClassLoader(getClassLoader());
@@ -714,7 +713,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // 1.跟踪进入，浅看下containsBean方法
         if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
             //如果有LoadTimeWeaver，加入bean后处理器
-            LoggerUtils.info("prepareBeanFactory beanFactory containsBean loadTimeWeaver ");
+            LogUtils.info("prepareBeanFactory beanFactory containsBean loadTimeWeaver ");
             beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
             // Set a temporary ClassLoader for type matching.
             // 为匹配类型设置一个临时的ClassLoader
@@ -730,19 +729,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             //但是没有注册到beanFactory中，通过getEnvironment方法拿到持有的引用
             //2.注册environment单例
             ConfigurableEnvironment configurableEnvironment = getEnvironment();
-            LoggerUtils.info("prepareBeanFactory beanFactory not contains environment, registerSingleton environment " + configurableEnvironment.getClass().getName());
+            LogUtils.info("prepareBeanFactory beanFactory not contains environment, registerSingleton environment " + configurableEnvironment.getClass().getName());
             beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, configurableEnvironment);
         }
         if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
             //注册systemProperties单例
             Map<String, Object> maps = getEnvironment().getSystemProperties();
-            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemProperties, registerSingleton systemProperties  " );
+            LogUtils.info("prepareBeanFactory beanFactory not contains systemProperties, registerSingleton systemProperties  ");
             beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, maps);
         }
         if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
             //注册systemEnvironment单例
             Map<String, Object> maps = getEnvironment().getSystemEnvironment();
-            LoggerUtils.info("prepareBeanFactory beanFactory not contains systemEnvironment , registerSingleton systemEnvironment " );
+            LogUtils.info("prepareBeanFactory beanFactory not contains systemEnvironment , registerSingleton systemEnvironment ");
             beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, maps);
         }
     }
@@ -757,7 +756,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * @param beanFactory the bean factory used by the application context
      */
     protected void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-        LoggerUtils.info("postProcessBeanFactory ",5 );
+        LogUtils.info("postProcessBeanFactory ", 5);
     }
 
     /**
@@ -784,7 +783,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      */
     protected void initMessageSource() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        LogUtils.info("initMessageSource beanFactory :" + beanFactory.getClass().getName());
         if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
+
+            LogUtils.info("beanFactory containsLocalBean  messageSource");
             this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
             // Make MessageSource aware of parent MessageSource.
             if (this.parent != null && this.messageSource instanceof HierarchicalMessageSource) {
@@ -799,9 +801,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
                 logger.debug("Using MessageSource [" + this.messageSource + "]");
             }
         } else {
+            LogUtils.info("initMessageSource else ");
             // Use empty MessageSource to be able to accept getMessage calls.
             DelegatingMessageSource dms = new DelegatingMessageSource();
-            dms.setParentMessageSource(getInternalParentMessageSource());
+            MessageSource messageSource = getInternalParentMessageSource();
+            LogUtils.info("initMessageSource messageSource " + (messageSource == null ? messageSource : messageSource.getClass().getName()));
+            dms.setParentMessageSource(messageSource);
             this.messageSource = dms;
             beanFactory.registerSingleton(MESSAGE_SOURCE_BEAN_NAME, this.messageSource);
             if (logger.isDebugEnabled()) {
@@ -819,20 +824,17 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      */
     protected void initApplicationEventMulticaster() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        LogUtils.info("initApplicationEventMulticaster beanFactory :" + beanFactory.getClass().getName());
         if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
             this.applicationEventMulticaster =
                     beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
-            }
+            LogUtils.info("initApplicationEventMulticaster Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
         } else {
             this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
             beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Unable to locate ApplicationEventMulticaster with name '" +
-                        APPLICATION_EVENT_MULTICASTER_BEAN_NAME +
-                        "': using default [" + this.applicationEventMulticaster + "]");
-            }
+            LogUtils.info("initApplicationEventMulticaster Unable to locate ApplicationEventMulticaster with name '" +
+                    APPLICATION_EVENT_MULTICASTER_BEAN_NAME +
+                    "': using default [" + this.applicationEventMulticaster + "]");
         }
     }
 
@@ -873,6 +875,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      */
     protected void onRefresh() throws BeansException {
         // For subclasses: do nothing by default.
+        LogUtils.info("onRefresh ",5);
     }
 
     /**
@@ -882,21 +885,25 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     protected void registerListeners() {
         // Register statically specified listeners first.
         for (ApplicationListener<?> listener : getApplicationListeners()) {
+            LogUtils.info("listener Name :" + listener.getClass().getName());
             getApplicationEventMulticaster().addApplicationListener(listener);
         }
 
         // Do not initialize FactoryBeans here: We need to leave all regular beans
         // uninitialized to let post-processors apply to them!
         String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
+        LogUtils.info("registerListeners listenerBeanNames :" + Arrays.toString(listenerBeanNames));
         for (String listenerBeanName : listenerBeanNames) {
             getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
         }
 
         // Publish early application events now that we finally have a multicaster...
         Set<ApplicationEvent> earlyEventsToProcess = this.earlyApplicationEvents;
+        LogUtils.info("registerListeners earlyEventsToProcess :" + earlyEventsToProcess);
         this.earlyApplicationEvents = null;
         if (earlyEventsToProcess != null) {
             for (ApplicationEvent earlyEvent : earlyEventsToProcess) {
+
                 getApplicationEventMulticaster().multicastEvent(earlyEvent);
             }
         }
@@ -910,12 +917,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // Initialize conversion service for this context.
         if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
                 beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
+            LogUtils.info("finishBeanFactoryInitialization beanFactory constains conversionService");
             beanFactory.setConversionService(
                     beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
         }
 
         // Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
         String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
+        LogUtils.info("finishBeanFactoryInitialization weaverAwareNames :" + Arrays.toString(weaverAwareNames));
         for (String weaverAwareName : weaverAwareNames) {
             getBean(weaverAwareName);
         }
@@ -1153,7 +1162,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     @Override
     public <T> T getBean(Class<T> requiredType) throws BeansException {
         assertBeanFactoryActive();
-        return getBeanFactory().getBean(requiredType);
+        ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+        LogUtils.info("getBean beanFactory name " + beanFactory.getClass().getName());
+        return beanFactory.getBean(requiredType);
     }
 
     @Override

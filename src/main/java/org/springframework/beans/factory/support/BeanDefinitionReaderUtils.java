@@ -16,6 +16,7 @@
 
 package org.springframework.beans.factory.support;
 
+import com.test.LogUtils;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import java.util.Arrays;
 
 /**
  * Utility methods that are useful for bean definition reader implementations.
@@ -59,6 +62,7 @@ public class BeanDefinitionReaderUtils {
 		GenericBeanDefinition bd = new GenericBeanDefinition();
 		bd.setParentName(parentName);
 		if (className != null) {
+			LogUtils.info("createBeanDefinition classLoader  name :" + (classLoader == null ? null: classLoader.getClass().getName()));
 			if (classLoader != null) {
 				bd.setBeanClass(ClassUtils.forName(className, classLoader));
 			}
@@ -145,10 +149,13 @@ public class BeanDefinitionReaderUtils {
 
 		// Register bean definition under primary name.
 		String beanName = definitionHolder.getBeanName();
+
+		LogUtils.info("registerBeanDefinition beanName :" + beanName,3);
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
 		String[] aliases = definitionHolder.getAliases();
+		LogUtils.info("registerBeanDefinition aliases :" + Arrays.toString(aliases));
 		if (aliases != null) {
 			for (String alias : aliases) {
 				registry.registerAlias(beanName, alias);

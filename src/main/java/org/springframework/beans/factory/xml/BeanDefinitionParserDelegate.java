@@ -16,6 +16,9 @@
 
 package org.springframework.beans.factory.xml;
 
+import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanMetadataAttribute;
@@ -315,12 +318,14 @@ public class BeanDefinitionParserDelegate {
             lazyInit = (parentDefaults != null ? parentDefaults.getLazyInit() : FALSE_VALUE);
         }
         defaults.setLazyInit(lazyInit);
+        LogUtils.info("populateDefaults lazyInit: " + lazyInit );
 
         String merge = root.getAttribute(DEFAULT_MERGE_ATTRIBUTE);
         if (DEFAULT_VALUE.equals(merge)) {
             // Potentially inherited from outer <beans> sections, otherwise falling back to false.
             merge = (parentDefaults != null ? parentDefaults.getMerge() : FALSE_VALUE);
         }
+        LogUtils.info("populateDefaults merge: " + merge );
         defaults.setMerge(merge);
 
         String autowire = root.getAttribute(DEFAULT_AUTOWIRE_ATTRIBUTE);
@@ -328,6 +333,7 @@ public class BeanDefinitionParserDelegate {
             // Potentially inherited from outer <beans> sections, otherwise falling back to 'no'.
             autowire = (parentDefaults != null ? parentDefaults.getAutowire() : AUTOWIRE_NO_VALUE);
         }
+        LogUtils.info("populateDefaults autowire: " + autowire );
         defaults.setAutowire(autowire);
 
         // Don't fall back to parentDefaults for dependency-check as it's no longer supported in
@@ -404,7 +410,7 @@ public class BeanDefinitionParserDelegate {
     public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, BeanDefinition containingBean) {
         String id = ele.getAttribute(ID_ATTRIBUTE);
         String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
-
+        LogUtils.info("parseBeanDefinitionElement id " + id + " nameAttr " + nameAttr);
         List<String> aliases = new ArrayList<String>();
         if (StringUtils.hasLength(nameAttr)) {
             String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
@@ -426,13 +432,16 @@ public class BeanDefinitionParserDelegate {
 
         AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
         if (beanDefinition != null) {
+            LogUtils.info("parseBeanDefinitionElement beanDefinition is null ,beanName : " + beanName);
             if (!StringUtils.hasText(beanName)) {
                 try {
                     if (containingBean != null) {
                         beanName = BeanDefinitionReaderUtils.generateBeanName(
                                 beanDefinition, this.readerContext.getRegistry(), true);
+                        LogUtils.info("parseBeanDefinitionElement containingBean is not null ,beanName : " + beanName);
                     } else {
                         beanName = this.readerContext.generateBeanName(beanDefinition);
+                        LogUtils.info("parseBeanDefinitionElement containingBean is null ,beanName : " + beanName);
                         // Register an alias for the plain bean class name, if still possible,
                         // if the generator returned the class name plus a suffix.
                         // This is expected for Spring 1.2/2.0 backwards compatibility.
@@ -486,14 +495,14 @@ public class BeanDefinitionParserDelegate {
      */
     public AbstractBeanDefinition parseBeanDefinitionElement(
             Element ele, String beanName, BeanDefinition containingBean) {
-
+        LogUtils.all("parseBeanDefinitionElement beanName " + beanName);
         this.parseState.push(new BeanEntry(beanName));
 
         String className = null;
         if (ele.hasAttribute(CLASS_ATTRIBUTE)) {
             className = ele.getAttribute(CLASS_ATTRIBUTE).trim();
         }
-
+        LogUtils.info("parseBeanDefinitionElement className :" + className);
         try {
             String parent = null;
             if (ele.hasAttribute(PARENT_ATTRIBUTE)) {
@@ -502,17 +511,25 @@ public class BeanDefinitionParserDelegate {
             AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
             parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
+
             bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+
             parseMetaElements(ele, bd);
+
             parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+
             parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+
             parseConstructorArgElements(ele, bd);
+
             parsePropertyElements(ele, bd);
+
             parseQualifierElements(ele, bd);
 
             bd.setResource(this.readerContext.getResource());
+
             bd.setSource(extractSource(ele));
 
             return bd;
@@ -545,6 +562,7 @@ public class BeanDefinitionParserDelegate {
         } else if (ele.hasAttribute(SCOPE_ATTRIBUTE)) {
             bd.setScope(ele.getAttribute(SCOPE_ATTRIBUTE));
         } else if (containingBean != null) {
+            LogUtils.info("parseBeanDefinitionAttributes scope :" + containingBean.getScope());
             // Take default from containing bean in case of an inner bean definition.
             bd.setScope(containingBean.getScope());
         }
@@ -558,9 +576,11 @@ public class BeanDefinitionParserDelegate {
             lazyInit = this.defaults.getLazyInit();
         }
         bd.setLazyInit(TRUE_VALUE.equals(lazyInit));
+        LogUtils.info("parseBeanDefinitionAttributes lazyInit :" + lazyInit + " , bd lazyInit :" + bd.isLazyInit());
 
         String autowire = ele.getAttribute(AUTOWIRE_ATTRIBUTE);
         bd.setAutowireMode(getAutowireMode(autowire));
+        LogUtils.info("parseBeanDefinitionAttributes AutowireMode :" + bd.getAutowireMode());
 
         String dependencyCheck = ele.getAttribute(DEPENDENCY_CHECK_ATTRIBUTE);
         bd.setDependencyCheck(getDependencyCheck(dependencyCheck));
@@ -571,8 +591,10 @@ public class BeanDefinitionParserDelegate {
         }
 
         String autowireCandidate = ele.getAttribute(AUTOWIRE_CANDIDATE_ATTRIBUTE);
+        LogUtils.info("parseBeanDefinitionAttributes autowireCandidate :" + autowireCandidate);
         if ("".equals(autowireCandidate) || DEFAULT_VALUE.equals(autowireCandidate)) {
             String candidatePattern = this.defaults.getAutowireCandidates();
+            LogUtils.info("parseBeanDefinitionAttributes candidatePattern :" + candidatePattern);
             if (candidatePattern != null) {
                 String[] patterns = StringUtils.commaDelimitedListToStringArray(candidatePattern);
                 bd.setAutowireCandidate(PatternMatchUtils.simpleMatch(patterns, beanName));
@@ -580,6 +602,7 @@ public class BeanDefinitionParserDelegate {
         } else {
             bd.setAutowireCandidate(TRUE_VALUE.equals(autowireCandidate));
         }
+        LogUtils.info("parseBeanDefinitionAttributes autowireCandidate value :" +bd.isAutowireCandidate() );
 
         if (ele.hasAttribute(PRIMARY_ATTRIBUTE)) {
             bd.setPrimary(TRUE_VALUE.equals(ele.getAttribute(PRIMARY_ATTRIBUTE)));
@@ -649,10 +672,12 @@ public class BeanDefinitionParserDelegate {
 
     @SuppressWarnings("deprecation")
     public int getAutowireMode(String attValue) {
+
         String att = attValue;
         if (DEFAULT_VALUE.equals(att)) {
             att = this.defaults.getAutowire();
         }
+
         int autowire = AbstractBeanDefinition.AUTOWIRE_NO;
         if (AUTOWIRE_BY_NAME_VALUE.equals(att)) {
             autowire = AbstractBeanDefinition.AUTOWIRE_BY_NAME;
@@ -664,6 +689,7 @@ public class BeanDefinitionParserDelegate {
             autowire = AbstractBeanDefinition.AUTOWIRE_AUTODETECT;
         }
         // Else leave default value.
+        LogUtils.info("getAutowireMode attValue :" + attValue + " ,att = " + att + " ,autowire =" + autowire);
         return autowire;
     }
 
@@ -954,6 +980,7 @@ public class BeanDefinitionParserDelegate {
      *                         {@code &lt;value&gt;} tag that might be created
      */
     public Object parsePropertySubElement(Element ele, BeanDefinition bd, String defaultValueType) {
+        LogUtils.all("parsePropertySubElement "  );
         if (!isDefaultNamespace(ele)) {
             return parseNestedCustomElement(ele, bd);
         } else if (nodeNameEquals(ele, BEAN_ELEMENT)) {
@@ -1333,13 +1360,15 @@ public class BeanDefinitionParserDelegate {
 
     public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
             Element ele, BeanDefinitionHolder definitionHolder, BeanDefinition containingBd) {
-
         BeanDefinitionHolder finalDefinition = definitionHolder;
 
         // Decorate based on custom attributes first.
         NamedNodeMap attributes = ele.getAttributes();
+        LogUtils.all("decorateBeanDefinitionIfRequired length :"  + attributes.getLength());
         for (int i = 0; i < attributes.getLength(); i++) {
             Node node = attributes.item(i);
+
+            LogUtils.info("decorateBeanDefinitionIfRequired node name :"  +    node.getNodeName());
             finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
         }
 
@@ -1347,6 +1376,8 @@ public class BeanDefinitionParserDelegate {
         NodeList children = ele.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
+
+            LogUtils.info("decorateBeanDefinitionIfRequired children node name :"  +    node.getNodeName() + " , nodeType = " + node.getNodeType());
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
             }
@@ -1358,7 +1389,9 @@ public class BeanDefinitionParserDelegate {
             Node node, BeanDefinitionHolder originalDef, BeanDefinition containingBd) {
 
         String namespaceUri = getNamespaceURI(node);
+        LogUtils.info("decorateIfRequired namespaceUri :" + namespaceUri);
         if (!isDefaultNamespace(namespaceUri)) {
+            LogUtils.info("decorateIfRequired isDefaultNamespace namespaceUri :" + namespaceUri);
             NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
             if (handler != null) {
                 return handler.decorate(node, originalDef, new ParserContext(this.readerContext, this, containingBd));
@@ -1430,7 +1463,9 @@ public class BeanDefinitionParserDelegate {
     }
 
     public boolean isDefaultNamespace(Node node) {
-        return isDefaultNamespace(getNamespaceURI(node));
+        String uri = getNamespaceURI(node);
+        LogUtils.info("isDefaultNamespace uri " + uri);
+        return isDefaultNamespace(uri);
     }
 
     private boolean isCandidateElement(Node node) {

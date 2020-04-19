@@ -13,7 +13,7 @@ public class SampleClassConverter extends ClassicConverter {
         StackTraceElement[] cda = event.getCallerData();
         if (cda != null && cda.length > 0) {
             String a = cda[0].getClassName();
-            if(a.endsWith("LoggerUtils")){
+            if(a.endsWith("LogUtils")){
                 a =  cda[1].getClassName();
             }
             try {

@@ -16,7 +16,7 @@
 
 package org.springframework.context.annotation;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.aop.framework.autoproxy.AutoProxyUtils;
@@ -203,7 +203,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
      */
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
-    	LoggerUtils.all("postProcessBeanDefinitionRegistry");
+    	LogUtils.all("postProcessBeanDefinitionRegistry");
         RootBeanDefinition iabpp = new RootBeanDefinition(ImportAwareBeanPostProcessor.class);
         iabpp.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         registry.registerBeanDefinition(IMPORT_AWARE_PROCESSOR_BEAN_NAME, iabpp);
@@ -251,7 +251,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
      * {@link Configuration} classes.
      */
     public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
-		LoggerUtils.all("processConfigBeanDefinitions ");
+		LogUtils.all("processConfigBeanDefinitions ");
         List<BeanDefinitionHolder> configCandidates = new ArrayList<BeanDefinitionHolder>();
         //获取Spring IoC容器中目前所有Bean定义的名称
         String[] candidateNames = registry.getBeanDefinitionNames();

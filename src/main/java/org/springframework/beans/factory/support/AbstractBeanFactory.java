@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
@@ -242,6 +242,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
+
 		if (sharedInstance != null && args == null) {
 			if (logger.isDebugEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -385,10 +386,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	@Override
 	public boolean containsBean(String name) {
 
-		LoggerUtils.info("containsBean name " + name,3);
+		LogUtils.info("containsBean name " + name,3);
 		String beanName = transformedBeanName(name);
 
-		LoggerUtils.info("containsBean beanName : " + beanName);
+		LogUtils.info("containsBean beanName : " + beanName);
 		if (containsSingleton(beanName) || containsBeanDefinition(beanName)) {
 			return (!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(name));
 		}
@@ -691,7 +692,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	public boolean containsLocalBean(String name) {
 		//1.1对name进行必要的转换
 		String beanName = transformedBeanName(name);
-		LoggerUtils.info("containsLocalBean beanName : " + beanName ,5);
+		LogUtils.info("containsLocalBean beanName : " + beanName ,5);
 
 
 		boolean containsSingleton = false;
@@ -699,7 +700,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			containsSingleton = containsSingleton(beanName);
 		} catch (Exception e) {
 		}
-		LoggerUtils.info("containsLocalBean containsSingleton :" + containsSingleton);
+		LogUtils.info("containsLocalBean containsSingleton :" + containsSingleton);
 		boolean containsBeanDefinition = false;
 		try {
 			containsBeanDefinition = containsBeanDefinition(beanName);
@@ -707,18 +708,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 
-		LoggerUtils.info("containsLocalBean  containsBeanDefinition :" + containsBeanDefinition);
+		LogUtils.info("containsLocalBean  containsBeanDefinition :" + containsBeanDefinition);
 		boolean isFactoryDereference = false;
 		try {
 			isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name) ;
 		} catch (Exception e) {
 		}
-		LoggerUtils.info("containsLocalBean   isFactoryDereference :" + isFactoryDereference);
+		LogUtils.info("containsLocalBean   isFactoryDereference :" + isFactoryDereference);
 		boolean isFactoryBean = false;
 		try {
 			isFactoryBean = isFactoryBean(beanName);
 		} catch (NoSuchBeanDefinitionException e) {		}
-		LoggerUtils.info("containsLocalBean  isFactoryBean :" +isFactoryBean);
+		LogUtils.info("containsLocalBean  isFactoryBean :" +isFactoryBean);
 
 
 		//singletonObjects或者beanDefinitionMap中已注册beanName则进入条件
@@ -1235,6 +1236,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Quick check on the concurrent map first, with minimal locking.
 		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName);
 		if (mbd != null) {
+			LogUtils.info("getMergedLocalBeanDefinition mergedBeanDefinitions has Bean " + beanName);
 			return mbd;
 		}
 		return getMergedBeanDefinition(beanName, getBeanDefinition(beanName));

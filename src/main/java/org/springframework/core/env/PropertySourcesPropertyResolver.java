@@ -16,6 +16,7 @@
 
 package org.springframework.core.env;
 
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionException;
 import org.springframework.util.ClassUtils;
@@ -75,7 +76,7 @@ public class PropertySourcesPropertyResolver extends AbstractPropertyResolver {
 
     protected <T> T getProperty(String key, Class<T> targetValueType, boolean resolveNestedPlaceholders) {
         boolean debugEnabled = logger.isDebugEnabled();
-        log.info(String.format("getProperty(\"%s\", %s)", key, targetValueType.getSimpleName()));
+        LogUtils.info(String.format("getProperty(\"%s\", %s)", key, targetValueType.getSimpleName()),10);
         if (logger.isTraceEnabled()) {
             logger.trace(String.format("getProperty(\"%s\", %s)", key, targetValueType.getSimpleName()));
         }

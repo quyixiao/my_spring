@@ -16,7 +16,7 @@
 
 package org.springframework.util;
 
-import com.test.LoggerUtils;
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.beans.Introspector;
@@ -162,7 +162,7 @@ public abstract class ClassUtils {
 		ClassLoader cl = null;
 		try {
 			cl = Thread.currentThread().getContextClassLoader();
-			LoggerUtils.info("getContextClassLoader" ,10);
+			LogUtils.info("getContextClassLoader" ,10);
 		}
 		catch (Throwable ex) {
 			// Cannot access thread context ClassLoader - falling back...
@@ -220,7 +220,7 @@ public abstract class ClassUtils {
 	 */
 	public static Class<?> forName(String name, ClassLoader classLoader) throws ClassNotFoundException, LinkageError {
 		Assert.notNull(name, "Name must not be null");
-
+		LogUtils.info("forName name :" + name);
 		Class<?> clazz = resolvePrimitiveClassName(name);
 		if (clazz == null) {
 			clazz = commonClassCache.get(name);
