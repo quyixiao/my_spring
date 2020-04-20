@@ -92,11 +92,14 @@ public class LogUtils {
     }
 
     private static void getNLation(Throwable throwable, StringBuilder cml, int i) {
+        String method = throwable.getStackTrace()[i].getMethodName();
+
+        cml.append(method);
+        cml.append(":");
         cml.append(getClassName(throwable.getStackTrace()[i].getClassName()));
         cml.append(":");
         cml.append(throwable.getStackTrace()[i].getLineNumber());
-        cml.append(".");
-        cml.append(throwable.getStackTrace()[i].getMethodName());
+
     }
 
 

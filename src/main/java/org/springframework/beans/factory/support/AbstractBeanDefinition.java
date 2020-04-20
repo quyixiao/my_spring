@@ -758,7 +758,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	@Override
 	public String getFactoryMethodName() {
-		LogUtils.info("getFactoryMethodName factoryMethodName :" + this.factoryMethodName,3);
+		LogUtils.info("getFactoryMethodName factoryMethodName :" + this.factoryMethodName,5);
 		return this.factoryMethodName;
 	}
 

@@ -220,7 +220,7 @@ public abstract class ClassUtils {
 	 */
 	public static Class<?> forName(String name, ClassLoader classLoader) throws ClassNotFoundException, LinkageError {
 		Assert.notNull(name, "Name must not be null");
-		LogUtils.info("forName name :" + name);
+		LogUtils.info("forName name :" + name,10);
 		Class<?> clazz = resolvePrimitiveClassName(name);
 		if (clazz == null) {
 			clazz = commonClassCache.get(name);

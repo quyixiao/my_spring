@@ -444,12 +444,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				try {
 					LogUtils.info("doGetBeanNamesForType not alias beanName = " +beanName);
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
+					LogUtils.info("doGetBeanNamesForType RootBeanDefinition mbd name = " +mbd.getClass().getName());
 					// Only check bean definition if it is complete.
 					if (!mbd.isAbstract() && (allowEagerInit ||
 							((mbd.hasBeanClass() || !mbd.isLazyInit() || isAllowEagerClassLoading())) &&
 									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
 						// In case of FactoryBean, match object created by FactoryBean.
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
+
 						boolean matchFound = (allowEagerInit || !isFactoryBean || containsSingleton(beanName)) &&
 								(includeNonSingletons || isSingleton(beanName)) && isTypeMatch(beanName, type);
 						LogUtils.info("doGetBeanNamesForType allowEagerInit :" + allowEagerInit + ", isFactoryBean = " + isFactoryBean
@@ -459,6 +461,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							// In case of FactoryBean, try to match FactoryBean instance itself next.
 							beanName = FACTORY_BEAN_PREFIX + beanName;
 							matchFound = (includeNonSingletons || mbd.isSingleton()) && isTypeMatch(beanName, type);
+							LogUtils.info("doGetBeanNamesForType FACTORY_BEAN_PREFIX beanName :" + beanName + " ,matchFound= " + matchFound);
 						}
 						if (matchFound) {
 							result.add(beanName);
@@ -496,14 +499,18 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				if (isFactoryBean(beanName)) {
 					if ((includeNonSingletons || isSingleton(beanName)) && isTypeMatch(beanName, type)) {
 						result.add(beanName);
+
+						LogUtils.info("doGetBeanNamesForType manualSingletonNamesn  includeNonSingletons :" + includeNonSingletons);
 						// Match found for this bean: do not match FactoryBean itself anymore.
 						continue;
 					}
 					// In case of FactoryBean, try to match FactoryBean itself next.
 					beanName = FACTORY_BEAN_PREFIX + beanName;
+					LogUtils.info("doGetBeanNamesForType manualSingletonNamesn  isFactoryBean beanName :" + beanName);
 				}
 				// Match raw bean instance (might be raw FactoryBean).
 				if (isTypeMatch(beanName, type)) {
+					LogUtils.info("doGetBeanNamesForType manualSingletonNamesn  isTypeMatch :" + beanName);
 					result.add(beanName);
 				}
 			}
