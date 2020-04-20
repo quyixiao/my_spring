@@ -404,7 +404,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
 		try {
-			log.info("doLoadBeanDefinitions  ...");
+			LogUtils.info("doLoadBeanDefinitions  ...",8);
 			Document doc = doLoadDocument(inputSource, resource);
 
 			return registerBeanDefinitions(doc, resource);
