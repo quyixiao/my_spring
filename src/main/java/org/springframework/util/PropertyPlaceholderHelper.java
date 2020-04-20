@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -131,14 +132,14 @@ public class PropertyPlaceholderHelper {
 
 	protected String parseStringValue(
 			String strVal, PlaceholderResolver placeholderResolver, Set<String> visitedPlaceholders) {
-		log.info(" start strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders + "  strVal  = " + strVal);
+		LogUtils.info(" start strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders + "  strVal  = " + strVal,8);
 
 		StringBuilder result = new StringBuilder(strVal);
 
 		int startIndex = strVal.indexOf(this.placeholderPrefix);
 		log.info("  placeholderPrefix :" + this.placeholderPrefix + " ,index = " + startIndex);
 		while (startIndex != -1) {
-
+			LogUtils.info(" parseStringValue startIndex is not -1 " );
 			int endIndex = findPlaceholderEndIndex(result, startIndex);
 			if (endIndex != -1) {
 				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);
