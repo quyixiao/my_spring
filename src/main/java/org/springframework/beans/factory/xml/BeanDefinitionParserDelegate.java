@@ -431,6 +431,7 @@ public class BeanDefinitionParserDelegate {
         }
 
         AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
+
         if (beanDefinition != null) {
             LogUtils.info("parseBeanDefinitionElement beanDefinition is null ,beanName : " + beanName);
             if (!StringUtils.hasText(beanName)) {
@@ -1364,6 +1365,7 @@ public class BeanDefinitionParserDelegate {
 
         // Decorate based on custom attributes first.
         NamedNodeMap attributes = ele.getAttributes();
+
         LogUtils.all("decorateBeanDefinitionIfRequired length :"  + attributes.getLength());
         for (int i = 0; i < attributes.getLength(); i++) {
             Node node = attributes.item(i);

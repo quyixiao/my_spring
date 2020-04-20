@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Provider;
 
 import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.test.LogUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -824,7 +825,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
-		LogUtils.info("registerBeanDefinition beanName :" + beanName);
+		LogUtils.info("registerBeanDefinition beanName :" + beanName,5);
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				LogUtils.info(" beanDefinition class Name :" + beanDefinition.getClass().getName());
@@ -874,8 +875,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			this.manualSingletonNames.remove(beanName);
 			this.frozenBeanDefinitionNames = null;
 		}
+
+
+
 		this.beanDefinitionMap.put(beanName, beanDefinition);
 
+		LogUtils.info("registerBeanDefinition beanDefinition ：" + beanDefinition.getClass().getName() + " \n " + beanDefinition);
 		if (oldBeanDefinition != null || containsSingleton(beanName)) {
 			resetBeanDefinition(beanName);
 		}
