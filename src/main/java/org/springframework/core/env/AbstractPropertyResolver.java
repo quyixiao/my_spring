@@ -16,9 +16,11 @@
 
 package org.springframework.core.env;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -122,9 +124,10 @@ public abstract class AbstractPropertyResolver implements ConfigurablePropertyRe
 
 	@Override
 	public void validateRequiredProperties() {
-		log.info(" start  validateRequiredProperties : " );
+		log.info(" start  validateRequiredProperties : "  + JSON.toJSONString(this.requiredProperties));
 		MissingRequiredPropertiesException ex = new MissingRequiredPropertiesException();
 		for (String key : this.requiredProperties) {
+
 			if (this.getProperty(key) == null) {
 				ex.addMissingRequiredProperty(key);
 			}
