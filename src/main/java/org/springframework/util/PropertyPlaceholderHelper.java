@@ -187,7 +187,7 @@ public class PropertyPlaceholderHelper {
 				startIndex = -1;
 			}
 		}
-		log.info(" end strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders);
+		log.info(" end strValue "+ strVal + " visitedPlaceholders :" + visitedPlaceholders + " result :" + result.toString());
 		return result.toString();
 	}
 
