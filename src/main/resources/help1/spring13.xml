@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
+       default-init-method="turnOnLights"
+       default-destroy-method="turnOffLights">
+
+
+    <util:list id="cities">
+        <bean class="com.test2.City" p:name="changsan" p:state="xx" p:population="893282938"></bean>
+        <bean class="com.test2.City" p:name="x" p:state="x" p:population="893282938"></bean>
+        <bean class="com.test2.City" p:name="y" p:state="y" p:population="893282938"></bean>
+        <bean class="com.test2.City" p:name="z" p:state="z" p:population="893282938"></bean>
+    </util:list>
+
+
+    <bean id="citys" class="com.test2.Citys">
+        <property name="city" value="#{cities[2]}"></property>
+    </bean>
+
+
+    <bean id="yy" class="com.test2.City" p:name="y" p:state="y" p:population="893282938"></bean>
+    <bean id="zz" class="com.test2.City" p:name="z" p:state="z" p:population="893282938"></bean>
+
+    <util:map id="mapcities">
+        <entry key="x">
+            <bean id="xx" class="com.test2.City" p:name="x" p:state="x" p:population="893282938"></bean>
+        </entry>
+        <entry key="y" value-ref="yy"></entry>
+        <entry key="z" value-ref="zz"></entry>
+    </util:map>
+
+
+    <bean id="citys1" class="com.test2.Citys">
+        <property name="city" value="#{cities[T(java.lang.Math).random() * cities.size()]}"></property>
+    </bean>
+
+
+</beans>

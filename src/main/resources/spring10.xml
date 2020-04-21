@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"
+       default-init-method="turnOnLights"
+       default-destroy-method="turnOffLights">
+
+    <bean id="piano" class="com.test2.Piano"></bean>
+    <bean id="saxophone" class="com.test2.Saxophone"></bean>
+
+
+    <bean id="hank" class="com.test2.OneManBand">
+        <property name="instruments">
+            <list>
+                <ref bean="piano"></ref>
+                <ref bean="saxophone"></ref>
+            </list>
+        </property>
+    </bean>
+
+</beans>
