@@ -7,6 +7,8 @@ import com.test2.CityNameList;
 import com.test2.Citys;
 import com.test2.Settings;
 import com.test3.InstrumentTest;
+import com.test3.InstrumentTest1;
+import com.test3.InstrumentTest2;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -28,6 +30,16 @@ public class SpringTest14 {
         System.out.println(instrumentTest.getInstrument());
 
 
+
+        InstrumentTest1 instrumentTest1 = (InstrumentTest1) classPathXmlApplicationContext.getBean("instrumentTest1");
+        System.out.println(instrumentTest1.getInstrument());
+
+
+
+
+
+        InstrumentTest2 instrumentTest2 = (InstrumentTest2) classPathXmlApplicationContext.getBean("instrumentTest2");
+        System.out.println(instrumentTest2.getInstrument());
 
 
     }

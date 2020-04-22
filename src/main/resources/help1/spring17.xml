@@ -14,14 +14,7 @@
     <context:component-scan base-package="com.test"/>
 
 
-    <bean id="instrumentTest" class="com.test3.InstrumentTest"></bean>
 
-
-
-    <bean id="instrumentTest1" class="com.test3.InstrumentTest1"></bean>
-
-
-
-    <bean id="instrumentTest2" class="com.test3.InstrumentTest2"></bean>
+    <bean id="instrumentTest5" class="com.test4.InstrumentTest5"></bean>
 
 </beans>
