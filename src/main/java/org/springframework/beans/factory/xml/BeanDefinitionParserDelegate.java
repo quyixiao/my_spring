@@ -1347,7 +1347,12 @@ public class BeanDefinitionParserDelegate {
 
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
         String namespaceUri = getNamespaceURI(ele);
+        LogUtils.info("parseCustomElement namespaceUri :" + namespaceUri);
+
         NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
+
+        LogUtils.info("parseCustomElement handler name :" +(handler !=null ? handler.getClass().getName() :null));
+
         if (handler == null) {
             error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
             return null;
@@ -1433,6 +1438,7 @@ public class BeanDefinitionParserDelegate {
      * @param node the node
      */
     public String getNamespaceURI(Node node) {
+        LogUtils.info("getNamespaceURI node Name :" + node.getClass().getName());
         return node.getNamespaceURI();
     }
 

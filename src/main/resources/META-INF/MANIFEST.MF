@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Created-By: 1.8.0_60 (Oracle Corporation)
+Implementation-Title: spring-all
+Implementation-Version: 4.2.1.RELEASE
+
+
+
+
