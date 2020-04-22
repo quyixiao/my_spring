@@ -18,3 +18,11 @@ http\://www.springframework.org/schema/jdbc=org.springframework.jdbc.config.Jdbc
 
 
 http\://www.springframework.org/schema/oxm=org.springframework.oxm.config.OxmNamespaceHandler
+
+
+http\://www.springframework.org/schema/tx=org.springframework.transaction.config.TxNamespaceHandler
+
+
+http\://www.springframework.org/schema/mvc=org.springframework.web.servlet.config.MvcNamespaceHandler
+
+
