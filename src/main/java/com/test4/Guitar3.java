@@ -1,13 +1,10 @@
 package com.test4;
 
 import com.test.LogUtils;
-import com.test2.Instrument;
-import com.test3.StringedInstrument;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Qualifier;
 
-@Component
-@StringedInstrument
-public class Guitar3 implements Instrument {
+@Qualifier
+public class Guitar3 implements Instrument4 {
     @Override
     public void play() {
         LogUtils.info("Guitar3333333333333333333333333333");
