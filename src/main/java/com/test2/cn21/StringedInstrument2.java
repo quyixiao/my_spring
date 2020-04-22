@@ -1,4 +1,4 @@
-package com.test4;
+package com.test2.cn21;
 
 
 import javax.inject.Qualifier;
@@ -10,5 +10,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Qualifier
-public @interface Strummed {
+public @interface StringedInstrument2 {
+
+
 }
