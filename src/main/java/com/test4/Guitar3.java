@@ -1,9 +1,10 @@
 package com.test4;
 
 import com.test.LogUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.test3.StringedInstrument;
 
-@Qualifier
+
+@StringedInstrument
 public class Guitar3 implements Instrument4 {
     @Override
     public void play() {

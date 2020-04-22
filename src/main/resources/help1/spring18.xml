@@ -16,6 +16,6 @@
 
 
 
-    <bean id="instrumentTest5" class="com.test4.InstrumentTest5"></bean>
+    <bean id="instrumentTest6" class="com.test4.InstrumentTest6"></bean>
 
 </beans>
