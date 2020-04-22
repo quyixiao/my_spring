@@ -9,10 +9,11 @@
 
 
     <util:list id="cities">
-        <bean class="com.test2.City" p:name="changsan" p:state="xx" p:population="893282938"></bean>
-        <bean class="com.test2.City" p:name="x" p:state="x" p:population="893282938"></bean>
-        <bean class="com.test2.City" p:name="y" p:state="y" p:population="893282938"></bean>
-        <bean class="com.test2.City" p:name="z" p:state="z" p:population="893282938"></bean>
+
+        <bean class="com.test2.City" p:name="x" p:state="x" p:population="1111"></bean>
+        <bean class="com.test2.City" p:name="y" p:state="y" p:population="2222"></bean>
+        <bean class="com.test2.City" p:name="z" p:state="z" p:population="3333"></bean>
+        <bean class="com.test2.City" p:name="changsan" p:state="xx" p:population="4444"></bean>
     </util:list>
 
 
@@ -37,5 +38,58 @@
         <property name="city" value="#{cities[T(java.lang.Math).random() * cities.size()]}"></property>
     </bean>
 
+
+    <bean id="citys2" class="com.test2.Citys">
+        <property name="city" value="#{mapcities['x']}"></property>
+    </bean>
+
+
+
+    <util:properties id="properties" location="classpath:help1/settings13.properties">
+
+    </util:properties>
+
+
+    <bean id="settings" class="com.test2.Settings">
+        <property name="name" value="#{properties['twitter.name']}"></property>
+    </bean>
+
+
+
+    <bean id="settings2" class="com.test2.Settings">
+        <property name="name" value="#{systemEnvironment['HOME']}"></property>
+    </bean>
+
+
+    <bean id="settings3" class="com.test2.Settings">
+        <property name="name" value="#{systemProperties['application.home']}"></property>
+    </bean>
+
+
+    <bean id="cityList" class="com.test2.CityList">
+        <property name="citys" value="#{cities.?[population gt 2222 ]}"></property>
+    </bean>
+
+
+    <bean id="cityList1" class="com.test2.CityList">
+        <property name="citys" value="#{cities.^[population gt 2222 ]}"></property>
+    </bean>
+
+
+    <bean id="cityList2" class="com.test2.CityList">
+        <property name="citys" value="#{cities.$[population gt 2222 ]}"></property>
+    </bean>
+
+
+
+    <bean id="cityNameList" class="com.test2.CityNameList">
+        <property name="names" value="#{cities.![name]}"></property>
+    </bean>
+
+
+
+    <bean id="cityNameList1" class="com.test2.CityNameList">
+        <property name="names" value="#{cities.![name + ',' + state]}"></property>
+    </bean>
 
 </beans>
