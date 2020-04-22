@@ -134,7 +134,7 @@ public class DefaultDocumentLoader implements DocumentLoader {
 
 		DocumentBuilder docBuilder = factory.newDocumentBuilder();
 		if (entityResolver != null) {
-			log.info(" createDocumentBuilder setEntityResolver ");
+			log.info(" createDocumentBuilder setEntityResolver name : " + entityResolver.getClass().getName());
 			docBuilder.setEntityResolver(entityResolver);
 		}
 		if (errorHandler != null) {
