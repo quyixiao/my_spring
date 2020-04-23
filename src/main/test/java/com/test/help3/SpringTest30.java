@@ -1,4 +1,4 @@
-package com.test.help30;
+package com.test.help3;
 
 import com.test3.cn30.Behavior;
 import com.test3.cn30.Liquid1;
