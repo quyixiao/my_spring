@@ -21,5 +21,7 @@ public class SpringTest32 {
         person32.name(" 瞿贻晓 ");
         person32.setAge(32);
         person32.setWife(new Woman32("小胡",29));
+        System.out.println("==================================================");
+        person32.setInfo("红伟",35);
     }
 }

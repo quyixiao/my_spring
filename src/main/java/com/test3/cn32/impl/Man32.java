@@ -23,4 +23,10 @@ public class Man32 implements Person32 {
 
         LogUtils.info(" my woman is " + woman32);
     }
+
+    @Override
+    public void setInfo(String name, int age) {
+
+        LogUtils.info(" my name is " + name + ", age= "+age);
+    }
 }
