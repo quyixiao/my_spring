@@ -7,21 +7,25 @@
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
 
+
     <context:annotation-config/>
     <aop:aspectj-autoproxy proxy-target-class="true"/>
-    <context:component-scan base-package="com.*"></context:component-scan>
+
+    <context:component-scan base-package="com.test2.*"></context:component-scan>
+
+    <bean id="audience25" class="com.test2.cn25.Audience25"></bean>
 
 
-    <!-- 系统服务组件的切面Bean -->
-    <bean id="aspectService" class="com.test2.Aspectj22"></bean>
-    <!-- AOP配置 -->
     <aop:config>
-        <!-- 声明一个切面,并注入切面Bean,相当于@Aspect -->
-        <aop:aspect id="simpleAspect" ref="aspectService">
-            <!-- 配置一个切入点,相当于@Pointcut -->
-            <aop:pointcut expression="execution(public * com.test2..*.*(..))" id="simplePointcut"/>
-            <aop:around pointcut-ref="simplePointcut" method="doAround"/>
+        <aop:aspect ref="audience25">
+            <aop:before pointcut="execution(* com.test2.cn25.*.*(..))" method="takeSeats"></aop:before>
+            <aop:before pointcut="execution(* com.test2.cn25.*.*(..))" method="turnOffCellPhones"></aop:before>
+            <aop:after-returning pointcut="execution(* com.test2.cn25.*.*(..))" method="applaud"></aop:after-returning>
+            <aop:after-throwing pointcut="execution(* com.test2.cn25.*.*(..))" method="demandRefund"></aop:after-throwing>
         </aop:aspect>
+
+
     </aop:config>
+
 
 </beans>
