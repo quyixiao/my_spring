@@ -200,10 +200,13 @@ public class PathMatchingResourcePatternResolver implements ResourcePatternResol
      *
      * @param resourceLoader the ResourceLoader to load root directories and
      *                       actual resources with
+     *
      */
+    // 获取一个Spring source
     public PathMatchingResourcePatternResolver(ResourceLoader resourceLoader) {
         Assert.notNull(resourceLoader, "ResourceLoader must not be null");
 		LogUtils.info(" resourceLoader init by resourceLoader",10);
+		//设置Spring 的资源加载器
         this.resourceLoader = resourceLoader;
     }
 

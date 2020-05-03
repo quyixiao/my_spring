@@ -35,6 +35,8 @@ import org.springframework.core.io.ResourceLoader;
  * @author Juergen Hoeller
  * @since 1.1
  * @see org.springframework.core.io.Resource
+ * Bean 的解析过程是非常的复杂的，功能被分得很细，因为需要被扩展的地方很多，必须保证足够的灵活性，以应对可能的变化，Bean的解析主要是对Spring
+ * 配制文件解析，这个解析的过程主要通过BeanDefinitionReader来完成的，
  */
 public interface BeanDefinitionReader {
 

@@ -182,7 +182,9 @@ public abstract class GenericFilterBean implements
 		// Set bean properties from init parameters.
 		try {
 			PropertyValues pvs = new FilterConfigPropertyValues(filterConfig, this.requiredProperties);
+			// 定位资源
 			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
+			// 加载配置文件
 			ResourceLoader resourceLoader = new ServletContextResourceLoader(filterConfig.getServletContext());
 			bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, this.environment));
 			initBeanWrapper(bw);

@@ -16,8 +16,6 @@
 
 package org.springframework.context.support;
 
-import java.io.IOException;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -25,6 +23,8 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextException;
+
+import java.io.IOException;
 
 /**
  * Base class for {@link ApplicationContext}
@@ -54,7 +54,6 @@ import org.springframework.context.ApplicationContextException;
  *
  * @author Juergen Hoeller
  * @author Chris Beams
- * @since 1.1.3
  * @see #loadBeanDefinitions
  * @see DefaultListableBeanFactory
  * @see org.springframework.web.context.support.AbstractRefreshableWebApplicationContext
@@ -62,209 +61,226 @@ import org.springframework.context.ApplicationContextException;
  * @see ClassPathXmlApplicationContext
  * @see FileSystemXmlApplicationContext
  * @see org.springframework.context.annotation.AnnotationConfigApplicationContext
+ * @since 1.1.3
  */
 @Slf4j
 public abstract class AbstractRefreshableApplicationContext extends AbstractApplicationContext {
 
-	private Boolean allowBeanDefinitionOverriding;
+    private Boolean allowBeanDefinitionOverriding;
 
-	private Boolean allowCircularReferences;
+    private Boolean allowCircularReferences;
 
-	/** Bean factory for this context */
-	private DefaultListableBeanFactory beanFactory;
+    /**
+     * Bean factory for this context
+     */
+    private DefaultListableBeanFactory beanFactory;
 
-	/** Synchronization monitor for the internal BeanFactory */
-	private final Object beanFactoryMonitor = new Object();
-
-
-	/**
-	 * Create a new AbstractRefreshableApplicationContext with no parent.
-	 */
-	public AbstractRefreshableApplicationContext() {
-	}
-
-	/**
-	 * Create a new AbstractRefreshableApplicationContext with the given parent context.
-	 * @param parent the parent context
-	 */
-	public AbstractRefreshableApplicationContext(ApplicationContext parent) {
-		super(parent);
-	}
+    /**
+     * Synchronization monitor for the internal BeanFactory
+     */
+    private final Object beanFactoryMonitor = new Object();
 
 
-	/**
-	 * Set whether it should be allowed to override bean definitions by registering
-	 * a different definition with the same name, automatically replacing the former.
-	 * If not, an exception will be thrown. Default is "true".
-	 * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
-	 */
-	public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
-		this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
-	}
+    /**
+     * Create a new AbstractRefreshableApplicationContext with no parent.
+     */
+    public AbstractRefreshableApplicationContext() {
+    }
 
-	/**
-	 * Set whether to allow circular references between beans - and automatically
-	 * try to resolve them.
-	 * <p>Default is "true". Turn this off to throw an exception when encountering
-	 * a circular reference, disallowing them completely.
-	 * @see DefaultListableBeanFactory#setAllowCircularReferences
-	 */
-	public void setAllowCircularReferences(boolean allowCircularReferences) {
-		this.allowCircularReferences = allowCircularReferences;
-	}
+    /**
+     * Create a new AbstractRefreshableApplicationContext with the given parent context.
+     *
+     * @param parent the parent context
+     */
+    public AbstractRefreshableApplicationContext(ApplicationContext parent) {
+        super(parent);
+    }
 
 
-	/**
-	 * This implementation performs an actual refresh of this context's underlying
-	 * bean factory, shutting down the previous bean factory (if any) and
-	 * initializing a fresh bean factory for the next phase of the context's lifecycle.
-	 *
-	 * // 初始化BeanFactory，并进行XML文件读取，并将得到的BeanFactory记录在当前实体的属性中
-	 *
-	 */
-	@Override
-	protected final void refreshBeanFactory() throws BeansException {
-		log.info(" refreshBeanFactory ");
-		if (hasBeanFactory()) {
-			log.info(" destroyBeans ");
-			destroyBeans();
-			log.info(" closeBeanFactory ");
-			closeBeanFactory();
-		}
-		try {
-			log.info(" start createBeanFactory ");
-			// 创建DefaultListableBeanFactory
-			DefaultListableBeanFactory beanFactory = createBeanFactory();
-			String id = getId();
-			log.info(" end createBeanFactory  " + beanFactory.getClass().getName() + "  id = " + id);
-			// 为了序列话指定id，如果需要的话，让这个BeanFactory从id反序列化到BeanFactory对象
-			beanFactory.setSerializationId(id);
-			/**
-			 * 设置两个属性：
-			 * 1. 是否允许覆盖同名称的不同定义的对象
-			 * 2. 是否允许bean之间存在循环依赖
-			 */
-			log.info(" start customizeBeanFactory ");
-			customizeBeanFactory(beanFactory);
-			log.info(" end customizeBeanFactory ");
-			// 初始化DocumentReader，并进行XML文件读取和解析
-			loadBeanDefinitions(beanFactory);
+    /**
+     * Set whether it should be allowed to override bean definitions by registering
+     * a different definition with the same name, automatically replacing the former.
+     * If not, an exception will be thrown. Default is "true".
+     *
+     * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
+     */
+    public void setAllowBeanDefinitionOverriding(boolean allowBeanDefinitionOverriding) {
+        this.allowBeanDefinitionOverriding = allowBeanDefinitionOverriding;
+    }
 
-			synchronized (this.beanFactoryMonitor) {
-				this.beanFactory = beanFactory;
-			}
-		}
-		catch (IOException ex) {
-			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
-		}
-	}
+    /**
+     * Set whether to allow circular references between beans - and automatically
+     * try to resolve them.
+     * <p>Default is "true". Turn this off to throw an exception when encountering
+     * a circular reference, disallowing them completely.
+     *
+     * @see DefaultListableBeanFactory#setAllowCircularReferences
+     */
+    public void setAllowCircularReferences(boolean allowCircularReferences) {
+        this.allowCircularReferences = allowCircularReferences;
+    }
 
-	@Override
-	protected void cancelRefresh(BeansException ex) {
-		synchronized (this.beanFactoryMonitor) {
-			if (this.beanFactory != null)
-				this.beanFactory.setSerializationId(null);
-		}
-		super.cancelRefresh(ex);
-	}
 
-	@Override
-	protected final void closeBeanFactory() {
-		synchronized (this.beanFactoryMonitor) {
-			this.beanFactory.setSerializationId(null);
-			this.beanFactory = null;
-		}
-	}
+    /**
+     * This implementation performs an actual refresh of this context's underlying
+     * bean factory, shutting down the previous bean factory (if any) and
+     * initializing a fresh bean factory for the next phase of the context's lifecycle.
+     * <p>
+     * 初始化BeanFactory，并进行XML文件读取，并将得到的BeanFactory记录在当前实体的属性中
+     * 在这个方法中，先判断beanFactory是否存在，如果存在，则先销毁Bean并关闭beanFactory,接着创建DefaultListableBeanFactory
+     * ，并调用loadBeanDefinitions()方法装载bean的定义
+     */
+    @Override
+    protected final void refreshBeanFactory() throws BeansException {
+        log.info(" refreshBeanFactory ");
+        // 如果已经存在容器，销毁容器中的Bean,关闭容器
+        if (hasBeanFactory()) {
+            log.info(" destroyBeans ");
+            destroyBeans();
+            log.info(" closeBeanFactory ");
+            closeBeanFactory();
+        }
+        try {
+            //
+            log.info(" start createBeanFactory ");
+            // 创建DefaultListableBeanFactory,创建IOC容器
+            DefaultListableBeanFactory beanFactory = createBeanFactory();
+            String id = getId();
+            log.info(" end createBeanFactory  " + beanFactory.getClass().getName() + "  id = " + id);
+            // 为了序列话指定id，如果需要的话，让这个BeanFactory从id反序列化到BeanFactory对象
 
-	/**
-	 * Determine whether this context currently holds a bean factory,
-	 * i.e. has been refreshed at least once and not been closed yet.
-	 */
-	protected final boolean hasBeanFactory() {
-		synchronized (this.beanFactoryMonitor) {
-			return (this.beanFactory != null);
-		}
-	}
+            beanFactory.setSerializationId(id);
+            /**
+             * 设置两个属性：
+             * 1. 是否允许覆盖同名称的不同定义的对象
+             * 2. 是否允许bean之间存在循环依赖
+             * 对Ioc容器进行定制化，如果设置了启动参数，开启注解的自动装配等
+             */
+            log.info(" start customizeBeanFactory ");
+            customizeBeanFactory(beanFactory);
+            log.info(" end customizeBeanFactory ");
+            // 初始化DocumentReader，并进行XML文件读取和解析
+            // 调用载入的Bean定义的方法，这里又使用了一个委派模式
+            // 当前类中只定义了一个抽象的loadBeanDefinitions()方法，调用子类容器实现
+            loadBeanDefinitions(beanFactory);
 
-	@Override
-	public final ConfigurableListableBeanFactory getBeanFactory() {
-		log.info("getBeanFactory");
-		synchronized (this.beanFactoryMonitor) {
-			if (this.beanFactory == null) {
-				throw new IllegalStateException("BeanFactory not initialized or already closed - " +
-						"call 'refresh' before accessing beans via the ApplicationContext");
-			}
-			return this.beanFactory;
-		}
-	}
+            synchronized (this.beanFactoryMonitor) {
+                this.beanFactory = beanFactory;
+            }
+        } catch (IOException ex) {
+            throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
+        }
+    }
 
-	/**
-	 * Overridden to turn it into a no-op: With AbstractRefreshableApplicationContext,
-	 * {@link #getBeanFactory()} serves a strong assertion for an active context anyway.
-	 */
-	@Override
-	protected void assertBeanFactoryActive() {
-	}
+    @Override
+    protected void cancelRefresh(BeansException ex) {
+        synchronized (this.beanFactoryMonitor) {
+            if (this.beanFactory != null)
+                this.beanFactory.setSerializationId(null);
+        }
+        super.cancelRefresh(ex);
+    }
 
-	/**
-	 * Create an internal bean factory for this context.
-	 * Called for each {@link #refresh()} attempt.
-	 * <p>The default implementation creates a
-	 * {@link DefaultListableBeanFactory}
-	 * with the {@linkplain #getInternalParentBeanFactory() internal bean factory} of this
-	 * context's parent as parent bean factory. Can be overridden in subclasses,
-	 * for example to customize DefaultListableBeanFactory's settings.
-	 * @return the bean factory for this context
-	 * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
-	 * @see DefaultListableBeanFactory#setAllowEagerClassLoading
-	 * @see DefaultListableBeanFactory#setAllowCircularReferences
-	 * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
-	 */
-	protected DefaultListableBeanFactory createBeanFactory() {
-		BeanFactory beanFactory = getInternalParentBeanFactory();
-		log.info("DefaultListableBeanFactory  createBeanFactory BeanFactory =  {}  " ,beanFactory);
-		return new DefaultListableBeanFactory(beanFactory);
-	}
+    @Override
+    protected final void closeBeanFactory() {
+        synchronized (this.beanFactoryMonitor) {
+            this.beanFactory.setSerializationId(null);
+            this.beanFactory = null;
+        }
+    }
 
-	/**
-	 * Customize the internal bean factory used by this context.
-	 * Called for each {@link #refresh()} attempt.
-	 * <p>The default implementation applies this context's
-	 * {@linkplain #setAllowBeanDefinitionOverriding "allowBeanDefinitionOverriding"}
-	 * and {@linkplain #setAllowCircularReferences "allowCircularReferences"} settings,
-	 * if specified. Can be overridden in subclasses to customize any of
-	 * {@link DefaultListableBeanFactory}'s settings.
-	 * @param beanFactory the newly created bean factory for this context
-	 * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
-	 * @see DefaultListableBeanFactory#setAllowCircularReferences
-	 * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
-	 * @see DefaultListableBeanFactory#setAllowEagerClassLoading
-	 */
-	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
-		// 如果属性allowBeanDefinitionOverriding不为空，设置给beanFactory对象相应属性
-		// 此属性的含义：是否允许覆盖同名称的不同定义的对象
-		log.info(" allowBeanDefinitionOverriding = " + this.allowBeanDefinitionOverriding);
-		if (this.allowBeanDefinitionOverriding != null) {
-			beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
-		}
-		// 如果属性allowCircularReferences不为空，设置给beanFactory对象相应属性
-		// 此属性的含义：是否允许bean之间存在循环依赖
-		log.info(" allowCircularReferences = " + this.allowCircularReferences);
-		if (this.allowCircularReferences != null) {
-			beanFactory.setAllowCircularReferences(this.allowCircularReferences);
-		}
-	}
+    /**
+     * Determine whether this context currently holds a bean factory,
+     * i.e. has been refreshed at least once and not been closed yet.
+     */
+    protected final boolean hasBeanFactory() {
+        synchronized (this.beanFactoryMonitor) {
+            return (this.beanFactory != null);
+        }
+    }
 
-	/**
-	 * Load bean definitions into the given bean factory, typically through
-	 * delegating to one or more bean definition readers.
-	 * @param beanFactory the bean factory to load bean definitions into
-	 * @throws BeansException if parsing of the bean definitions failed
-	 * @throws IOException if loading of bean definition files failed
-	 * @see org.springframework.beans.factory.support.PropertiesBeanDefinitionReader
-	 * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
-	 */
-	protected abstract void loadBeanDefinitions(DefaultListableBeanFactory beanFactory)
-			throws BeansException, IOException;
+    @Override
+    public final ConfigurableListableBeanFactory getBeanFactory() {
+        log.info("getBeanFactory");
+        synchronized (this.beanFactoryMonitor) {
+            if (this.beanFactory == null) {
+                throw new IllegalStateException("BeanFactory not initialized or already closed - " +
+                        "call 'refresh' before accessing beans via the ApplicationContext");
+            }
+            return this.beanFactory;
+        }
+    }
+
+    /**
+     * Overridden to turn it into a no-op: With AbstractRefreshableApplicationContext,
+     * {@link #getBeanFactory()} serves a strong assertion for an active context anyway.
+     */
+    @Override
+    protected void assertBeanFactoryActive() {
+    }
+
+    /**
+     * Create an internal bean factory for this context.
+     * Called for each {@link #refresh()} attempt.
+     * <p>The default implementation creates a
+     * {@link DefaultListableBeanFactory}
+     * with the {@linkplain #getInternalParentBeanFactory() internal bean factory} of this
+     * context's parent as parent bean factory. Can be overridden in subclasses,
+     * for example to customize DefaultListableBeanFactory's settings.
+     *
+     * @return the bean factory for this context
+     * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
+     * @see DefaultListableBeanFactory#setAllowEagerClassLoading
+     * @see DefaultListableBeanFactory#setAllowCircularReferences
+     * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
+     */
+    protected DefaultListableBeanFactory createBeanFactory() {
+        BeanFactory beanFactory = getInternalParentBeanFactory();
+        log.info("DefaultListableBeanFactory  createBeanFactory BeanFactory =  {}  ", beanFactory);
+        return new DefaultListableBeanFactory(beanFactory);
+    }
+
+    /**
+     * Customize the internal bean factory used by this context.
+     * Called for each {@link #refresh()} attempt.
+     * <p>The default implementation applies this context's
+     * {@linkplain #setAllowBeanDefinitionOverriding "allowBeanDefinitionOverriding"}
+     * and {@linkplain #setAllowCircularReferences "allowCircularReferences"} settings,
+     * if specified. Can be overridden in subclasses to customize any of
+     * {@link DefaultListableBeanFactory}'s settings.
+     *
+     * @param beanFactory the newly created bean factory for this context
+     * @see DefaultListableBeanFactory#setAllowBeanDefinitionOverriding
+     * @see DefaultListableBeanFactory#setAllowCircularReferences
+     * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
+     * @see DefaultListableBeanFactory#setAllowEagerClassLoading
+     */
+    protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
+        // 如果属性allowBeanDefinitionOverriding不为空，设置给beanFactory对象相应属性
+        // 此属性的含义：是否允许覆盖同名称的不同定义的对象
+        log.info(" allowBeanDefinitionOverriding = " + this.allowBeanDefinitionOverriding);
+        if (this.allowBeanDefinitionOverriding != null) {
+            beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
+        }
+        // 如果属性allowCircularReferences不为空，设置给beanFactory对象相应属性
+        // 此属性的含义：是否允许bean之间存在循环依赖
+        log.info(" allowCircularReferences = " + this.allowCircularReferences);
+        if (this.allowCircularReferences != null) {
+            beanFactory.setAllowCircularReferences(this.allowCircularReferences);
+        }
+    }
+
+    /**
+     * Load bean definitions into the given bean factory, typically through
+     * delegating to one or more bean definition readers.
+     *
+     * @param beanFactory the bean factory to load bean definitions into
+     * @throws BeansException if parsing of the bean definitions failed
+     * @throws IOException    if loading of bean definition files failed
+     * @see org.springframework.beans.factory.support.PropertiesBeanDefinitionReader
+     * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
+     */
+    protected abstract void loadBeanDefinitions(DefaultListableBeanFactory beanFactory)
+            throws BeansException, IOException;
 
 }
