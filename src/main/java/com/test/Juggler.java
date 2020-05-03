@@ -1,6 +1,7 @@
 package com.test;
 
 
+
 public class Juggler implements Performer {
 
     private int beanBags = 3;
