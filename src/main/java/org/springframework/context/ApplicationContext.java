@@ -53,6 +53,10 @@ import org.springframework.core.io.support.ResourcePatternResolver;
  * @see ConfigurableApplicationContext
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.core.io.ResourceLoader
+ * Spring 提供了一个高级的IOC容器，它除了能提供Ioc 容器的基本功能，还为用户提供了以下附加的服务
+ * 1.支持信息源，可以实现国际化，实现messageSource接口
+ * 2.访问资源（实现ResourcePatternResolver接口，后面的章节会讲到）
+ * 3.支持应用事件，（实现ApplicationEventPublisher接口）
  */
 public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
 		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {

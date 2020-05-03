@@ -104,6 +104,8 @@ import org.springframework.core.ResolvableType;
  * @see org.springframework.beans.factory.config.BeanPostProcessor#postProcessAfterInitialization
  * @see DisposableBean#destroy
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
+ * 在BeanFactory 里只对Ioc容器基本行为做了定义，根本不关心你的bean 是如何定义及怎样加载的，
+ * 正如我们只关心能从工厂里得到什么产品，不关心工厂是怎样生产出来的这些产品的
  */
 public interface BeanFactory {
 
