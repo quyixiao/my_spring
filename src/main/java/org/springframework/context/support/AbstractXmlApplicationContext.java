@@ -80,6 +80,11 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
      * @see XmlBeanDefinitionReader
      * @see #initBeanDefinitionReader
      * @see #loadBeanDefinitions
+     *
+     *
+     * 从AbstractBeanDefinitionReader的loadBeanDefinitions()方法源码分析可以看出，该方法就做了两件事情，首先，调用资源加载器的获取
+     * 资源方法resourceLoader.getResource(location),获取加载的资源，其次执行加载功能，由其子类XmlBeanDefinitionReader的loadBeanDefinitions()
+     * 方法来完成
      */
     @Override
     protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
