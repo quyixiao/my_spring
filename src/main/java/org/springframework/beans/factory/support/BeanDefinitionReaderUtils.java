@@ -142,18 +142,22 @@ public class BeanDefinitionReaderUtils {
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with
 	 * @throws BeanDefinitionStoreException if registration failed
+	 * 将解析的BeanDefinitionHold注册到Spring IoC容器中
+	 * 当调用BeanDefintionReaderUtils向Spring IoC容器中注册解析的BeanDefintion时，真正完成注册功能是DefaultListableBeanFactory
 	 */
 	public static void registerBeanDefinition(
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
 		// Register bean definition under primary name.
+		//获取解析的BeanDefinition的名称
 		String beanName = definitionHolder.getBeanName();
 
 		LogUtils.info("registerBeanDefinition beanName :" + beanName,3);
+		//向Spring Ioc容器注册BeanDefinition
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
-
 		// Register aliases for bean name, if any.
+		// 如果解析的BeanDefinition有别名，向Spring IoC容器中注册别名
 		String[] aliases = definitionHolder.getAliases();
 		LogUtils.info("registerBeanDefinition aliases :" + Arrays.toString(aliases));
 		if (aliases != null) {

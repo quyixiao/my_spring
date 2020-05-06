@@ -16,8 +16,6 @@
 
 package org.springframework.beans.factory.xml;
 
-import com.alibaba.fastjson.JSON;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -318,14 +316,14 @@ public class BeanDefinitionParserDelegate {
             lazyInit = (parentDefaults != null ? parentDefaults.getLazyInit() : FALSE_VALUE);
         }
         defaults.setLazyInit(lazyInit);
-        LogUtils.info("populateDefaults lazyInit: " + lazyInit );
+        LogUtils.info("populateDefaults lazyInit: " + lazyInit);
 
         String merge = root.getAttribute(DEFAULT_MERGE_ATTRIBUTE);
         if (DEFAULT_VALUE.equals(merge)) {
             // Potentially inherited from outer <beans> sections, otherwise falling back to false.
             merge = (parentDefaults != null ? parentDefaults.getMerge() : FALSE_VALUE);
         }
-        LogUtils.info("populateDefaults merge: " + merge );
+        LogUtils.info("populateDefaults merge: " + merge);
         defaults.setMerge(merge);
 
         String autowire = root.getAttribute(DEFAULT_AUTOWIRE_ATTRIBUTE);
@@ -333,7 +331,7 @@ public class BeanDefinitionParserDelegate {
             // Potentially inherited from outer <beans> sections, otherwise falling back to 'no'.
             autowire = (parentDefaults != null ? parentDefaults.getAutowire() : AUTOWIRE_NO_VALUE);
         }
-        LogUtils.info("populateDefaults autowire: " + autowire );
+        LogUtils.info("populateDefaults autowire: " + autowire);
         defaults.setAutowire(autowire);
 
         // Don't fall back to parentDefaults for dependency-check as it's no longer supported in
@@ -623,7 +621,7 @@ public class BeanDefinitionParserDelegate {
         } else {
             bd.setAutowireCandidate(TRUE_VALUE.equals(autowireCandidate));
         }
-        LogUtils.info("parseBeanDefinitionAttributes autowireCandidate value :" +bd.isAutowireCandidate() );
+        LogUtils.info("parseBeanDefinitionAttributes autowireCandidate value :" + bd.isAutowireCandidate());
 
         if (ele.hasAttribute(PRIMARY_ATTRIBUTE)) {
             bd.setPrimary(TRUE_VALUE.equals(ele.getAttribute(PRIMARY_ATTRIBUTE)));
@@ -885,13 +883,17 @@ public class BeanDefinitionParserDelegate {
         }
         this.parseState.push(new PropertyEntry(propertyName));
         try {
-            //
+            // 如果一个Bean中已经存在同名的<property>元素存在，则不进行解析，直接返回
+            // 即如果存在同一个Bean中配置同名的<property>元素，则只有第一个起作用
             if (bd.getPropertyValues().contains(propertyName)) {
                 error("Multiple 'property' definitions for property '" + propertyName + "'", ele);
                 return;
             }
+            //解析获取的<property>元素的值
             Object val = parsePropertyValue(ele, bd, propertyName);
+            //根据<property>元素的名字和值创建实例
             PropertyValue pv = new PropertyValue(propertyName, val);
+            //解析<property>元素中的meta属性
             parseMetaElements(ele, pv);
             pv.setSource(extractSource(ele));
             bd.getPropertyValues().addPropertyValue(pv);
@@ -943,28 +945,36 @@ public class BeanDefinitionParserDelegate {
     /**
      * Get the value of a property element. May be a list etc.
      * Also used for constructor arguments, "propertyName" being null in this case.
+     * 解析获取<property>元素的值
+     * 通过下面的源码解析，我们了解了Spring配置文件中的<bean>元素中的<property>子元素的相关配置，
+     * 1.ref 被封装成指向依赖对象的一个引用
+     * 2.value 被封装成一个字符串类型的对象
+     * 3.ref 和value都是通过解析数据类型属性值.setSource(extractSource(ele));将方法的属性或者引用与引用属性关系起来
+     * 最后<property>元素的子元素通过parsePropertySubElement()方法解析，下面我们继续分析该方法的源码，了解其解析过程
      */
     public Object parsePropertyValue(Element ele, BeanDefinition bd, String propertyName) {
         String elementName = (propertyName != null) ?
                 "<property> element for property '" + propertyName + "'" :
                 "<constructor-arg> element";
-
+        // 获取<property>中的所有的子元素，只能是ref,value,list,etc中的一种类型
         // Should only have one child element: ref, value, list, etc.
         NodeList nl = ele.getChildNodes();
         Element subElement = null;
         for (int i = 0; i < nl.getLength(); i++) {
             Node node = nl.item(i);
+            // 子元素不是description和meta属性
             if (node instanceof Element && !nodeNameEquals(node, DESCRIPTION_ELEMENT) &&
                     !nodeNameEquals(node, META_ELEMENT)) {
                 // Child element is what we're looking for.
                 if (subElement != null) {
                     error(elementName + " must not contain more than one sub-element", ele);
                 } else {
+                    // 当property元素包含子元素
                     subElement = (Element) node;
                 }
             }
         }
-
+        // 判断属性值是ref还是value，不允许既是ref 又是value
         boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
         boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
         if ((hasRefAttribute && hasValueAttribute) ||
@@ -972,22 +982,28 @@ public class BeanDefinitionParserDelegate {
             error(elementName +
                     " is only allowed to contain either 'ref' attribute OR 'value' attribute OR sub-element", ele);
         }
-
+        // 如果属性值是ref ，创建一个ref 的数据对象，RuntimeBeanReference，这个对象封装了ref
         if (hasRefAttribute) {
             String refName = ele.getAttribute(REF_ATTRIBUTE);
             if (!StringUtils.hasText(refName)) {
                 error(elementName + " contains empty 'ref' attribute", ele);
             }
+            //一个指向运行是所依赖对象的引用
             RuntimeBeanReference ref = new RuntimeBeanReference(refName);
             ref.setSource(extractSource(ele));
             return ref;
+            // 如果属性值是value,创建一个value数据对象，typedStringValue，这个对象封装了value
         } else if (hasValueAttribute) {
+            // 一个持有String类型的对象
             TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
+            // 设置这个value的数据对象被当前对象所引用
             valueHolder.setSource(extractSource(ele));
             return valueHolder;
         } else if (subElement != null) {
+            // 解析<property>子元素
             return parsePropertySubElement(subElement, bd);
         } else {
+            // 属性值既不是ref也不是value，解析出错，返回null
             // Neither child element nor "ref" or "value" attribute found.
             error(elementName + " must specify a ref or value", ele);
             return null;
@@ -1005,23 +1021,39 @@ public class BeanDefinitionParserDelegate {
      * @param ele              subelement of property element; we don't know which yet
      * @param defaultValueType the default type (class name) for any
      *                         {@code &lt;value&gt;} tag that might be created
+     *                         解析<property>元素中的ref,value或者集合等元素
+     * 通过下面的源码可以得到，在Spring配置文件中，对<property>元素中的配置的<array>，<list>,<set>，<map>，<props>，等各种子元素都
+     *                         通过上面的方法解析，生成对应的数据对象，比如ManagedList,ManagedArray,ManagedSet,等,这些managed类是
+     *                         Spring对象的BeanDefinition的数据封装，对集合数据类型的具体解析由各种解析方法实现，解析方法的命名也非常的
+     *                         一目了然
+     * 经过对SpringBean配置信息转换文档对象中的元素层层解析，Spring Ioc现在已经将XML 形式定义的Bean配置信息转换为Spring IOc所识别的数据
+     * 结构，-BeanDefinition,它是Bean配置信息中的POJO对象在Spring IOC容器中的映射，我们通过AbstractBeanDefinition作为入口，
+     *                         看如何在Spring Ioc容器进行索引，查询，和其他的操作
+     *                         通过Spring Ioc容器对Bean 的配置信息的解析，    Spring IOc 容器大致完成了Bean 对象的唯一的准备工作
+     *                         ，即初始化过程，但是最的重要的依赖注入还没有发生，在Spring IOc容器中BeanDefinition在存储的还是一些静态的
+     *                         信息，接下来，需要向容器注册Bean定义信息，才能真正的完成IOC容器的初始化工作
      */
     public Object parsePropertySubElement(Element ele, BeanDefinition bd, String defaultValueType) {
-        LogUtils.all("parsePropertySubElement "  );
+        LogUtils.all("parsePropertySubElement ");
+        // 如果<property>元素没有使用Spring默认的命名空间，则使用用户自定义的规则解析内嵌元素
         if (!isDefaultNamespace(ele)) {
             return parseNestedCustomElement(ele, bd);
+            //如果子元素是Bean,则使用解析<bean>元素的方法解析
         } else if (nodeNameEquals(ele, BEAN_ELEMENT)) {
             BeanDefinitionHolder nestedBd = parseBeanDefinitionElement(ele, bd);
             if (nestedBd != null) {
                 nestedBd = decorateBeanDefinitionIfRequired(ele, nestedBd, bd);
             }
             return nestedBd;
+            //如果子元素是ref,ref只能有3个属性，bean,local,parent
         } else if (nodeNameEquals(ele, REF_ELEMENT)) {
             // A generic reference to any name of any bean.
+            // 可以不在同一个Spring配置文件中上，具体参考 Spring 对ref配置规则
             String refName = ele.getAttribute(BEAN_REF_ATTRIBUTE);
             boolean toParent = false;
             if (!StringUtils.hasLength(refName)) {
                 // A reference to the id of another bean in the same XML file.
+                // 获取<property>元素中的parent属性值，引用父容器中的Bean
                 refName = ele.getAttribute(LOCAL_REF_ATTRIBUTE);
                 if (!StringUtils.hasLength(refName)) {
                     // A reference to the id of another bean in a parent context.
@@ -1037,29 +1069,40 @@ public class BeanDefinitionParserDelegate {
                 error("<ref> element contains empty target attribute", ele);
                 return null;
             }
+            // 创建ref类型数据，指向被引用的对象
             RuntimeBeanReference ref = new RuntimeBeanReference(refName, toParent);
+            //设置引用类型值被当前的子元素所引用
             ref.setSource(extractSource(ele));
             return ref;
+            //如果子元素是<idref>,使用解析<ref>元素的方法进行解析
         } else if (nodeNameEquals(ele, IDREF_ELEMENT)) {
             return parseIdRefElement(ele);
+            //如果子元素是<value>,使用解析<value>元素的方法解析
         } else if (nodeNameEquals(ele, VALUE_ELEMENT)) {
             return parseValueElement(ele, defaultValueType);
+            //如果子元素是null，则为<property>元素设置一个封装null值的字符串数据
         } else if (nodeNameEquals(ele, NULL_ELEMENT)) {
             // It's a distinguished null value. Let's wrap it in a TypedStringValue
             // object in order to preserve the source location.
             TypedStringValue nullHolder = new TypedStringValue(null);
             nullHolder.setSource(extractSource(ele));
             return nullHolder;
+            //如果子元素是<Array>，则使用解析<array>集合元素的方法进行解析
         } else if (nodeNameEquals(ele, ARRAY_ELEMENT)) {
             return parseArrayElement(ele, bd);
+            //如果子元素是<list>，则使用解析<list>元素的方法进行解析
         } else if (nodeNameEquals(ele, LIST_ELEMENT)) {
             return parseListElement(ele, bd);
+            //如果子元素是<set>，则使用<set>集合子元素的方法解析
         } else if (nodeNameEquals(ele, SET_ELEMENT)) {
             return parseSetElement(ele, bd);
+            // 如果子元素是<map>，则使用<map>集合中的元素方法进行解析
         } else if (nodeNameEquals(ele, MAP_ELEMENT)) {
             return parseMapElement(ele, bd);
+            //如果子元素是<props>，则使用<props>集合元素中的方法进行解析
         } else if (nodeNameEquals(ele, PROPS_ELEMENT)) {
             return parsePropsElement(ele);
+            //如果既不是ref又不是value,也不是集合，则说明子元素配置错误，返回null
         } else {
             error("Unknown property sub-element: [" + ele.getNodeName() + "]", ele);
             return null;
@@ -1148,14 +1191,20 @@ public class BeanDefinitionParserDelegate {
 
     /**
      * Parse a list element.
+     * 解析<list>集合元素
      */
     public List<Object> parseListElement(Element collectionEle, BeanDefinition bd) {
+        //获取<list>元素中的value-type属性，即获取集合元素中的数据类型
         String defaultElementType = collectionEle.getAttribute(VALUE_TYPE_ATTRIBUTE);
+        //获取<list>元素中的所有的集合结点
         NodeList nl = collectionEle.getChildNodes();
+        //Spring中将list封装成ManagedList
         ManagedList<Object> target = new ManagedList<Object>(nl.getLength());
         target.setSource(extractSource(collectionEle));
+        //设置集合目标的数据类型
         target.setElementTypeName(defaultElementType);
         target.setMergeEnabled(parseMergeAttribute(collectionEle));
+        //具体的<list>元素的解析
         parseCollectionElements(nl, target, bd, defaultElementType);
         return target;
     }
@@ -1174,12 +1223,15 @@ public class BeanDefinitionParserDelegate {
         return target;
     }
 
+    //具体的解析<list>集合子元素，<array>,<list>和<set>都使用了方法解析
     protected void parseCollectionElements(
             NodeList elementNodes, Collection<Object> target, BeanDefinition bd, String defaultElementType) {
-
+        // 遍历集合的所有的了节点
         for (int i = 0; i < elementNodes.getLength(); i++) {
             Node node = elementNodes.item(i);
+            //节点不是description节点
             if (node instanceof Element && !nodeNameEquals(node, DESCRIPTION_ELEMENT)) {
+                //将解析的元素加入到集合，递归调用下一个元素
                 target.add(parsePropertySubElement((Element) node, bd, defaultElementType));
             }
         }
@@ -1377,7 +1429,7 @@ public class BeanDefinitionParserDelegate {
 
         NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 
-        LogUtils.info("parseCustomElement handler name :" +(handler !=null ? handler.getClass().getName() :null));
+        LogUtils.info("parseCustomElement handler name :" + (handler != null ? handler.getClass().getName() : null));
 
         if (handler == null) {
             error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
@@ -1397,11 +1449,11 @@ public class BeanDefinitionParserDelegate {
         // Decorate based on custom attributes first.
         NamedNodeMap attributes = ele.getAttributes();
 
-        LogUtils.all("decorateBeanDefinitionIfRequired length :"  + attributes.getLength());
+        LogUtils.all("decorateBeanDefinitionIfRequired length :" + attributes.getLength());
         for (int i = 0; i < attributes.getLength(); i++) {
             Node node = attributes.item(i);
 
-            LogUtils.info("decorateBeanDefinitionIfRequired node name :"  +    node.getNodeName());
+            LogUtils.info("decorateBeanDefinitionIfRequired node name :" + node.getNodeName());
             finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
         }
 
@@ -1410,7 +1462,7 @@ public class BeanDefinitionParserDelegate {
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
 
-            LogUtils.info("decorateBeanDefinitionIfRequired children node name :"  +    node.getNodeName() + " , nodeType = " + node.getNodeType());
+            LogUtils.info("decorateBeanDefinitionIfRequired children node name :" + node.getNodeName() + " , nodeType = " + node.getNodeType());
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 finalDefinition = decorateIfRequired(node, finalDefinition, containingBd);
             }

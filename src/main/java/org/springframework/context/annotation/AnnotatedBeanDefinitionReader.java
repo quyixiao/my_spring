@@ -117,34 +117,40 @@ public class AnnotatedBeanDefinitionReader {
 				(scopeMetadataResolver != null ? scopeMetadataResolver : new AnnotationScopeMetadataResolver());
 	}
 
+	// 注册多个注解的Bean定义类
 	public void register(Class<?>... annotatedClasses) {
 		for (Class<?> annotatedClass : annotatedClasses) {
 			registerBean(annotatedClass);
 		}
 	}
-
+	// 注册一个注解Bean的定义类
 	public void registerBean(Class<?> annotatedClass) {
 		registerBean(annotatedClass, null, (Class<? extends Annotation>[]) null);
 	}
-
+	//Bean定义读取器注册注解Bean定义的入口方法
 	public void registerBean(Class<?> annotatedClass,
 			@SuppressWarnings("unchecked") Class<? extends Annotation>... qualifiers) {
 
 		registerBean(annotatedClass, null, qualifiers);
 	}
-
+	// Bean 定义读取器向容器注册注解Bean的定义类
 	public void registerBean(Class<?> annotatedClass, String name,
 			@SuppressWarnings("unchecked") Class<? extends Annotation>... qualifiers) {
-
+		// 根据指定的注解Bean的定义类，创建Spring容器中对注解的Bean的封装的数据结构
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(annotatedClass);
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
-
+		//
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
+		// 解析注解Bean定义的作用域，如果@scope("prototype") ,则Bean为原型类型
 		abd.setScope(scopeMetadata.getScopeName());
+		// 为注解Bean定义Bean的名称
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
+		//处理注解Bean定义中的通用注解
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
+		// 如果在向容器注册注解Bean定义时，使用额外的限定条件，即@Qualifier注解
+		// 
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
 				if (Primary.class == qualifier) {
