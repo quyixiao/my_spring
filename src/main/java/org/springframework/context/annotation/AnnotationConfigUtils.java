@@ -234,22 +234,24 @@ public class AnnotationConfigUtils {
 	public static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd) {
 		processCommonDefinitionAnnotations(abd, abd.getMetadata());
 	}
-
+	// 处理Bean定义的能用注解
 	static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata) {
 		if (metadata.isAnnotated(Lazy.class.getName())) {
+			// 如果Bean定义中有@Lazy注解，则将该Bean预实例化属性设置为@lazy注解的值
 			abd.setLazyInit(attributesFor(metadata, Lazy.class).getBoolean("value"));
 		}
 		else if (abd.getMetadata() != metadata && abd.getMetadata().isAnnotated(Lazy.class.getName())) {
 			abd.setLazyInit(attributesFor(abd.getMetadata(), Lazy.class).getBoolean("value"));
 		}
-
+		// 如果Bean定义中有@Primary注解，则将该Bean设置为autowiring自动依赖注入装配的首选对象
 		if (metadata.isAnnotated(Primary.class.getName())) {
 			abd.setPrimary(true);
 		}
+		// 如果Bean定义中有@DependsOn注解，则为该Bean设置所依赖的Bean名称
+		// 容器将确保在实例化该Bean之前首先实例化所依赖的对象Bean
 		if (metadata.isAnnotated(DependsOn.class.getName())) {
 			abd.setDependsOn(attributesFor(metadata, DependsOn.class).getStringArray("value"));
 		}
-
 		if (abd instanceof AbstractBeanDefinition) {
 			AbstractBeanDefinition absBd = (AbstractBeanDefinition) abd;
 			if (metadata.isAnnotated(Role.class.getName())) {
@@ -261,14 +263,19 @@ public class AnnotationConfigUtils {
 		}
 	}
 
+	// 根据作用域为Bean定义应用的代理模式
 	static BeanDefinitionHolder applyScopedProxyMode(
 			ScopeMetadata metadata, BeanDefinitionHolder definition, BeanDefinitionRegistry registry) {
-
+		// 获取注解Bean定义类的@Scope注解的proxyMode属性值
 		ScopedProxyMode scopedProxyMode = metadata.getScopedProxyMode();
+		// 如果配置的@Scope注解的proxyMode的属性值为NO,则不应该使用代理模式
 		if (scopedProxyMode.equals(ScopedProxyMode.NO)) {
 			return definition;
 		}
+		//获取配置的@Scope注解的proxyMode的属性值，如果为TARGET_CLASS
+		// 则返回True,如果为INTERFACES则返回false
 		boolean proxyTargetClass = scopedProxyMode.equals(ScopedProxyMode.TARGET_CLASS);
+		// 为注册的Bean创建相应的模式的代理对象
 		return ScopedProxyCreator.createScopedProxy(definition, registry, proxyTargetClass);
 	}
 

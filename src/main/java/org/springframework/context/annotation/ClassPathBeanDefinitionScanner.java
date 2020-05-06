@@ -58,6 +58,11 @@ import org.springframework.util.PatternMatchUtils;
  * @see org.springframework.stereotype.Repository
  * @see org.springframework.stereotype.Service
  * @see org.springframework.stereotype.Controller
+ * 当创建注解处理容器时，如果传入的初始化参数的注解Bean定义类所在的包，注解容器将扫描给定的包及其子包，将扫描得到的注解Bean定义载入并
+ * 进行注册
+ *
+ * AnnotationConfigApplicationContext通过调用类路径的Bean定义扫描器ClassPathBeanDefinitionScanner扫描给定包及其子包下的所有的类
+ *
  */
 public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateComponentProvider {
 
@@ -78,6 +83,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * Create a new {@code ClassPathBeanDefinitionScanner} for the given bean factory.
 	 * @param registry the {@code BeanFactory} to load bean definitions into, in the form
 	 * of a {@code BeanDefinitionRegistry}
+	 *                 创建一个类路径Bean定义扫描器
 	 */
 	public ClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry) {
 		this(registry, true);
@@ -105,7 +111,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * {@link org.springframework.stereotype.Service @Service}, and
 	 * {@link org.springframework.stereotype.Controller @Controller} stereotype annotations
 	 * @see #setResourceLoader
-	 * @see #setEnvironment
+	 * @see #setEnvironment(Environment)
+	 * 为容器创建一个类路径Bean定义扫描器，并指定是否使用默认的扫描过滤规则
+	 * 即Spring默认的扫描配置@Component,@Repository,@Service,@Controller
+	 * 注解的Bean,同时支持Java EE 6 的@ManagedBean和JSR-330的@Named注解
 	 */
 	public ClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters) {
 		this(registry, useDefaultFilters, getOrCreateEnvironment(registry));
@@ -136,10 +145,12 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		super(useDefaultFilters, environment);
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+		// 为容器设置加载Bean定义的注册器
 		this.registry = registry;
 
 		// Determine ResourceLoader to use.
 		if (this.registry instanceof ResourceLoader) {
+			// 为容器设置资源加载器
 			setResourceLoader((ResourceLoader) this.registry);
 		}
 	}
@@ -219,17 +230,19 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * Perform a scan within the specified base packages.
 	 * @param basePackages the packages to check for annotated classes
 	 * @return number of beans registered
+	 * 调用类路径的Bean定义扫描入口方法
 	 */
 	public int scan(String... basePackages) {
+		//获取容器中已经注册的Bean的个数
 		int beanCountAtScanStart = this.registry.getBeanDefinitionCount();
-
+		// 启动扫描器扫描给定包
 		doScan(basePackages);
-
+		// 注册注解配置（Annotation config）处理器
 		// Register annotation config processors, if necessary.
 		if (this.includeAnnotationConfig) {
 			AnnotationConfigUtils.registerAnnotationConfigProcessors(this.registry);
 		}
-
+		//返回注册bean的个数
 		return (this.registry.getBeanDefinitionCount() - beanCountAtScanStart);
 	}
 
@@ -240,35 +253,49 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * but rather leaves this up to the caller.
 	 * @param basePackages the packages to check for annotated classes
 	 * @return set of beans registered if any for tooling registration purposes (never {@code null})
+	 * 类路径Bean定义扫描给定的包及其子包
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		//创建bean定义的holder对象用于保存扫描后生成的bean定义对象
+		// 创建一个集合，存入扫描到的Bean 定义的封装类
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<BeanDefinitionHolder>();
 		//循环我们的包路径集合
+		// 遍历扫描所给定的包
 		for (String basePackage : basePackages) {
 			//找到候选的@Component
+			// 调用父类的ClassPathScanningCandidateComponentProvider 的findCandidateComponents方法
+			// 扫描给定类路径的，获取符合条件的Bean的定义
+			// 类路径的Bean定义扫描ClassPathBeanDefinitionScanner主要通过findCandidateComponents()方法调用其父类ClassPathScanningCadidateComponentProvider
+			// 来扫描获取给定包及其子包的类
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
+			// 遍历扫描得到的Bean
 			for (BeanDefinition candidate : candidates) {
-
+				// 获取Bean定义类中的@Scope注解的值，即获取Bean的作用域
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
+				// 为Bean设置注解配置的作用域
 				candidate.setScope(scopeMetadata.getScopeName());
-				//设置我们的beanName
+				//设置我们的beanName，为Bean生成名称
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
-				//处理@AutoWired相关的
+				// 处理@AutoWired相关的
+				// 如果扫描到Bean不是Spring的注解Bean,则为Bean设置默认值
+				// 设置Bean的自动依赖注入装配属性等
 				if (candidate instanceof AbstractBeanDefinition) {
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
-				//处理jsr250相关的组件
+				//处理jsr250相关的组件，如果扫描到的Bean是Spring的注解的Bean,则处理其通用的注解
 				if (candidate instanceof AnnotatedBeanDefinition) {
+					// 处理注解Bean中通过的注解，在分析注解Bean定义类读取器时已经分析过了
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
-				//把我们解析出来的组件bean定义注册到Spring IoC容器中
+				//把我们解析出来的组件bean定义注册到Spring IoC容器中，根据Bean名称检查指定的Bean是否需要在容器注册，或者是否是容器中
+				// 有冲突。
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
+					// 根据注解中的配置的作用域，为Bean的应用的代理模式
 					definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);
-					//注册到Spring IoC容器中
+					//注册到Spring IoC容器中，向容器注册扫描到的Bean
 					registerBeanDefinition(definitionHolder, this.registry);
 				}
 			}
