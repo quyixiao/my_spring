@@ -1032,6 +1032,9 @@ public class BeanDefinitionParserDelegate {
      *                         通过Spring Ioc容器对Bean 的配置信息的解析，    Spring IOc 容器大致完成了Bean 对象的唯一的准备工作
      *                         ，即初始化过程，但是最的重要的依赖注入还没有发生，在Spring IOc容器中BeanDefinition在存储的还是一些静态的
      *                         信息，接下来，需要向容器注册Bean定义信息，才能真正的完成IOC容器的初始化工作
+     *
+     *
+     *
      */
     public Object parsePropertySubElement(Element ele, BeanDefinition bd, String defaultValueType) {
         LogUtils.all("parsePropertySubElement ");

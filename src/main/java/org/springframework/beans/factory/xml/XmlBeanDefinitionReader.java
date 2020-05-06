@@ -377,6 +377,18 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * @param inputSource the SAX InputSource to read from
      * @return the number of bean definitions found
      * @throws BeanDefinitionStoreException in case of loading or parsing errors
+     * 下面总结一下IoC 容器初始化的基本步骤
+     * 1.初始化的入口由容器实现中的refresh()方法来调用完成
+     * 2.对bean定义载入的IOC容器使用的方法是loadBeanDefinition()
+     * 大致过程如下：通过ResourceLoader来完成资源文件的定位，DefaultResourceLoader是默认的实现，同时上下文本身就给出了ResourceLoader的实现
+     * 可以通过类路径，文件系统，URL等方式来定位资源，如果是XMLBeanFactory作为IoC容器，那么需要它指定Bean定义资源，也就是说，Bean定义文件时通过
+     * 抽象成Resource来被IoC容器处理，容器通过BeanDefinitionReader来完成定义信息的解析和Bean信息的注册，往往使用XmlBeanDefinitionReader
+     * 来解析Bean的xml定义文件，实际处理往往使用BeanDefinitinoParserDelegate来完成，从而得到Bean的定义信息，这些信息在Spring中使用了
+     * BeanDefinition来表示，这些名字可以让我们想到的是loadBeanDefinition(),registerBeanDefinition()这些相关的方法，它们都是为了处理
+     * BeanDefinition脑子短路的，容器解析得到的BeanDefinition以后，需要在IoC容器中注册，这些由IoC实现的BeanDefinitionRegistry接口实现
+     * 注册过程就是在IoC容器内部维护着一个HashMap来保存得到的BeanDefinition的过程，这个HashMap是Ioc容器持有的Bean信息场所，以后对Bean的操作
+     * 都是在这个HashMap中实现的
+     *
      */
     public int loadBeanDefinitions(InputSource inputSource) throws BeanDefinitionStoreException {
         return loadBeanDefinitions(inputSource, "resource loaded through SAX InputSource");
