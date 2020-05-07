@@ -249,6 +249,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @return an instance of the bean
 	 * @throws BeansException if the bean could not be created
 	 * 真正的实现向Ioc容器获取Bean的功能，也是就触发依赖注入的地方
+	 * 通过对IOC容器的获取Bean的的分析，我们可以看到，在Spring中，如果Bean定义为单例模式（Singleton）的，容器在创建之前先从缓存中查找
+	 * 以确保整个容器中只存在一个实例对象时，如果Bean定义为原型模式，则容器每次都会创建一个新的的实例对象，除此之外，Bean定义还可以指定其生命
+	 * 周期范围
+	 * 上面的源码只定义了根据Bean定义的不同模式采取的创建Bean实例对象的不同策略，具体的Bean实例对象创建过程由实现了ObjectFactory接口匿名
+	 * 内部类createBean()方法完成，ObjectFactory接口使用了委派模式，具体的Bean实例创建过程交由其实现类AbstractAutowireCapableBeanFactory
+	 * 完成，下面我们继续分析AbstractAutowireCapableBeanFactory的createBean()方法的源码，理解 创建Bean实例 具体的过程
+	 *
+	 *
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> T doGetBean(

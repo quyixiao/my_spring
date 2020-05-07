@@ -54,21 +54,26 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 		return currentlyInvokedFactoryMethod.get();
 	}
 
-
+	// 使用了初始化策略实例化的Bean对象
+	// 通过下面的代码可以知道，如果Bean被覆盖了，则使用 CGlib进行实例化，否则使用JDK的反射机制来进行实例化
 	@Override
 	public Object instantiate(RootBeanDefinition bd, String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
+		// 如果Bean定义中没有方法覆盖，就不需要CGLib父类方法
 		if (bd.getMethodOverrides().isEmpty()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
+				// 获取对象的构造方法或者工厂方法
 				constructorToUse = (Constructor<?>) bd.resolvedConstructorOrFactoryMethod;
 				if (constructorToUse == null) {
+					// 如果没有构造方法或者工厂方法，判断要实例化的bean是不是有接口
 					final Class<?> clazz = bd.getBeanClass();
 					if (clazz.isInterface()) {
 						throw new BeanInstantiationException(clazz, "Specified class is an interface");
 					}
 					try {
 						if (System.getSecurityManager() != null) {
+							// 这里是一个匿名的内部类，使用反射机制获取 Bean的构造方法
 							constructorToUse = AccessController.doPrivileged(new PrivilegedExceptionAction<Constructor<?>>() {
 								@Override
 								public Constructor<?> run() throws Exception {
@@ -86,10 +91,12 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 					}
 				}
 			}
+			//使用BeanUtils进行实例化，通过反射机制调用构造方法.newInstance(args)来进行实例化
 			return BeanUtils.instantiateClass(constructorToUse);
 		}
 		else {
 			// Must generate CGLIB subclass.
+			// 使用Cglib来实例化对象
 			return instantiateWithMethodInjection(bd, beanName, owner);
 		}
 	}

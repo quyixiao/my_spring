@@ -107,8 +107,10 @@ public class CglibSubclassingInstantiationStrategy extends SimpleInstantiationSt
 		 * @param args arguments to use for the constructor.
 		 * Ignored if the {@code ctor} parameter is {@code null}.
 		 * @return new instance of the dynamically generated subclass
+		 * 使用CGlib进行Bean的实例化
 		 */
 		public Object instantiate(Constructor<?> ctor, Object... args) {
+			// 创建代理子类
 			Class<?> subclass = createEnhancedSubclass(this.beanDefinition);
 			Object instance;
 			if (ctor == null) {
@@ -136,13 +138,19 @@ public class CglibSubclassingInstantiationStrategy extends SimpleInstantiationSt
 		/**
 		 * Create an enhanced subclass of the bean class for the provided bean
 		 * definition, using CGLIB.
+		 * CGLib 是一个常用的字节码生成器的类库，它提供了一系列的API 实现java字节码的生成和转换功能，我们学习了JDK的动态代理学过
+		 * ,JDK动态代理只能针对接口，如果一个类没有实例化任何接口，只要对其进行动态代理 ，只能使用CGLIb了
+		 *
 		 */
 		private Class<?> createEnhancedSubclass(RootBeanDefinition beanDefinition) {
+			// CGLib中的类
 			Enhancer enhancer = new Enhancer();
+			// 将Bean本身作为基类
 			enhancer.setSuperclass(beanDefinition.getBeanClass());
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setCallbackFilter(new MethodOverrideCallbackFilter(beanDefinition));
 			enhancer.setCallbackTypes(CALLBACK_TYPES);
+			// 使用Cglib的createClass()方法生成实例对象
 			return enhancer.createClass();
 		}
 	}
