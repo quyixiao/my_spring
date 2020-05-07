@@ -1204,6 +1204,21 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 *
 	 *           前面已经分析了容器初始化生成Bean所包含的java实例对象的过程，下面继续分析生成对象后，Spring Ioc容器是如何的将Bean
 	 *           的属性依赖关系注入到Bean实例化对象并设置好的，
+	 *Spring Ioc 容器提供了两种管理Bean依赖关系的方式
+	 * 1.显示管理：通过BeanDefintion的属性值和构造方法实现Bean依赖关系管理
+	 * 2.autowiring: Spring ioc 容器有依赖自动装配的功能，不需要对Bean属性的依赖关系做显示的声明，只需要配置好autowing属性，Ioc容器
+	 * 会自动的使用反射查找属性的类型和名称，然后基于属性的类型或者名称来自动匹配容器中的Bean , 从而自动的完成依赖注入
+	 * 容器对Bean 的自动装配发生在容器依赖注入的过程，在对Spring IOc容器的依赖注入的源码分析时，我们已经知道容器对Bean 实例对象的依赖
+	 * 属性注入发生在AbstractAutoWireCapabelBeanFactory类的populateBean()方法，下面的程序就分析autowiring原理
+	 *
+	 * 应用程序第一次通过getBean()方法配置了lazy-init预实例化，属性例外，向Ioc容器索取Bean时，容器创建Bean实例对象，并且对Bean
+	 * 实例对象进行属性依赖注入，AbstractAutoWireCapableBeanFactory的populateBean()方法实现了属性的依赖注入的功能，
+	 *
+	 *
+	 * 将Bean 属性设置到生成的实例对象上
+	 *
+	 *
+	 *
 	 */
 	protected void populateBean(String beanName, RootBeanDefinition mbd, BeanWrapper bw) {
 		PropertyValues pvs = mbd.getPropertyValues();
@@ -1240,16 +1255,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return;
 		}
 		// 获取容器在解析Bean定义资源为BeanDefinition设置属性值
+		// 处理依赖注入，首先处理autowing自动装配的依赖注入
 		if (mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_NAME ||
 				mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_TYPE) {
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
 
 			// Add property values based on autowire by name if applicable.
+			// 根据Bean 名称进行autowiring自动装配处理
 			if (mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_NAME) {
 				autowireByName(beanName, mbd, bw, newPvs);
 			}
 
 			// Add property values based on autowire by type if applicable.
+			// 根据Bean 类型进行autowiring自动装配处理
 			if (mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_TYPE) {
 				autowireByType(beanName, mbd, bw, newPvs);
 			}
@@ -1257,6 +1275,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			pvs = newPvs;
 		}
 
+		// 对非autowiring的属性进行依赖注入处理
 		boolean hasInstAwareBpps = hasInstantiationAwareBeanPostProcessors();
 		boolean needsDepCheck = (mbd.getDependencyCheck() != RootBeanDefinition.DEPENDENCY_CHECK_NONE);
 

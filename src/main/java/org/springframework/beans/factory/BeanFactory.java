@@ -106,6 +106,16 @@ import org.springframework.core.ResolvableType;
  * @see org.springframework.beans.factory.support.RootBeanDefinition#getDestroyMethodName
  * 在BeanFactory 里只对Ioc容器基本行为做了定义，根本不关心你的bean 是如何定义及怎样加载的，
  * 正如我们只关心能从工厂里得到什么产品，不关心工厂是怎样生产出来的这些产品的
+ * Spring 中两个很容易混淆的类，BeanFactory,FactoryBean
+ * BeanFactory ：Bean 工厂，是一个工厂（Factory）是Spring Ioc容器最高层接口就是BeanFactory,它的作用就是管理Bean,即实例化，定位，配置
+ * 应用程序中的对象及建立这些对象之间的依赖
+ * FactoryBean : 工厂Bean ，是一个Bean ,使用是产生其他Bean的实例，这种Bean 没有什么特别的要求，仅需要一个提供一个工厂方法，该方法
+ * 用来返回其他的Bean 实例，在通常的情况下，Bean 无需自己实现工厂模式，Spring 容器担任的工厂的角色，在少数的情况下，容器中的Bean 本身就是
+ * 工厂，其作用就是产生其他的Bean ,
+ * 当用户使用容器时，可以使用转义字符"&"来得到FactoryBean本身，以区别通过FactoryBean产生的实例化对象和FactoryBean对象本身，在BeanFactory
+ * 中通过如下的代码定义来该转义字符
+ * String FACTORY_BEAN_PREFIX="&"
+ *
  */
 public interface BeanFactory {
 

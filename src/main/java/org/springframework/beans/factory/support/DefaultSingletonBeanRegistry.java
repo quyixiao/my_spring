@@ -432,9 +432,23 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * to be destroyed before the given bean is destroyed.
 	 * @param beanName the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
+	 *                          为指定的Bean注入依赖的Bean
+	 *
+	 *                          1.对Bean的属性调用getBean()方法 ，完成依赖Bean的初始化和依赖注入
+	 *                          2.将依赖Bean的属性引用设置到被依赖的Bean的属性上
+	 *                          3.将依赖的Bean的名称和被依赖的Bean的名称存储到IoC容器的集合中
+	 *
+	 *                          Spring IoC 容器的autowiring自动属性依赖注入是一个很方便的特性，可以简化开发配置，但是凡事都有两面
+	 *                          性，自动属性依赖注入也有不足，首先，Bean的依赖关系在配置文件中无法很清楚的看出来，会给维护造成一定的
+	 *                          困难，其实，由于自动属性依赖注入是Spring 容器自动执行的，容器是会智能的判断的，如果配置不当用，将会
+	 *                         带来无法预料的后果，所以在使用自动属性依赖注入的时候需要综合的考虑
+	 *
+	 *
+	 *
 	 */
 	public void registerDependentBean(String beanName, String dependentBeanName) {
 		// A quick check for an existing entry upfront, avoiding synchronization...
+		// 处理Bean的名称，将别名转换成规范的Bean的名称
 		String canonicalName = canonicalName(beanName);
 		Set<String> dependentBeans = this.dependentBeanMap.get(canonicalName);
 		if (dependentBeans != null && dependentBeans.contains(dependentBeanName)) {
@@ -442,20 +456,29 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 
 		// No entry yet -> fully synchronized manipulation of the dependentBeans Set
+		// 多线程同步，保证容器内数据是一致的
+		// 在容器中通过Bean名称->全部依赖Bean的名称的集合，查找 指定的名称的Bean的依赖Bean
 		synchronized (this.dependentBeanMap) {
+			// 获取指定名称Bean，所有的依赖Bean的名称
 			dependentBeans = this.dependentBeanMap.get(canonicalName);
 			if (dependentBeans == null) {
+				// 为Bean 设置依赖Bean信息
 				dependentBeans = new LinkedHashSet<String>(8);
 				this.dependentBeanMap.put(canonicalName, dependentBeans);
 			}
+			// 在向容器中通过Bean 名称全部依赖Bean的名称集合，添加Bean的依赖信息
+			// 即，将Bean所依赖的Bean添加到容器集合中
 			dependentBeans.add(dependentBeanName);
 		}
+		//在向容器中通过Bean 名称-> 指定名称Bean依赖Bean集合，查找指定名称的Bean的依赖Bean
 		synchronized (this.dependenciesForBeanMap) {
 			Set<String> dependenciesForBean = this.dependenciesForBeanMap.get(dependentBeanName);
 			if (dependenciesForBean == null) {
 				dependenciesForBean = new LinkedHashSet<String>(8);
 				this.dependenciesForBeanMap.put(dependentBeanName, dependenciesForBean);
 			}
+			// 在容器中通过Bean 名称指定Bean的依赖Bean名称集合，添加Bean的依赖信息
+			// 即将Bean所有的依赖的Bean添加到容器的集合中
 			dependenciesForBean.add(canonicalName);
 		}
 	}

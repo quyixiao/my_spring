@@ -755,6 +755,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		return (this.configurationFrozen || super.isBeanEligibleForMetadataCaching(beanName));
 	}
 
+	// 对配置了lazy-init属性的单例模式的Bean实例化
+	// 通过对lazy-init处理源码分析可以看出，如果设置了lazy-init属性，则容器在完成Bean定义的注册后，会通过getBean()方法触发指定的
+	// Bean 的初始化和依赖注入，如果前面所述，这样当应用程序第一次向容器索取所需要的Bean时，容器不再需要对Bean进行初始化的依赖注入
+	// 可直接从已经完成的实例化和依赖注入的Bean中取一个现在的Bean ,提高第一次获取Bean的性能
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
 		if (this.logger.isDebugEnabled()) {
@@ -767,12 +771,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Trigger initialization of all non-lazy singleton beans...
 		for (String beanName : beanNames) {
+			// 获取指定名称的Bean 定义
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			// Bean 不是抽象的，是单例模式的，且lazy-init属性配置为false
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				// 如果指定的名称的Bean是创建容器的Bean
 				if (isFactoryBean(beanName)) {
+					// FACTORY_BEAN_PREFIX="&",当Bean 名称前面加了&符号时，获取的是容器对象本身，而不是容器产生的Bean
+					// 调用getBean 方法，触发Bean实例化，和依赖注入
 					final FactoryBean<?> factory = (FactoryBean<?>) getBean(FACTORY_BEAN_PREFIX + beanName);
+					// 标识是否需要预实例化
 					boolean isEagerInit;
 					if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
+						// 一个匿名的内部类
 						isEagerInit = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
 							@Override
 							public Boolean run() {
@@ -785,6 +796,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 								((SmartFactoryBean<?>) factory).isEagerInit());
 					}
 					if (isEagerInit) {
+						// 调用getBean()方法，触发Bean实例化和依赖注入
 						getBean(beanName);
 					}
 				}

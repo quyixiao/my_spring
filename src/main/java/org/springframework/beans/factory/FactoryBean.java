@@ -49,6 +49,11 @@ package org.springframework.beans.factory;
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.jndi.JndiObjectFactoryBean
+ * 工厂Bean ,用于产生其他的对象
+ *
+ * FactoryBean 接口实现非常的多，比如Proxy,RMI,JNDI,ServletContextFactoryBean 等，FactoryBean 接口为Spring 提供了一个很好的封装
+ * 机制，具体的获取对象的方法由不同的实现类根据不同的实现策略来提供，我们分析一下最简单的AnnotationTestFactoryBean 类的源码
+ *
  */
 public interface FactoryBean<T> {
 
@@ -68,6 +73,7 @@ public interface FactoryBean<T> {
 	 * @return an instance of the bean (can be {@code null})
 	 * @throws Exception in case of creation errors
 	 * @see FactoryBeanNotInitializedException
+	 * 获取容器管理的对象实例
 	 */
 	T getObject() throws Exception;
 
@@ -89,6 +95,7 @@ public interface FactoryBean<T> {
 	 * @return the type of object that this FactoryBean creates,
 	 * or {@code null} if not known at the time of the call
 	 * @see ListableBeanFactory#getBeansOfType
+	 * 获取Bean 工厂创建的对象的类型
 	 */
 	Class<?> getObjectType();
 
@@ -114,6 +121,7 @@ public interface FactoryBean<T> {
 	 * @return whether the exposed object is a singleton
 	 * @see #getObject()
 	 * @see SmartFactoryBean#isPrototype()
+	 * Bean 工厂创建的对象是否是单例模式，如果是则整个容器中只有一个实例对象，每次请求都是返回一个实例对象
 	 */
 	boolean isSingleton();
 

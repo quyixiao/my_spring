@@ -532,6 +532,19 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * refresh()方法的主要作是： 在创建Ioc容器前，如果已经有容器存在，需要把已有的容器销毁和关闭，以保证在refresh()方法之后的使用的是新
      * 创创建的Ioc容器，它类似于对Ioc容器的重启，在新创建的容器中对容器进行初始化，对Bean配置资源进行载入
      *
+     *
+     * 我们已经知道，IoC容器初始化过程就是对Bean定义资源的定位，载入和注册，此时容器对Bean的依赖注入并没有发生，依赖注入是在应用程序
+     * 第一次向索取Bean时通过getBean()方法来完成的
+     *
+     * 当Bean定义资源的Bean元素中配置了lazy-init=false 属性时，容器将会在初始化时对所配置的Bean进行实例化，Bean的依赖注入在容器在容器
+     * 初始化时就已经完成，这样应用程序第一次向容器索取被管理的Bean时，就不用再初始化和对应的Bean进行依赖注入了，而是直接从容器中获取
+     * 已经完成依赖注入Bean,提高了应用程序第一次向容器获取Bean的性能
+     *
+     * refresh()方法
+     * IOC 容器读入已经定位的Bean 定义资源是从refresh()方法开始的，我们从AbstractApplicationContext类的refresh()方法入手分析
+     *
+     *
+     *
      */
     @Override
     public void refresh() throws BeansException, IllegalStateException {
@@ -544,6 +557,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
             // Tell the subclass to refresh the internal bean factory.
             // 告诉子类启动refreshBeanFactory()方法，Bean定义资源文件的载入从子类 的refreshBeanFactory()方法启动
+            // 在refresh()方法中 ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory() 启动了Bean的注册
+            // Bean定义资源的载入，注册过程，finishBeanFactoryInitialization() 方法是对注册后的Bean定义中的预实例化(lazy-init=false)
+            // Spring 默认进行预实例化，即为true的Bean 进行处理的地方
             log.info("start obtainFreshBeanFactory");
             ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
             log.info("end obtainFreshBeanFactory");
@@ -943,9 +959,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     /**
      * Finish the initialization of this context's bean factory,
      * initializing all remaining singleton beans.
+     * 当Bean 定义资源被载入IoC容器之后，容器将Bean定义资源解析成容器内部的数据结构BeanDefinition，并注册到容器中，AbstractApplicationContext
+     * 类中的finishBeanFactoryInitialization() 方法配置了预实例化属性的Bean进行预初始化如下：
+     * 对配置了lazy-init属性进行预实例化处理
      */
     protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
         // Initialize conversion service for this context.
+        // 这是Spring 3 新加的代码，为容器指定个转换服务（ConversionService）
+        // 在对某些Bean属性进行转换时使用
         if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
                 beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
             LogUtils.info("finishBeanFactoryInitialization beanFactory constains conversionService");
@@ -961,12 +982,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         }
 
         // Stop using the temporary ClassLoader for type matching.
+        // 为了使类型匹配，停止使用临时的类加载器
         beanFactory.setTempClassLoader(null);
 
         // Allow for caching all bean definition metadata, not expecting further changes.
+        // 缓存容器中所有的注册的BeanDefinition元数据，以防止被修改
         beanFactory.freezeConfiguration();
 
         // Instantiate all remaining (non-lazy-init) singletons.
+        // 对配置了lazy-init属性的单例模式的Bean进行预实例化处理
         beanFactory.preInstantiateSingletons();
     }
 
