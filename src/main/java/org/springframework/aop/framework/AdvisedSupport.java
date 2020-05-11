@@ -481,6 +481,9 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * @param method the proxied method
 	 * @param targetClass the target class
 	 * @return List of MethodInterceptors (may also include InterceptorAndDynamicMethodMatchers)
+	 * 可以看出来，拦截器是由advisorChainFactory的getInterceptorsAndDynamicInterceptionAdvice()方法来完成的，
+	 * 并且获得的结果是可以缓存下来的
+	 *
 	 */
 	public List<Object> getInterceptorsAndDynamicInterceptionAdvice(Method method, Class<?> targetClass) {
 		MethodCacheKey cacheKey = new MethodCacheKey(method);

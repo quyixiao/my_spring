@@ -23,6 +23,9 @@ package org.springframework.aop.framework.adapter;
  * @author Juergen Hoeller
  * @author Phillip Webb
  * @see DefaultAdvisorAdapterRegistry
+ * GlobalAdvisorAdapterRegistry 类负责拦截器适配和注册的过程，这个类直到了适配器和单例的作用，提供了一个DefaultAdvisorAdapterRegistry
+ * 类完成各种通知的适配和注册过程
+ *
  */
 public abstract class GlobalAdvisorAdapterRegistry {
 

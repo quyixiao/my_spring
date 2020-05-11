@@ -46,6 +46,20 @@ import org.springframework.aop.support.MethodMatchers;
 @SuppressWarnings("serial")
 public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializable {
 
+
+	/***
+	 * @param config the AOP configuration in the form of an Advised object
+	 * @param method the proxied method
+	 * @param targetClass the target class (may be {@code null} to indicate a proxy without
+	 * target object, in which case the method's declaring class is the next best option)
+	 * @return
+	 * 从提供的配置实例config中获取advisor列表，遍历处理这些Advisor，如果是IntroductionAdvisor，则判断
+	 * Advisor能不应用到目标类targetClass上，如果是PointcutAdvisor，则判断此Advisor能否应用到目标方法method上，满足条件
+	 * 的Advisor通过AdvisorAdaptor转化成拦截器列表返回
+	 *	这个方法执行完成后，Advised 中配置的能够应用到连接点，JointPoint或者目标对象Target Object的Advisor全部转换成MethodInterceptor
+	 *接下来，我们可以看到拦截器是怎样起作用的
+	 *
+	 */
 	@Override
 	public List<Object> getInterceptorsAndDynamicInterceptionAdvice(
 			Advised config, Method method, Class<?> targetClass) {
@@ -54,15 +68,19 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 		// but we need to preserve order in the ultimate list.
 		List<Object> interceptorList = new ArrayList<Object>(config.getAdvisors().length);
 		Class<?> actualClass = (targetClass != null ? targetClass : method.getDeclaringClass());
+		// 查看是否包含IntroductionAdvisor
 		boolean hasIntroductions = hasMatchingIntroductions(config, actualClass);
+		// 这里实际上注册了一系列的AdvisorAdapter，用于将Advisor转化成MethodInterceptor
 		AdvisorAdapterRegistry registry = GlobalAdvisorAdapterRegistry.getInstance();
-
 		for (Advisor advisor : config.getAdvisors()) {
 			if (advisor instanceof PointcutAdvisor) {
 				// Add it conditionally.
 				PointcutAdvisor pointcutAdvisor = (PointcutAdvisor) advisor;
 				if (config.isPreFiltered() || pointcutAdvisor.getPointcut().getClassFilter().matches(actualClass)) {
+					// 这里两个方法的位置是可以转换的
+					// 将Advisor转换成Interceptor
 					MethodInterceptor[] interceptors = registry.getInterceptors(advisor);
+					// 检查当前Advisor的切入点是否可以匹配当前方法
 					MethodMatcher mm = pointcutAdvisor.getPointcut().getMethodMatcher();
 					if (MethodMatchers.matches(mm, method, actualClass, hasIntroductions)) {
 						if (mm.isRuntime()) {

@@ -45,7 +45,8 @@ public class MethodBeforeAdviceInterceptor implements MethodInterceptor, Seriali
 		Assert.notNull(advice, "Advice must not be null");
 		this.advice = advice;
 	}
-
+	// 可以看出.invoke()方法中首先触发了Advise的before()方法回调，然后才执行proceed()方法
+	//
 	@Override
 	public Object invoke(MethodInvocation mi) throws Throwable {
 		this.advice.before(mi.getMethod(), mi.getArguments(), mi.getThis() );
