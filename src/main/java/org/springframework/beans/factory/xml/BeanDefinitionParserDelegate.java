@@ -1444,7 +1444,8 @@ public class BeanDefinitionParserDelegate {
     public BeanDefinitionHolder decorateBeanDefinitionIfRequired(Element ele, BeanDefinitionHolder definitionHolder) {
         return decorateBeanDefinitionIfRequired(ele, definitionHolder, null);
     }
-
+    // 我们总结一下 decorateBeanDefinitionIfRequired 方法的作用，在 decorateBeanDefinitionIfRequired 中，我们可以看到程序的
+    // 默认的标签的处理其实是直接略过的，因此，默认的标签到这里已经被处理完成，这里对自定义的标签或者说对 bean 的我自定义属性感兴趣
     public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
             Element ele, BeanDefinitionHolder definitionHolder, BeanDefinition containingBd) {
         BeanDefinitionHolder finalDefinition = definitionHolder;
@@ -1453,6 +1454,7 @@ public class BeanDefinitionParserDelegate {
         NamedNodeMap attributes = ele.getAttributes();
 
         LogUtils.all("decorateBeanDefinitionIfRequired length :" + attributes.getLength());
+        //遍历所有的属性，看看是否有适用于修饰的属性
         for (int i = 0; i < attributes.getLength(); i++) {
             Node node = attributes.item(i);
 
@@ -1461,6 +1463,7 @@ public class BeanDefinitionParserDelegate {
         }
 
         // Decorate based on custom nested elements.
+        // 遍历所有的子节点，看看是否有适用于修饰的子元素
         NodeList children = ele.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
@@ -1475,13 +1478,18 @@ public class BeanDefinitionParserDelegate {
 
     public BeanDefinitionHolder decorateIfRequired(
             Node node, BeanDefinitionHolder originalDef, BeanDefinition containingBd) {
-
+        // 获取自己定义标签的命名空间
         String namespaceUri = getNamespaceURI(node);
         LogUtils.info("decorateIfRequired namespaceUri :" + namespaceUri);
+        // 对于非默认标签进行修饰
         if (!isDefaultNamespace(namespaceUri)) {
             LogUtils.info("decorateIfRequired isDefaultNamespace namespaceUri :" + namespaceUri);
+            // 根据命名空间找到对应的处理器
+            // 程序走到这里，条理其实已经非常的清楚了，首先获取属性或者元素的命名空间，以此来判断该元素或者属性是否适用于自定义标签的解析条件
+            // 找出自定义类型所对应的NamespaceHandler并进行进一步的解析
             NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
             if (handler != null) {
+                // 进行修饰
                 return handler.decorate(node, originalDef, new ParserContext(this.readerContext, this, containingBd));
             } else if (namespaceUri != null && namespaceUri.startsWith("http://www.springframework.org/")) {
                 error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", node);
