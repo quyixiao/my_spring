@@ -40,26 +40,54 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	/** Map from alias to canonical name */
 	private final Map<String, String> aliasMap = new ConcurrentHashMap<String, String>(16);
 
-
+	/***
+	 * 在对 bean 进行定义时，除了使用 id属性来指定名称之外，为了提供了名称，可以使用 alias 标签来指定，而所有的
+	 *  这些名称都指向同一个 bean,在某些情况下，提供的别名非常的有用，比如了为让每个引用更加的容易的对公共的组件 进行引用
+	 *  然而，在定义 bean时就指定所有的别名并不是总是恰当的，有时， 我们期望能在当前位置为那些在别处的 bean 定义 bean引入别名
+	 *  在 xml 配置文件中，可用单独的 alias元素来完成 bean 别名定义，如配置文件中的定义一个 javaBean
+	 *  <bean id="testBean" class="com.test"></bean>
+	 *  要给这个 javaBean 增加别名，以方便不同的对象来引用 ，我们就可以直接的使用 bean 标签中的 name 属性
+	 *  <bean id="testBean" name = "testBean,testBean2" class="com.test"></bean>
+	 *  同样 Spring 还有另一个种声明别名的方式
+	 *  <bean id="testBean" class="com.test"></bean>
+	 *  <bean name = "testBean" alias = "testBean,testBean2"></bean>
+	 *
+	 * 	考虑一个更加具体的例子，组件 A 在 XML 配置文件中定义了一个名字为 componetA 的 Datasorce 类型的 bean,但是组件 B 却想在其
+	 * 	XML 文件中以 componetB 命名来引用此 bean ，而且在主程序 MyApp 中的 xml 配置文件中，希望以 myApp 的名字来引用些类型的 bean,
+	 * 	最后，容器加载3个 XML 文件来生成最终的 ApplicationContext,在些情形下，可以通过配置文件中添加下列的 alias 元素来实现
+	 * 	<alias name="componentA" alias="componentB" />
+	 * 	<alias name="componentA" alias="myApp"/>
+	 *
+	 *
+	 *  下面的代码中可以得到注册的 alias 步骤如下：
+	 *  1.alias 与 beanName 相同的情况处理，若 alias 与 BeanName并名称相同则不需要处理并删除掉原有的 alias
+	 *  2.alias 覆盖处理，若 aliasName 已经使用并已经指向了另一个 BeanName，则需要用户的设置进行处理
+	 *  3.alias 循环检查，当 A->B 存在时，若再次出现 A->C->B  时候则会抛出异常
+	 *  注册 alias
+	 */
 	@Override
 	public void registerAlias(String name, String alias) {
 		Assert.hasText(name, "'name' must not be empty");
 		Assert.hasText(alias, "'alias' must not be empty");
+		//如果 beanName 与 alias 相同的话，就不再记录 alias，并删除对应的 alias
 		if (alias.equals(name)) {
 			this.aliasMap.remove(alias);
 		}
 		else {
+
 			String registeredName = this.aliasMap.get(alias);
 			if (registeredName != null) {
 				if (registeredName.equals(name)) {
 					// An existing alias - no need to re-register
 					return;
 				}
+				//如果 alias 不允许被覆盖则抛出异常
 				if (!allowAliasOverriding()) {
 					throw new IllegalStateException("Cannot register alias '" + alias + "' for name '" +
 							name + "': It is already registered for name '" + registeredName + "'.");
 				}
 			}
+			// 当 A-> B 存在时，若再次出现 A->C->B 时候，则抛出异常
 			checkForAliasCircle(name, alias);
 			this.aliasMap.put(alias, name);
 		}

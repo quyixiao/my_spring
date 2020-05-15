@@ -1426,10 +1426,17 @@ public class BeanDefinitionParserDelegate {
         return parseCustomElement(ele, null);
     }
 
+    // containingBd 为父类的 bean ，对顶层元素的解析应该设置为 null
+    //  其实思路非常的简单，无非是根据对应的Bean获取对应的命名空间，根据命名空间解析对应的处理器，然后根据用户自定义的处理器进行解析，
+    //
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
+        // 获取对应的命名空间
         String namespaceUri = getNamespaceURI(ele);
         LogUtils.info("parseCustomElement namespaceUri :" + namespaceUri);
-
+        // 根据命名空间找到对应的 NamespaceHandler，
+        // 在 readerContext 初始化的时候，其属性 namespaceHandlerResolver 已经被初始化成了DefaultNamespaceHandlerResolver
+        // 的实例了，所以这里调用 resolver 方法其实调用的是 DefaultNamespaceHandlerResolver 类中的方法，我们进入了
+        // DefaultNamespaceHandlerResolver 的 resolver 方法进行查看
         NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 
         LogUtils.info("parseCustomElement handler name :" + (handler != null ? handler.getClass().getName() : null));
@@ -1438,6 +1445,12 @@ public class BeanDefinitionParserDelegate {
             error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
             return null;
         }
+        // 调用自定义的 NamesapceHandler  进行解析
+        // 得到了解析器以及要分析的元素后，Spring 就可以将解析工作委托给自定义的解析器去解析，在 Spring 中的代码为
+        //  return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
+        // 以前提到的示例进行分析，此时的 Handler 已经被实例化成为我们自定义的 MyNameSpaceHandler 了，而 MyNamespaceHandler
+        // 已经完成了初始化的工作，但是我们实现自定义的命名空间处理器并没有实现 parse 方法，所以推断，这个方法是父类中实现的
+        //
         return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
     }
 
@@ -1525,6 +1538,11 @@ public class BeanDefinitionParserDelegate {
      * Subclasses may override the default implementation to provide a different namespace identification mechanism.
      *
      * @param node the node
+     * 标签的解析是从命名空间中提起开始，无论是区分 Spring 默认的标签和还是区分自定义标签中不同的标签的处理器是以标签所提供的命名空间
+     *             为基础的，而至于如何提取对应的元素命名空间其实并不需要我们亲自去实现，在 org.w3c.dom.Node 中已经提供了方法，直接
+     *              给我们调用
+     *
+     *
      */
     public String getNamespaceURI(Node node) {
         LogUtils.info("getNamespaceURI node Name :" + node.getClass().getName());

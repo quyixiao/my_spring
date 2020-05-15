@@ -838,11 +838,20 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// 是Spring IoC容器的控制反转的基础，也正是有了这些信息，容器才进行依赖注入的
 	// Spring IoC容器对于类级别的注解和类内部的注解处理策略如下
 	// 类级别的注解，如@Component,@Repository,@Controller,@Service,以及JavaEE 6的@ManageBean @Named，都是添加在类上的类级别的注解
-	//Spring IC容器根据注解的过滤规则，扫描读取注解的Bean的定义类，并将其注册到Spring IoC容器中
+	//Spring IoC容器根据注解的过滤规则，扫描读取注解的Bean的定义类，并将其注册到Spring IoC容器中
 	// 2.类内部的注解，如@Autoweire,@Value,@Resource,以及EJB和WebSerivce相关的注解等，都是添加在类内部的字段或者方式上的类部注解
 	// Spring IoC容器通过Bean后置注解处理解析Bean内部的注解
 	// 下面将分析Spring 处理注解相关的源码
+
 	//
+	// 对于 beanDefinition注册，或许很多的人认为的方式就是将 beanDefinition 直接放入到 map中就好了，使用 BeanName 作为key ，确实
+	// Spring 就是这样做的，只不过除此之外，它还做了一些其他的事情
+	// 1.对于 abstractBeanDefinition 的校验，在解析 XML文件的时候，我们提过校验，但是些校验非彼校验，之前的校验时针对XML 格式的校验，而
+	// 此时的校验是针对于 AbstractBeanDefinition 的 methodOverrides 属性的
+	// 2.对 beanName 已经注册的情况的处理，如果设置了不允许 bean覆盖，则需要抛出异常，否则直接覆盖
+	// 3.加入 map 缓存
+	// 4.清除解析之前留下的对应的 beanName 的缓存
+
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
@@ -854,6 +863,8 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				LogUtils.info(" beanDefinition class Name :" + beanDefinition.getClass().getName());
+				//注册前的最后一次校验，这里检验不同于之前的 XML 文件的校验，主要是对于 AbstractBeanDefinition 属性中的 methodOverrides 校验
+				// 校验的 methodsOverides 是否是工厂方法并存或者 methodOverrides 对应的方法根本不存在
 				((AbstractBeanDefinition) beanDefinition).validate();
 			}
 			catch (BeanDefinitionValidationException ex) {
@@ -863,10 +874,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		BeanDefinition oldBeanDefinition;
-
+		// beanDefinitionMap 是一个全局的变量，这里定会存在并发访问的情况
 		oldBeanDefinition = this.beanDefinitionMap.get(beanName);
 		LogUtils.info("registerBeanDefinition oldBeanDefinition :" + oldBeanDefinition ,3);
 		if (oldBeanDefinition != null) {
+			// 如果对应的了 BeanName 已经注册且配置了 Bean 不允许被覆盖，则抛出异常
 			if (!isAllowBeanDefinitionOverriding()) {
 				throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 						"Cannot register bean definition [" + beanDefinition + "] for bean '" + beanName +
@@ -896,13 +908,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 		}
 		else {
+			//记录 beanName
 			this.beanDefinitionNames.add(beanName);
 			this.manualSingletonNames.remove(beanName);
 			this.frozenBeanDefinitionNames = null;
 		}
 
 
-
+		// 注册 beanDefinition
 		this.beanDefinitionMap.put(beanName, beanDefinition);
 
 		LogUtils.info("registerBeanDefinition beanDefinition ：" + beanDefinition.getClass().getName() + " \n " + beanDefinition);

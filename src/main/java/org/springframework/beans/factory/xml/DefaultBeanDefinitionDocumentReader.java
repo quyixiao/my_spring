@@ -182,11 +182,110 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					// 获取文档节点的XML元素的节点
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
-						// 使用Spring的Bean规则解析元素节点
+						// 使用Spring的Bean规则解析元素节点 | 开始默认标签解析
 						parseDefaultElement(ele, delegate);
 					}
 					else {
-						// 如果没有使用Spring默认的xml命名空间，则使用用户自定义的解析规则解析元素的节点
+						// 如果没有使用Spring默认的xml命名空间，则使用用户自定义的解析规则解析元素的节点 |  开始自定义标签两种格式的区分
+						// Spring 拿到一个元素时首先要做的是根据命名空间进行解析，如果是默认的命名空间，则使用 parseDefaultElment方法
+						// 进行元素解析，否则使用 parseCustomElment 元素进行解析，在分析自定义标签的解析过程前，我们先了解一下使用过程
+						// 在很多的情况下，我们需要为系统提供可配置的支持，简单的做法可以直接基于 Spring 的标准来配置，但是配置较为复杂
+						// 的时候，解析工作是一个不得不考虑的负担，Spring 提供了可扩展的 Schema 的支持，这是一个不错的折中方案，扩展
+						// Spring 自定义的标签配置大致需要以下的几个步骤，前提是把 Spring 的 core 包加入到项目中
+						// 1.创建需要扩展的组件
+						// 2.定义一个 xsd 文件描述组件内容
+						// 3.创建一个文件，实现 BeanDefinitionParser接口，用来解析 xsd 文件中的定义和组件定义
+						// 4.创建一个 Handler文件，扩展自NamespaceHandlerSupport，目的是将组件注册到 Spring 容器中
+						// 编写 Spring.handlers和 Spring.schemas
+						/***
+						 * public class User{
+						 *   private String userName;
+						 *   private String email;
+						 * }
+						 * 定义一个 XSD 文件描述组件内容
+						 * <?xml version="1.0" encoding="UTF-8"?>
+						 * <beans xmlns="http://www.springframework.org/schema/beans"
+						 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						 *        targetNamespace="http://www.lexueba.com/schema/user"
+						 *        xmlns:tns="http://www.lexueba.com/schema/user"
+						 *        elementFormDefault="qualified">
+						 *        <elment name="user">
+						 *         		<complexType>
+						 *         		 	<attribute name="id" type="string" />
+						 *         		 	<attribute name="userName" type="string"/>
+						 *         		 	<attribute name="email" type="string"></attribute>
+						 *         		</complexType>
+						 *         </elment>
+						 *	在上面的 XSD 文件中描述了一个新的 targetNamespace ，并在这个空间中定义了一个 name
+						 * 为 user的 element，user 有三个属性 id,userName,和 email ,其中 email 的类型为 string，这3个类主要验证
+						 * Spring 配置文件中的自定义格式，xsd 文件是 XML DTD 的替代者，使用 XML Schema 语言进行编写，这里对 XSD
+						 * Schema 不做太多的解析，有兴趣的读者可以参考相关资料
+						 * 创建一个文件 ：实现 BeanDefinitionParser 接口，用来解析 XSD 文件中的定义和组件定义
+						 *
+						 * import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+						 * import org.springframework.beans.factory.xml.AbstractSingleBeanDefinitionParser;
+						 * import org.springframework.util.StringUtils;
+						 * import org.w3c.dom.Element;
+						 * public class UserBeanDefinitionParser extends AbstractSingleBeanDefinitionParser{
+						 * 	//Elment 对应的类
+						 * 	protected Class getBeanClass(Elment element){
+						 * 		return User.class;
+						 * 	}
+						 * 	// 从 element 中解析提取对应的元素
+						 * 	protected void doParse(Element element,BeanDefinitionBuilder bean){
+						 * 		String userName = element.getAttribute("userName");
+						 * 		String email = element.getAttribute("email");
+						 * 		// 将提取的数据放到 BeanDefinitionBuilder中，待完成完成所有的 Bean的解析后，统一的注册到 BeanFactory 中
+						 * 		if(StringUtils.hasText(userName)){
+						 * 				bean.addPropertyValue("userName",userName);
+						 * 		}
+						 * 		if(StringUtils.hasText(email)){
+						 * 			bean.addPropertyValue("email",email);
+						 * 		}
+						 * }
+						 *
+						 *  创建一个 Handler文件，扩展自 NamespaceHandlerSupport，目的是将组件注册到 Spring 容器
+						 *  import org.Springframework.beans.factory.xml.NamespaceHandlerSupport;
+						 *  public class MyNamespaceHandler extends NamespaceHandlerSupport{
+						 *  	public void init(){
+						 *  		registerBeanDefinitionParser("user",new UserBeanDefinitionParser());
+						 *  	}
+						 *  }
+						 *
+						 *  这个代码很简单，无非是当遇到自定义的标签<user:aaa 这样的类似于 user 开头的元素，就会把这个元素扔给对应的
+						 *  UserBeanDefinitionParser 去解析
+						 *  编写 Spring.handlers 和 Spring.schemas 文件，默认位置是在工程的/META-INF/ 文件夹下，当然，你可以通过
+						 *  Spring 的扩展参数或者修改源码的方式来改变路径
+						 *  Spring.handlers
+						 *  http://www.lexueba.com/schema/user=test.customtag.MyNamespaceHandler
+						 *  Spring.schemas
+						 *  http://www.lexueba.com/schema/user.xsd=META-INF/Spring-test.xsd
+						 *  到这里，自定义的配置就结束了，而 Spring 加载自定义的大致流程就是自定义标签然后就是 Spring.handlers
+						 *  和 Spring.schemas 中找到 handler 以及解析元素的 Parser，从而完成整个自定义的元素的解析，也就是说自定义的
+						 *  Spring 中默认的标准配置不同于 Spring 将自定义的标签解析的工作委托给了用户去实现
+						 *  创建测试文件，在配置文件中引入对应的命名空间以及 XSD 后，便可以直接使用自定义的标签了
+						 * <?xml version="1.0" encoding="UTF-8"?>
+						 * <beans xmlns="http://www.springframework.org/schema/beans"
+						 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						 *        xmlns:myname="http://www.lexueba.com/schema/user"
+						 *        ...
+						 *        http://www.lexueba.com/schema/user http://www.lexueba.com/schema/user.xsd">
+						 *        <myname:user id="testbean" userName="aaa" email="bbb" ></myname:user>
+						 * </beans>
+						 * 测试，
+						 * public static void main(String [] args){
+						 * 	ApplicationContext bf = new ClassPathXmlApplicationContext("/test/custometag/test.xml")
+						 * 	User user = (User )bf.getBean("testBean");
+						 * 	System.out.println(user.getUserName() + "," + user.getEmail()))
+						 *
+						 * }
+						 *
+						 * // 如果不出意外的话，你应该可以直接看到我们期待的结果，控制台上打印出了
+						 * aaa,bbbb
+						 * 上面的例子中，我们实现了通过自定义标签实现了通过属性的方式将 user 类别 的 bean 赋值，在 spring 中自定义的
+						 * 标签非常的有用，例如我们熟悉的事务标签，tx(<tx:annotation-driven>)
+						 *
+						 */
 						delegate.parseCustomElement(ele);
 					}
 				}
@@ -224,9 +323,34 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Parse an "import" element and load the bean definitions
 	 * from the given resource into the bean factory.
 	 * 解析<import>导入的元素，从给定的导入路径中加载Bean资源到Spring IOC 容器中
+	 *
+	 *
+	 * <beans>
+	 *     <import resource="customerContext.xml"></import>
+	 *     <import resource="systemContext.xml"></import>
+	 *     ....
+	 * </beans>
+	 *
+	 *  上面的代码不难，相信配合注解会很好理解，我们总结一下大致的流程便于读者更加好的梳理，在解析<import>标签时，Spring 进行解析步骤大致如下</import>
+	 *  1.获取resource 属性所表示的路径
+	 *  2.解析路径中的系统属性，格式如下："${user.dir}"
+	 *  3.判定 location 是绝对路径还是相对路径
+	 *  4.如果是绝对路径则递归调用 bean 的解析过程，进行另一次解析
+	 *  5.如果是相对路径则计算出绝对路径再进行解析
+	 *  6.通知监听器，解析完成
+	 *
+	 *  对于嵌入式的 beans 标签，相信大家使用过或者至少接触过，非常类似于 import 标签所提供的功能，
+	 *  <?xml version="1.0" encoding="UTF-8"?>
+	 * <beans xmlns="http://www.springframework.org/schema/beans"
+	 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	 *  <bean id="aa" class="test.aa"></bean>
+	 *  <beans>
+	 *
+	 *  </beans>
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
-		// 获取给定的导入元素的location属性
+		// 获取给定的导入元素的location属性 | 获取 resource 属性
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
 		LogUtils.info(" importBeanDefinitionResource location  :" + location);
 		//如果导入元素的location属性值为空，则没有导入任何资源，直接返回
@@ -236,13 +360,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		// Resolve system properties: e.g. "${user.dir}"
-		// 使用系统变量值解析location属性值
+		// 使用系统变量值解析location属性值 |  解析系统属性，格式如："${user.dir}"
 		location = getReaderContext().getEnvironment().resolveRequiredPlaceholders(location);
 
 		Set<Resource> actualResources = new LinkedHashSet<Resource>(4);
 
 		// Discover whether the location is an absolute or relative URI
-		// 标识给定导入元素的location属性值是否绝对路径。
+		// 标识给定导入元素的location属性值是否绝对路径。 |  判断 location 属性是绝对 URI 还是相对 URI
 		boolean absoluteLocation = false;
 		try {
 			absoluteLocation = ResourcePatternUtils.isUrl(location) || ResourceUtils.toURI(location).isAbsolute();
@@ -254,7 +378,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 
 		// Absolute or relative?
-		// 给定导入元素的location属性值是绝对路径
+		// 给定导入元素的location属性值是绝对路径 |  如果是绝对 URI 则直接根据地址加载对应的配置文件
 		if (absoluteLocation) {
 			try {
 				// 使用资源读入器加载给定路径的bean资源
@@ -270,10 +394,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		}
 		else {
 			// No URL -> considering resource location as relative to the current file.
-			// 给定导入元素的location属性值是相对路径
+			// 给定导入元素的location属性值是相对路径 | 如果是相对地址，则根据相对地址计算出绝对地址
 			try {
 				int importCount;
-				// 将给定的导入元素的location封装为相对路径资源
+				// 将给定的导入元素的location封装为相对路径资源 | resource 存在多个子实现类，如 VfsResource，FileSystemResource 等
+				// 而每个 resource 的 createRelative 方法实现都不一样，所以这里先使用子类的方法尝试解析
 				Resource relativeResource = getReaderContext().getResource().createRelative(location);
 				// 封装的相对路径资源存在
 				if (relativeResource.exists()) {
@@ -283,7 +408,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				}
 				// 封装的相对路径资源不存在
 				else {
-					// 获取Spring IoC容器资源读入器的基本路径
+					// 获取Spring IoC容器资源读入器的基本路径 |  如果解析不成功，则使用默认的解析器 ResourcePatternResolver 进行解析
 					String baseLocation = getReaderContext().getResource().getURL().toString();
 					// 根据Spring IOc容器读入器的基本路加载给定导入路径的资源路径
 					importCount = getReaderContext().getReader().loadBeanDefinitions(
@@ -301,6 +426,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						ele, ex);
 			}
 		}
+		//解析后进行监听器激活处理
 		Resource[] actResArray = actualResources.toArray(new Resource[actualResources.size()]);
 		// 在解析完成<import>元素之后，发送容器导入其他资源处理完成事件
 		getReaderContext().fireImportProcessed(location, actResArray, extractSource(ele));
@@ -330,14 +456,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 		if (valid) {
 			try {
-				// 向容器的资源读入器注册别名
+				// 向容器的资源读入器注册别名,注册 alias
 				getReaderContext().getRegistry().registerAlias(name, alias);
 			}
 			catch (Exception ex) {
 				getReaderContext().error("Failed to register alias '" + alias +
 						"' for bean with name '" + name + "'", ele, ex);
 			}
-			// 在解析完<alias>元素之后，发送容器别名处理完成事件
+			// 在解析完<alias>元素之后，发送容器别名处理完成事件,别名注册后通过监听器相应的处理
 			getReaderContext().fireAliasRegistered(name, alias, extractSource(ele));
 		}
 	}

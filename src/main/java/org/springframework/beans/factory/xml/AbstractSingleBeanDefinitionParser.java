@@ -56,6 +56,13 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 	 * @throws IllegalStateException if the bean {@link Class} returned from
 	 * {@link #getBeanClass(org.w3c.dom.Element)} is {@code null}
 	 * @see #doParse
+	 *  回顾一下全部的自定义标签处理过程，虽然在实例中我们定义的 UserBeanDefinitionParser，但是其中我们只做了与自己业务逻辑相关的部分
+	 *  ,不过，我们没有做，但是并不是代表没有，在这个处理过程中同样的是按照 Spring 中默认的标签处理方式进行的，包括创建 BeanDefintion
+	 *  以及进行相应的默认的属性的设置，对于这些工作，Spring都默默的帮我们实现了，只是暴露出一些接口，来借用户实现修改化业务，通过对本章的
+	 *  了解，相信读者对 Spring 中自定义标签的使用以及在解析自定义标签的过程中Spring 为我们做了哪些工作会有一个全面的了解，到此，我们已经完成
+	 *   完成了 Spring 中全部的解析工作，也就是说到现在为止我们已经理解 了 Spring 将 bean 从配置文件中加载到内存中的全部过程，而接下来的
+	 *   任务就是如何的使用这些 bean,下一章节你介绍 bean 的加载
+	 *
 	 */
 	@Override
 	protected final AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
@@ -64,11 +71,13 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 		if (parentName != null) {
 			builder.getRawBeanDefinition().setParentName(parentName);
 		}
+		// 获取自定义标签中的 class,此时会调用自定义解析器如： UserBeanDefinitionParser中的 getBeanClass 方法
 		Class<?> beanClass = getBeanClass(element);
 		if (beanClass != null) {
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
 		}
 		else {
+			// 如果子类没有重写 getBeanClass 方法，则尝试检查子类 是否重写了 getBeanClassName 方法
 			String beanClassName = getBeanClassName(element);
 			if (beanClassName != null) {
 				builder.getRawBeanDefinition().setBeanClassName(beanClassName);
@@ -76,13 +85,17 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 		}
 		builder.getRawBeanDefinition().setSource(parserContext.extractSource(element));
 		if (parserContext.isNested()) {
+			// 如果存在父类则使用父类的 scope 属性
 			// Inner bean definition must receive same scope as containing bean.
 			builder.setScope(parserContext.getContainingBeanDefinition().getScope());
 		}
 		if (parserContext.isDefaultLazyInit()) {
 			// Default-lazy-init applies to custom bean definitions as well.
+			// 配置了延迟加载
 			builder.setLazyInit(true);
 		}
+
+		// 调用子类 重写的 doParse 方法进行解析
 		doParse(element, parserContext, builder);
 		return builder.getBeanDefinition();
 	}
