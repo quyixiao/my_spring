@@ -193,6 +193,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	@Override
 	public Object getSingleton(String beanName) {
+		// 参数 true 设置标识允许早期依赖
 		return getSingleton(beanName, true);
 	}
 
@@ -203,10 +204,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param beanName the name of the bean to look for
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
+	 * 介绍过 FactoryBean 的用法后，我们就可以了解 bean 的加载过程了，前面已经提到过，单例在 Spring 的同一个容器内只会被创建一次
+	 * ，后续再获取 bean 直接从单例缓存中获取，当然这里中介尝试加载，首先尝试从缓存中加载，然后再次尝试从 singletonFactories 中加载
+	 * 因为在创建单例 bean 的时候会存在依赖注入的情况，而在创建依赖的时候为了避免循环依赖，Spring 在创建 bean 的原则是不等 bean
+	 * 创建完成就会将创建bean的 ObjectFactory 提早曝光加入到缓存中，一旦下一个 bean 创建的时候需要依赖上一个 bean，则直接使用 ObjectFactory
+	 *
 	 */
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+		// 检查缓存中是否存在实例
 		Object singletonObject = this.singletonObjects.get(beanName);
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			//如果为空，则
 			synchronized (this.singletonObjects) {
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {
