@@ -764,6 +764,16 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * if view resolution is required.
 	 * @since 4.2
 	 * @see #createInvocableHandlerMethod(HandlerMethod)
+	 * 获取处理请求的方法，执行并返回结果视图
+	 * invocableMethod.invokeAndHandle()最终要实现的目的上，完成请求中的参数和方法中参数和方法中的参数进行绑定，Spring MVC
+	 * 中提供了两种请求参数到方法中参数的绑定
+	 * 1.通过注解的进行绑定，@RequestParam
+	 * 2.通过参数名称进行绑定
+	 * 通过注解进行绑定，只要在方法参数前面声明@RequestParam("name"),就可以将请求参数的name的值绑定到方法的该参数上
+	 * 请求参数名称进行绑定的前提是必须获取方法中的参数的名称，java反射只提供了获取方法参数的类型方法，并没有提供获取参数名称的方法
+	 * Spring MVC 解决了这个问题的方法就是用ASM框架读取字节码文件，asm框架是一个字节码操作框架，得多的介绍，就可以参考其官网，个人建义
+	 * 通过注解进行绑定，如下代码，这样就省去了asm框架读取字节码的操作
+	 *
 	 */
 	protected ModelAndView invokeHandlerMethod(HttpServletRequest request,
 			HttpServletResponse response, HandlerMethod handlerMethod) throws Exception {

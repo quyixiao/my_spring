@@ -474,18 +474,32 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Initialize the strategy objects that this servlet uses.
 	 * <p>May be overridden in subclasses in order to initialize further strategy objects.
+	 * 初始化策略
+	 * 到这里就完成了Spring MVC 的九大组件的初始化，接下来，我们来看URL 和Controller的关系是如何建立的，HandlerMaping 的子类
+	 * AbstractDetectingUrlHandlerMapping ，实现了InitApplicationContext()方法，我们直接看到子类的初始化容器方法
+	 *
 	 */
 	protected void initStrategies(ApplicationContext context) {
+		// 多文件上传的组件
 		initMultipartResolver(context);
+		// 初始化本地语言环境
 		initLocaleResolver(context);
+		// 初始化模板处理器
 		initThemeResolver(context);
+		// 初始化handlerMapping
 		initHandlerMappings(context);
+		// 初始化参数适配器
 		initHandlerAdapters(context);
+		// 初始化异常拦截器
 		initHandlerExceptionResolvers(context);
+		// 初始化视图预处理器
 		initRequestToViewNameTranslator(context);
+		// 初始化视图转换器
 		initViewResolvers(context);
+		// 初始化 FlashMap管理器
 		initFlashMapManager(context);
 	}
+
 
 	/**
 	 * Initialize the MultipartResolver used by this class.
@@ -912,6 +926,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param request current HTTP request
 	 * @param response current HTTP response
 	 * @throws Exception in case of any kind of processing failure
+	 * 中央控制器，控制请求的转发
 	 */
 	protected void doDispatch(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		HttpServletRequest processedRequest = request;
@@ -925,20 +940,27 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
+				// 检查是否是文件上传请求
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
 
 				// Determine handler for the current request.
+				// 2.取得处理当前请求的Controller，这里也称为Handler ，即处理器
+				// 第一步的意义就是在这里体现了，这里并不是直接返回Controller
+				// 该对象封装了Handler和Interceptor
 				mappedHandler = getHandler(processedRequest);
+				// 如果Handler 为空，则返回404
 				if (mappedHandler == null || mappedHandler.getHandler() == null) {
 					noHandlerFound(processedRequest, response);
 					return;
 				}
 
 				// Determine handler adapter for the current request.
+				// 3.获取处理请求的处理器适配器HandlerAdapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
+				// 处理last-modified请求头
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
 				if (isGet || "HEAD".equals(method)) {
@@ -956,12 +978,13 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				// Actually invoke the handler.
+				// 4.实际处理器处理请求，返回结果视图对象
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
-
+				// 结果视图对象的处理
 				applyDefaultViewName(processedRequest, mv);
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
@@ -980,6 +1003,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			if (asyncManager.isConcurrentHandlingStarted()) {
 				// Instead of postHandle and afterCompletion
 				if (mappedHandler != null) {
+					// 请求成功响应之后的方法
 					mappedHandler.applyAfterConcurrentHandlingStarted(processedRequest, response);
 				}
 			}
@@ -1110,6 +1134,11 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * <p>Tries all handler mappings in order.
 	 * @param request current HTTP request
 	 * @return the HandlerExecutionChain, or {@code null} if no handler could be found
+	 * getHandler(ProcessedRequest) 方法实际上从HandlerMapping中找到URL和Controller对应关系，也就是Map<url,Controller>
+	 * ,我们知道，最终处理请求的是Controller中的方法，现在只是知道了Controller，如何确认Controller中处理请求的方法呢？
+	 * 最后调用RequestMappingHandlerAdapter的Handler()中的核心代码来，由于HandleInternal(request,response，Handler)实现
+	 * 整个处理过程中最核心的步骤就是拼接Controller的URL 和方法的URL,与request的URL 进行匹配，找到匹配的方法
+	 * 根据URL 获取处理请求的方法
 	 */
 	protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
 		for (HandlerMapping hm : this.handlerMappings) {

@@ -78,6 +78,7 @@ public abstract class AbstractControllerUrlHandlerMapping extends AbstractDetect
 	/**
 	 * This implementation delegates to {@link #buildUrlsForHandler},
 	 * provided that {@link #isEligibleForMapping} returns {@code true}.
+	 * 获取Controller中的所有的URL
 	 */
 	@Override
 	protected String[] determineUrlsForHandler(String beanName) {
