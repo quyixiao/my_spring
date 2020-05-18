@@ -197,6 +197,8 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 
 	/**
 	 * Actually register the default editors for this registry instance.
+	 *  具体的调用方法我们就不去深入研究了，但是至少通过这个方法我们已经知道在 Spring 中定义了上面一系列常用的属性编译器使我们
+	 *  可以方便的进行配置，如果我们定义的了 Bean 中某个属性不在上面的常用配置中，才需要我们进行个性化的属性编辑器的注册
 	 */
 	private void createDefaultEditors() {
 		this.defaultEditors = new HashMap<Class<?>, PropertyEditor>(64);

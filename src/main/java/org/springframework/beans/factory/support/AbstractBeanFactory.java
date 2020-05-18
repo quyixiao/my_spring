@@ -1294,6 +1294,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * <p>The default implementation delegates to {@link #registerCustomEditors}.
 	 * Can be overridden in subclasses.
 	 * @param bw the BeanWrapper to initialize
+	 * @return
+	 * 其中我们看到一个方法是我们熟悉的，就是我们熟悉的，就是 AbstratBeanFactory 类中的 initBeanWrapper 方法，
+	 * 这是在 Bean初始化时使用的一个方法，之前已经使用大量的篇幅进行讲解，主要是将 BeanDefinition 转换成 BeanWrapper
+	 * 用于对属性的填充，到此，逻辑已经声明了，在 bean 初始化后会调用 ResourceEditorRegistrar 的 registerCustomEditors 方法进行
+	 * 批量通过属性编辑器注册，注册后，在属性填充的环节便可以直接让 Spring 使用的这些编辑器进行属性解析了
+	 *
+	 * 既然提到了 BeanWrapper ，这里也有必要强调下，Spring 中用于封装的 bean 的是 BeanWapper 类型，而它双是间接继承了 PropertyEditorRegistry类型，
+	 * 也就是我们之前反复看到的方法参数，PropertyEditorRegistry registry ，其实大部分的情况下都是 BeanWrapper  接口外还继承了 PropertyEditorRegistrySupport
+	 * ，在 PropertyEditorRegistrySupport 中有一个这样的方法
+	 *
 	 */
 	protected void initBeanWrapper(BeanWrapper bw) {
 		bw.setConversionService(getConversionService());
@@ -1609,6 +1619,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param beanDefinition the bean definition that the value comes from
 	 * @return the resolved value
 	 * @see #setBeanExpressionResolver
+	 * 之前我们讲解过 Spring 在 bean 进行初始化的时候会有一个属性填充一步，而这一步中，Spring  会调用 AbstractAutowireCapableBeanFactory
+	 * 类的 applyPropertValues  函数来完成功能，就是这个函数中，会通过构造 BeanDefinitionValueResolver 类型实例 valueResolver 来进行属性值
+	 * 的解析，同时，也是在这一步骤中一般通过 AbstractBeanFactory 中的 evaluateBeanDefinitionString 方法来完成 SPEL 解析
+	 * 当调用这个方法时会判断是否存在语言解析器，如果存在则调用语言解析器的方法进行解析，解析的过程就是在 Spring 的 expression 的包内
+	 * 这里不做过多的解析，我们通过查看 evaluateBeanDefinitionString 方法调用层次可以看出，应用语言解析器的调用主要是在解析依赖
+	 * 注入 bean 的时候，以及完成 bean 的初始化和属性获取后进行属性填充的时候
+	 *
 	 */
 	protected Object evaluateBeanDefinitionString(String value, BeanDefinition beanDefinition) {
 		if (this.beanExpressionResolver == null) {
@@ -1868,11 +1885,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// Register a DisposableBean implementation that performs all destruction
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
+				// 单例模式注册需要销毁的 bean ,此方法中会处理实现 DisposableBean 的 bean ,并且对所有的 bean 使用
+				// DestructionAwareBeanPostProcessors的处理，
+				// DisposableBean DestructionAwareBeanPostProcessors
+
 				registerDisposableBean(beanName,
 						new DisposableBeanAdapter(bean, beanName, mbd, getBeanPostProcessors(), acc));
 			}
 			else {
 				// A bean with a custom scope...
+				// 自定义 scope 的处理
 				Scope scope = this.scopes.get(mbd.getScope());
 				if (scope == null) {
 					throw new IllegalStateException("No Scope registered for scope '" + mbd.getScope() + "'");

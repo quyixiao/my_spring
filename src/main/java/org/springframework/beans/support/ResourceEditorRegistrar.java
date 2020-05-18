@@ -120,6 +120,17 @@ public class ResourceEditorRegistrar implements PropertyEditorRegistrar {
 	/**
 	 * Override default editor, if possible (since that's what we really mean to do here);
 	 * otherwise register as a custom editor.
+	 *  在 doRegisterEditor 函数中，可以看到在之前的反映到的自定义属性中使用的关键代码 registry.registerCustomEditor(requiredType, editor);
+	 *  回过头来看，ResourceEditorRegistrar 类的registerCustomEditors 方法的核心功能，其实无非是注册了一系列的常用类型的属性编辑 器
+	 *   例如，代码 doregisterEditor(registry,Class.class,new ClassEditor(classLoader)) 实现的功能就是注册 Class 类对应的属性编辑 器，
+	 *    那么注册后，一旦某个实体的 bean 中存在一些 Class类型属性，那么 Spring 会调用 ClassEditor 将配置中定义的 String 类型转换成
+	 *    Class 类型进行赋值
+	 *    分析到这里，我们不禁有个疑问，虽说 ResourceEditorRegistrar 类的 registerCustomEditors 方法实现了批量注册的功能，
+	 *    但是 beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this,getEnvironment()))
+	 *    仅仅是注册了 ResourceEditorRegistrar实例，却并没有调用 ResourceEditorRegistrar 的 registerCustomEditors
+	 *    方法进行注册，那么到底是什么时候进行注册的呢？进一步查看 resourceEditorRegistrar 的 registerCustomEditors 方法的调用层次结构
+	 *
+	 *
 	 */
 	private void doRegisterEditor(PropertyEditorRegistry registry, Class<?> requiredType, PropertyEditor editor) {
 		if (registry instanceof PropertyEditorRegistrySupport) {

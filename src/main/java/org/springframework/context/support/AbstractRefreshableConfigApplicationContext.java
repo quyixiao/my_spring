@@ -80,6 +80,9 @@ public abstract class AbstractRefreshableConfigApplicationContext extends Abstra
 	 * Set the config locations for this application context.
 	 * <p>If not set, the implementation may use a default as appropriate.
 	 * 解析Bean 定义资源文件路径，处理多个资源文件字符串数组
+	 * 在 ClassPathXmlApplicationContext 中支持多个配置文件以数组的方式同时传入
+	 * 此函数主要用于解析给定的路径数组，当然，如果数组中包含特殊符号，如${var},那么 resolvePath 中会搜寻匹配的系统变量并
+	 * 替换
 	 */
 	public void setConfigLocations(String... locations) {
 		if (locations != null) {
@@ -88,12 +91,13 @@ public abstract class AbstractRefreshableConfigApplicationContext extends Abstra
 			this.configLocations = new String[locations.length];
 			for (int i = 0; i < locations.length; i++) {
 				log.info(" add to configLocations :" + locations[i]);
-				// resolverPath 为同一个类中将字符串解析为路径的方法
+				// resolverPath 为同一个类中将字符串解析为路径的方法，解析给定路径
 				this.configLocations[i] = resolvePath(locations[i]).trim();
 			}
 		}
 		else {
 			this.configLocations = null;
+
 		}
 	}
 

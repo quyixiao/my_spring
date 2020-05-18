@@ -85,6 +85,11 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
      * 从AbstractBeanDefinitionReader的loadBeanDefinitions()方法源码分析可以看出，该方法就做了两件事情，首先，调用资源加载器的获取
      * 资源方法resourceLoader.getResource(location),获取加载的资源，其次执行加载功能，由其子类XmlBeanDefinitionReader的loadBeanDefinitions()
      * 方法来完成
+     *
+     * 在第一步中提到了将 ClassPathXmlApplicationContext 与 XmlBeanFactory  创建的对比，在实现配置文件的加载功能中除了我们在第一步
+     * 中已经初始化的 DefaultListableBeanFactory 外，还需要 XmlBeanDefinitionReader 来读取 XML ，那么这个步骤中首先要做的就是
+     * 初始化 XmlBeanDefinitionReader
+     *
      */
     @Override
     protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
@@ -143,6 +148,14 @@ public abstract class AbstractXmlApplicationContext extends AbstractRefreshableC
      * 以XML Bean 读取器在的一种策略XmlBeanDefinitionReader为例，XmlBeanDefinitionReader调用其父类AbstractBeanDefinitionReader
      * 的reader.loadBeanDefinitions()方法读取bean的配置资源
      * 由于我们使用ClassPathXmlApplicationContext作为例子，getConfigResources()方法返回值为null,因此程序执行reader.loadBeanDefinitions(configLocations)分支
+     *
+     *
+     * 在初始化 DefaultListableBeanFactory 和 XmlBeanDefinitionReader 之后，就可以进行配置文件的读取了
+     * 使用了 XmlBeanDefinitionReader 和 loadBeanDefinitions 方法进行配置文件的加载注册相信大家已经不陌生，这完全就是开始的
+     * BeanFactory的套路，因为在 XmlBeanDefinitionReader 中已经将之前的初始化的 DefaultListableBeanFactory 注册进去了
+     * 所以 XmlBeanDefinitionReader 所读取的 BeanDefinitionHolder 都会注册到 DefaultListableBeanFactory 中，也就是
+     * 经过此步骤，类型 DefaultListableBeanFactory 的变量 beanFactory 已经向包含了所有解析好的配置了
+     *
      */
     protected void loadBeanDefinitions(XmlBeanDefinitionReader reader) throws BeansException, IOException {
         // 获取Bean配置资源的定位

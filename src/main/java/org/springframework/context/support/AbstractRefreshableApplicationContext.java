@@ -129,6 +129,20 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
      * 初始化BeanFactory，并进行XML文件读取，并将得到的BeanFactory记录在当前实体的属性中
      * 在这个方法中，先判断beanFactory是否存在，如果存在，则先销毁Bean并关闭beanFactory,接着创建DefaultListableBeanFactory
      * ，并调用loadBeanDefinitions()方法装载bean的定义
+     *
+     *
+     *
+     * 1.我们详细分析下面代码的步骤
+     * 在介绍BeanFactory 的时候，不知道读者是不是有印象，声明方式 BeanFactory bf = new XmlBeanFactory("beanFactoryTest.xml");
+     * 其中 XmlBeanFactory 继承 DefaultListableBeanFactory ，并提供了 XmlBeanDefinitionReader 类型的 reader 属性，也就是说
+     * DefaultListableBeanFactory 是容器的基础，必需首先要实例化，那么在这里就是实例化 DefaultListableBeanFactory 的步骤
+     *
+     * 2. 指定序列化 id
+     * 3.定制 BeanFactory
+     * 4.加载 beanDefinition
+     * 5.使用全局变量记录 BeanFactory 类的实例
+     * 因为 DefaultListableBeanFactory 类型的变量 beanFactory 是函数内部的局部变量，所以要使用全局变量记录解析结果
+     *
      */
     @Override
     protected final void refreshBeanFactory() throws BeansException {
@@ -155,6 +169,7 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
              * 1. 是否允许覆盖同名称的不同定义的对象
              * 2. 是否允许bean之间存在循环依赖
              * 对Ioc容器进行定制化，如果设置了启动参数，开启注解的自动装配等
+             * 设置@Autowired 和@Qualifier 注解解析器 QualifierAnnotaionAutowireCandidateResolver
              */
             log.info(" start customizeBeanFactory ");
             customizeBeanFactory(beanFactory);
@@ -254,6 +269,25 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
      * @see DefaultListableBeanFactory#setAllowCircularReferences
      * @see DefaultListableBeanFactory#setAllowRawInjectionDespiteWrapping
      * @see DefaultListableBeanFactory#setAllowEagerClassLoading
+     * 这里已经开始对 BeanFactory 的扩展，在基本容器的基础上，增加了是否允许覆盖是否允许扩展设置并提供注解
+     * @Qualifier 和@Autowired 的支持
+     * 对于允许覆盖和允许依赖的设置这里是判断是否为空，如果不为空要进行设置，但是并没有看到哪里进行设置，究竟这个设置是在哪里进行的
+     * 呢？还是那句话，使用子类覆盖方法:例如：
+     * public class MyClassPathXmlApplicationContext extends ClassPathXmlApplicationContext{
+     *     ... ...
+     *     protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory){
+     *         super.setAllowBeanDefinitionOverriding(false);
+     *         super.setAlloCircularReferences(false);
+     *         super.customizeBeanFactory(beanFactory);
+     *     }
+     * }
+     *  设置完后相信大家已经对这两个属性的使用有所了解，或者可以回到前面的章节进行再一次查看，对于定制 BeanFactory ，Spring 还提供了
+     *  另外一个重要的扩展，就是设置 AutowireCandidateResolver，在 Bean 加载部分讲解创建 bean 时，如果采用了 autowireByType 方式
+     *  注入，那么会默认使用 Spring 提供的 SimpleAutowireCandidateResolver，而对于默认的实现并没有过多逻辑处理，在这里，Spring  使用了
+     *  QualifereAnnotationAugowireCanDidateResolver，设置这个解析后的 Spring 就可以支持注解方式注入了
+     *  Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
+     *  因此，我们知道，在 QualifierAnnotationAutowireCandidateResolver 中一定会提供了解析 Qualifier 与 Autowire 注解的方法
+     *  
      */
     protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
         // 如果属性allowBeanDefinitionOverriding不为空，设置给beanFactory对象相应属性

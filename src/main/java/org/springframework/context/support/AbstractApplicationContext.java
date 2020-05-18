@@ -543,6 +543,27 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * refresh()方法
      * IOC 容器读入已经定位的Bean 定义资源是从refresh()方法开始的，我们从AbstractApplicationContext类的refresh()方法入手分析
      *
+     * 1.下面概括一下 ClassPathXmlApplicationContext 初始化的步骤，并从中解释一下它为我们提供的功能
+     * 1. 初始化前的准备工作，例如对系统属性或者环境变量进行准备及验证
+     * 在某种情况下，项目的使用需要读取某些系统变量，而这个变量的设置很可能会影响到系统的正确性，那么 ClassPathXmlApplicationContext
+     * 为我们提供的准备函数就显得非常的必要了，它可以在 Spring  启动的时候提前对必需的变量进行存在性验证
+     * 2.初始化 beanFactory 进行 Xml 文件的读取
+     * 之前有提到的 ClasspathXmlApplicationContext包含着 BeanFactory 所提供的一切特征，在这一步骤中将会复用 BeanFActory 中的配置
+     * 文件读取及解析其他的功能，这一步之后，ClassPathXmlApplicationContext 实际上就已经包含了 BeanFactory 所提供的功能，也就是可以
+     * 进行 Bean 的提取等基础操作了
+     * 3.对 BeanFactory 进行各种功能的填充
+     * @Qualifier 与@Autowired 应该是大家非常熟悉的注解了，那么这两个注册正是这一步骤增加的支持
+     * 4.Spring 之所以强大，除了它功能上为大家提供了便例外，还有一方面它的完美架构，开放式的架构让使用它的程序员很容易根据业务需要扩展
+     * 已经存在的功能，这种开放式的设置在 Spring中随处可见，例如在配合中就提供了一个空间函数的实现，postProcessBeanFactory 来方便程序员
+     * 在业务上做进步的扩展
+     * 5. 激活各种 beanFactory 的处理器
+     * 6.注册拦截 bean 创建的 bean 处理器，这里只是注册，真正的调用是在 getBean时候
+     * 7.为上下文初始化 Message源，即对不同的语言的消息进行国际化的处理
+     * 8. 初始化应用的消息广播器，并放入到"applicationEventMulticaster" bean 中
+     * 9.留给子类来初始化其他的 bean
+     * 10,所有的注册的 bean 中查找 listener bean 注册到的消息广播器中
+     * 11.初始化剩下的单例（非惰性的）
+     * 12. 完成刷新的过程，通知生命周期处理器 lifecycleProcessor 刷新过程，同时发出 contextRefreshEvent 通知别人
      *
      *
      */
@@ -560,25 +581,29 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             // 在refresh()方法中 ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory() 启动了Bean的注册
             // Bean定义资源的载入，注册过程，finishBeanFactoryInitialization() 方法是对注册后的Bean定义中的预实例化(lazy-init=false)
             // Spring 默认进行预实例化，即为true的Bean 进行处理的地方
+            // 初始化 bean ，并野德 xml 文件的读取
+            // obtainFreshBeanFactory 方法从字面的理解是获取BeanFactory ，之前有说过，ApplicationContext 是对 BeanFactory
+            // 的功能上基础上添加了大量的扩展应用，那么 obtainFreshBeanFactory 正是实现 BeanFactory 的地方，也就是经过这个函数之后
+            // ApplicationContext 就已经拥有 BeanFactory 的全部功能
             log.info("start obtainFreshBeanFactory");
             ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
             log.info("end obtainFreshBeanFactory");
 
             log.info("start prepareBeanFactory");
             // Prepare the bean factory for use in this context.
-            // 3.为BeanFactory配置容器我，例如类加载器，事件处理器
+            // 3.为BeanFactory配置容器我，例如类加载器，事件处理器 | 为 BeanFactory 进行各种功能进行填充
             prepareBeanFactory(beanFactory);
             log.info("end prepareBeanFactory");
 
             try {
                 // Allows post-processing of the bean factory in context subclasses.
-                // 4.为容器的某些子类指定特殊的Post事件处理器
+                // 4.为容器的某些子类指定特殊的Post事件处理器 |  子类覆盖方法做额外的处理
                 log.info("start postProcessBeanFactory");
                 postProcessBeanFactory(beanFactory);
                 log.info("end prepareBeanFactory");
 
                 // Invoke factory processors registered as beans in the context.
-                // 5.调用所有的注册的beanFactoryPostProcessor的bean
+                // 5.调用所有的注册的beanFactoryPostProcessor的bean | 激活各种 BeanFactory 处理器
                 log.info("start invokeBeanFactoryPostProcessors");
                 invokeBeanFactoryPostProcessors(beanFactory);
                 log.info("end invokeBeanFactoryPostProcessors");
@@ -587,29 +612,30 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
                 // 6.为BeanFactory注册Post事件处理器
                 // BeanPostProcessor(BeanFactory)
                 log.info("start registerBeanPostProcessors");
+                // 注册拦截 bean 创建 bean 处理器，这里只是注册，真正的调用在 getBean 时候
                 registerBeanPostProcessors(beanFactory);
                 log.info("end registerBeanPostProcessors");
 
                 // Initialize message source for this context.
-                // 初始化信息源，和国际化相关
+                // 初始化信息源，和国际化相关 |  为上下文初始化 Message源，即不同的语言的消息体，国际化处理
                 log.info("start initMessageSource");
                 initMessageSource();
                 log.info("end initMessageSource");
 
                 // Initialize event multicaster for this context.
-                // 8.初始化容器事件传播器
+                // 8.初始化容器事件传播器 | 初始化应用消息广播器，并放入到"applicationEventMulticaster" bean 中
                 log.info("start initApplicationEventMulticaster");
                 initApplicationEventMulticaster();
                 log.info("end initApplicationEventMulticaster");
 
                 // Initialize other special beans in specific context subclasses.
-                // 9.调用子类的某些特殊bean的初始化方法
+                // 9.调用子类的某些特殊bean的初始化方法 | 留给子类来初始化其他的 Bean
                 log.info("start onRefresh");
                 onRefresh();
                 log.info("end onRefresh");
 
                 // Check for listener beans and register them.
-                // 为事件传播器注册事件监听器
+                // 为事件传播器注册事件监听器 | 在所有的注册的 bean 中查找 Listener Bean ,注册到消息广播器中
                 log.info("start registerListeners");
                 registerListeners();
                 log.info("end registerListeners");
@@ -621,7 +647,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
                 log.info("end finishBeanFactoryInitialization");
 
                 // Last step: publish corresponding event.
-                // 12.初始化容器的生命周期事件处理器，为发布容器的生命周期事件
+                // 12.初始化容器的生命周期事件处理器，为发布容器的生命周期事件 |  完成刷新过程，通知生命周期处理器 lifecycleProcessor 刷新
+                // 过程，同时发出 contextRefreshEvent 通知别人
                 log.info("start finishRefresh");
                 finishRefresh();
                 LogUtils.info("end finishRefresh" ,3);
@@ -656,6 +683,29 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     /**
      * Prepare this context for refreshing, setting its startup date and
      * active flag as well as performing any initialization of property sources.
+     * 网上有人说其实这个函数没有什么用，因为最后两句代码才是最关键，但是却没有逻辑处理，initPropertySources 是空的，没有任何逻辑
+     * ，而 getEnvironment().validateRequiredProperties 也因为没有需要验证的属性而没有做任何处理，其实这都是因为没有彻底的理解才会
+     * 这样说，这个函数如果用好了，作用不还是很大的，那么，该怎样的用呢？ 我们先来探索下各个函数的作用
+     *
+     * 1.initPropertySources 正符合 Spring 开放式结构设计，给用户最大的扩展 Spring 的能力，用户可以根据自身的需要重写 initPropertySources方法
+     * ，并在这个方法中进行修改化的属性处理及设置
+     * 2.validateRequiredProperties 则是对属性进行验证，那么如何验证呢？我们举个融合两个代码的小例子来帮助大家理解
+     * 假如：现在有这样的一个需求，工程在运行的过中用到了某个设置 例如 VAR 是从系统环境变量中取得的，而如果用户没有在系统环境中配置这个参数
+     * 那么工程可能不会工作，这一要求可能会有各种各样的解决办法，当然，在 Spring 中可以这样做，你可以直接修改 Spring 的源码，例如修改
+     * ClasspathXmlApplicationContext ，当然，最好的办法还是对源码进行扩展，我们可以自定义类
+     * public class MyClassPathApplicationContext extends ClassPathXmlApplicationContext {
+     *     public MyClassPathApplicationContext (String ... configLocations){
+     *         super(configLocations);
+     *     }
+     *     protected void initPropertySources(){
+     *         // 添加验证要求
+     *         getEnviroment().setRequiredProperties("VAR");
+     *     }
+     * }
+     * 我们自定义了继承自 ClassPathXmlApplicationContext 的 MyClassPathXmlApplicationContext，并重写了 initPropertySources方法
+     * 在方法中，我们添加了我们的修改化需求，那么验证的时候也就是程序直到了 getEnvironment().validateRequiredProperties()代码的时候
+     * 如果系统并没有检测到对应的 VAR 的环境变量，那么就抛出异常，当然，我们还需要在使用的时候替换掉原有的 ClassPathXmlApplicationContext
+     *
      */
     protected void prepareRefresh() {
         this.startupDate = System.currentTimeMillis();
@@ -667,6 +717,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
         // Initialize any placeholder(占位符) property sources in the context environment
         log.info(" start initPropertySources");
+        // 留给子类覆盖
         initPropertySources();
         log.info(" end initPropertySources");
 
@@ -675,6 +726,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         /**
          *    {@link ConfigurableEnvironment },
          */
+        // 验证需要的属性文件中是否都已经放入到环境中
         getEnvironment().validateRequiredProperties();
 
         // Allow for the collection of early ApplicationEvents,
@@ -703,8 +755,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
         log.info(" pre refreshBeanFactory ");
         // 这里使用了委派模式，父类定义了抽象的refreshBeanFactory()方法
-        // 具体实现调用了子类容器的refreshBeanFatory()方法
+        // 具体实现调用了子类容器的refreshBeanFatory()方法民| 初始化 BeanFactory ，并进行 xml 文件的读取，并将得到的 BeanFactory
+        // 记录在当前实体的属性中
         refreshBeanFactory();
+        // 返回当前实例的 BeanFactory 属性
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
         if (logger.isDebugEnabled()) {
             logger.debug("Bean factory for " + getDisplayName() + ": " + beanFactory);
@@ -717,22 +771,155 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * such as the context's ClassLoader and post-processors.
      *
      * @param beanFactory the BeanFactory to configure
+     *
+     * @return
+     * 进入函数 prepareBeanFactory 前，Spring 已经完成了配置的解析，而 ApplicationContext 的功能的扩展也由此展开
+     * 上面函数中主要进行了几个方面的扩展
+     * 1.增加对 SPEL 语言的支持
+     * 2.增加对属性编辑器的支持
+     * 3.增加对一些内置类，比如 EnvironmentAware,MessageSourceAware 的信息注入
+     * 4.设置依赖功能可忽略的接口
+     * 5.注册一些固定的依赖的属性
+     * 6.增加 AspectJ 的支持（ 会在第7章中进行详细的讲解）
+     * 7.将相关的环境变量及属性注册到以单例的模式注册
+     * 可能读者不是很了解每个步骤的具体的含义，接下来我们对和个步骤进行详细的分析
      */
     protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
         log.info("prepareBeanFactory beanFactory name :" + beanFactory.getClass().getName());
         // Tell the internal bean factory to use the context's class loader etc.
-        //设置类加载器：存在则直接设置/不存在则新建一个默认类加载器
+        //设置类加载器：存在则直接设置/不存在则新建一个默认类加载器 | 设置 beanFactory 的 classLoader 为当前的 context 的 classLoader
         beanFactory.setBeanClassLoader(getClassLoader());
-        //设置EL表达式解析器（Bean初始化完成后填充属性时会用到）
+        //设置EL表达式解析器（Bean初始化完成后填充属性时会用到） |
+        //  设置 beanFactory 的表达式语言处理器，Spring 3 增强了表达式语言的支持
+        //  默认可以使用#{bean.xxx} 的形式来调用相关的属性值
+        // Spring 表达式语言全称"Spring Expression Language" 缩写"SpEL" ，类似于 Struts2.x 中使用的 OGNL 表达式语言，能在运行时构建
+        // 复杂的表达式，存取对象图属性，对象方法调用等，并且能在 Spring  功能完美整合，比如能用来配置 bean 的定义，SPEL 是单独模块
+        // 只依赖于 core模块，不依赖于其他的模块，可以单独使用
+        // SPEL  使用#{...} 作为定界符，所以在大框号中字符中都将被该为是 SpEL ，使用格式如下：
+        // <bean id="saxophone" value="com.xxx.xxx.xxx"/>
+        // <bean>
+        //      <property name="instrument" value="#{saxophone}">
+        // </bean>
+        //  相当于
+        // <bean id="saxophone" value="com.xxx.xxx.xxx"/>
+        // <bean>
+        //      <property name="instrument" ref = "saxophone" />
+        // <bean/>
+        // 当然，上面只是列举了其中最简单的使用方式，SPEL功能强大，使用好了可以大大的提高开发效率，这里只是为了唤起读者的记忆来帮助我们
+        //  理解源码，有兴趣的读者可以进一步的深入研究
+        //  在源码中通过代码 beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
+        // 注册语言解析器，就可以对 SPEL 进行解析了，那么注册解析器后Spring 又是在什么时候调用这个解析器进行解析的呢？
+        /*	 * 之前我们讲解过 Spring 在 bean 进行初始化的时候会有一个属性填充一步，而这一步中，javax.swing.Spring 会调用 AbstractAutowireCapableBeanFactory
+         * 类的 applyPropertValues  函数来完成功能，就是这个函数中，会通过构造 BeanDefinitionValueResolver 类型实例 valueResolver 来进行属性值
+         * 的解析，同时，也是在这一步骤中一般通过 AbstractBeanFactory 中的 evaluateBeanDefinitionString 方法来完成 SPEL 解析
+         * 当调用这个方法时会判断是否存在语言解析器，如果存在则调用语言解析器的方法进行解析，解析的过程就是在 Spring 的 expression 的包内
+         * 这里不做过多的解析，我们通过查看 evaluateBeanDefinitionString 方法调用层次可以看出，应用语言解析器的调用主要是在解析依赖
+         * 注入 bean 的时候，以及完成 bean 的初始化和属性获取后进行属性填充的时候
+         */
         beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
         // 设置属性注册解析器PropertyEditor
-        beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
+        // 为 beanFactory 增加了一个默认的 propertyEditor，这个主要的对 bean 的属性等设置管理的一个工具
+        // 6.5.2 增加属性注册编辑器
+        // 在 Spring DI 注入的时候可以把普通的属性注入进来，但是像 Date类型就无法被识别了，例如：
+        // public class UserManager {
+        //  private Date dataValue;
+        //  public Date getDateValue(){
+        //      return dataValue;
+        // }
+        // public void setDataValue(Date dataValue){
+        //      this.dataValue = dataValue;
+        // }
+        // public String toString(){
+        //      return "dataValue" + dataValue;
+        // }
+        // }
+        // 上面的代码中 ，需要对日期类型属性进行注入
+        // <bean id="userManager" class="com.test.UserManager">
+        //      <property name="dataValue">
+        //          <value>2013-03-05</value>
+        //      </property>
+        //  </bean>
+        // 测试代码
+        // @Test
+        // public void testDate(){
+        //      ApplicationContext ctx = new ClassPathXmlApplicationContext("bean.xml");
+        //      UserManager userManager = (UserManager) ctx.getBean("userManager");
+        //      System.out.println(userManager);
+        // }
+        // 如果直接使用，则程序会报错，类型转换不成功，因为在 UserManager 中 dateValue 属性是 Date类型的，但是在 Xml 配置中
+        //  却是 Spring  类型的，所以当然会报异常
+        // Spring  针对经问题提供了两咱解决办法
+        // 1. 使用自定义属性编辑器，通过继承 PropertyEditorSupport，重写 setAsText方法，具体的步骤如下：
+        //  (1)编写自定义的属性编辑器
+        // public class DatePropertyEditor extends PropertyEditorSupport{
+        // private String formate = "yyyy-MM-dd";
+        // public void setFormat(String format){
+        //      this.formate = formate ;
+        // }
+        // public void setAsText(String arg0) throws IllegalArgumentException{
+        //      System.out.println("arg0:" + arg0);
+        //      SimpleDateFormat sdf = new SimpleDateFormat(format);
+        //      try{
+        //          Date d = sdf.parse(arg0);
+        //          this.setValue(d);
+        //      } catch(ParseException e ){
+        //             e.printStackException();
+        //      }
+        // }
+        //}
+        // (2).将自定义属性编辑器注册到 Spring 中
+        // <!--自定义属性编辑器-->
+        // <bean class="org.Springframework.beans.factory.config.CustomEditorConfigurer">
+        //      <property name="customeEditors">
+        //          <map>
+        //              <entry key = "java.util.Date">
+        //                  <bean class="com.test.DatePropertyEditor">
+        //                       <property name="format" value="yyyy-MM--dd"/>
+        //                  </bean>
+        //              </entry>
+        //          </map>
+        //      </property>
+        // </bean>
+        // 配置文件中上引入类型为 org.springframework.beans.factory.config.CustomEditorConfigurer
+        // 的 bean 并在属性 customEditors 中加入了自定义属性编辑器，其中Key 为属性编辑器所对应的类型，通过这样的
+        // 配置，当 Spring 在注入 bean 的属性时一旦遇到 java.util.Date 类型属性会自动调用自定义的 DatePropertyEditor 解析器
+        // 进行解析，并用解析结果代码配置属性进行注入
+        /////////////////////////////////////////////////////////////////////////
+        // 2. 注册 Spring自带的属性编辑器 CustomDataEditor
+        // 通过注册 Spring 自带的属性编辑器 CustomDateEditor ，具体的步骤如下
+        //(1) public class DatePropertyEditorRegistrar implements PropertyEditorRegistrar {
+        //  public void registerCustomEditors (PropertyEditorRegistry registry ){
+        //      registry.registerCustomEditor(Date.class,new CustomDateEditor(new SimpleDateFormate("yyyy-MM-dd"),true));
+        // }
+        // (2) 注册到 Spring 中
+        // <!--注册到 Spring 自带的编辑器-->
+        // <bean class="org.Springframework.beans.factory.config.CustomEditorConfigurer">
+        //      <property name="propertyEditorRegistrars">
+        //          <list>
+        //              <bean class="com.test.DatePropertyEditorRegistrar"/>
+        //          </list>
+        //      </property>
+        //  </bean>
+        // 我们通过配置文件中将自定义的 DatePropertyEditorRegistrar 注册进入org.springframework.bean.factory.config.CustomEditorConfigurer
+        // 的 propertyEditorRegistrars 属性中，可以具有与方法同样的效果
+        // 我们了解了自定义属性编辑器的使用，但是，似乎与本节围绕的核心代码 beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this,getEnvironment()))
+        // 并无联系，因为在注册自定义属性编辑器的时候使用的是 PropertyEditorRegistry 的 registerCustomEditor 方法，而这里使用的是
+        // ConfigurableListableBeanFactory 的 addPropertyEditorRegistrar方法，我们妨深入探索一下 ResourceEditorRegistrar 的内部实现
+        // 在 ResourceEditorRegistrar 中，我们最关心的方法就是 registerCustomEditors
 
+        beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
         // Configure the bean factory with context callbacks.
         // 将当前的ApplicationContext对象交给ApplicationContextAwareProcessor类来处理，从而在Aware接口实现类中的注入applicationContext
+        // 添加 BeanPostProcessor,
+        // 对于这个方法的主要目的就是注册 BeanPostProcessor ，而真正的逻辑还是在 ApplicationContextAwareProcessor 中
+        // ApplicationContextAwareProcessor 实现了 BeanPostProcessor接口，我们回顾下之前讲过的内容，在 Bean 初始化的时候
+        // 也就是  Spring 激活 bean 的 init-method 的前后，会调用 beanPostProcessor 的 postProcessBeforeInitialization 方法和
+        // postProcessAfterInitialization 方法
+        // 同样，对于 ApplicationContextAwareProcessor 我们也关心这两个方法
+        //  对于 postProcessAfterInitialization 方法，在 ApplicationContextAwareProcessor 中并没有做过多逻辑处理
         beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
-        // 设置忽略自动装配的接口
+        // 设置忽略自动装配的接口 | 设置几个忽略自动装配的接口
         beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
         beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
         beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
@@ -747,7 +934,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         //BeanFactory.class为key，beanFactory为value放入到了beanFactory的resolvableDependencies属性中
         //resolvableDependencies是一个ConcurrentHashMap,映射依赖类型和对应的被注入的value
         //这样的话BeanFactory/ApplicationContext虽然没有以bean的方式被定义在工厂中，
-        //但是也能够支持自动注入，因为他处于resolvableDependencies属性中
+        //但是也能够支持自动注入，因为他处于resolvableDependencies属性中 |
+        // 设置几个自动装配的特殊规则
         beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
         //再将上下文的一些接口与上下文本身做映射，一一放入到resolvableDependencies中
         beanFactory.registerResolvableDependency(ResourceLoader.class, this);
@@ -758,6 +946,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // 如果当前BeanFactory包含loadTimeWeaver Bean，说明存在类加载期织入AspectJ，则把当前BeanFactory交给类加载期BeanPostProcessor实现类
         // LoadTimeWeaverAwareProcessor来处理，从而实现类加载期织入AspectJ的目的。
         // 1.跟踪进入，浅看下containsBean方法
+        // 增加对 AspectJ 的支持
         if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
             //如果有LoadTimeWeaver，加入bean后处理器
             LogUtils.info("prepareBeanFactory beanFactory containsBean loadTimeWeaver ");
@@ -771,6 +960,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // 注册默认的environment beans
 
         // 判断目前这个bean工厂中是否包含指定name的bean，忽略父工厂
+        // 添加默认的系统环境 bean
         if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
             //虽然XmlWebApplicationContext中持有默认实现的StandardServletEnvironment
             //但是没有注册到beanFactory中，通过getEnvironment方法拿到持有的引用
