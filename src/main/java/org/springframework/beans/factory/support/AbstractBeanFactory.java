@@ -1750,6 +1750,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param mbd the merged bean definition
 	 * @return the object to expose for the bean
 	 * 获取给定的Bean的实例对象，主要完成FactoryBean 的相关处理
+	 *
+	 * 从这个代码中来看，其实这个方法并没有什么重要的信息，大多都是辅助的代码以及一些功能性的判断，而真正的核心代码去委托给了 getObjectFromFactoryBean
+	 * ,我们来看看 getObjectFromBeanInstance 中所做的工作
+	 *
+	 * 	 1. 对 FactoryBean 正确性的验证
+	 * 	 2.对非 FactoryBean 不做任何处理
+	 * 	 3.对 bean 进行转换
+	 * 	 4.将从 Factory 上解析 bean 的工作委托给 getObjectFromFactoryBean
+	 *
 	 */
 	protected Object getObjectForBeanInstance(
 			Object beanInstance, String name, String beanName, RootBeanDefinition mbd) {
@@ -1759,7 +1768,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// 也可能是一个工厂Bean,如果是一个工厂Bean,则使用它创建一个Bean的实例对象
 		// 如果调用本身也想获得一个容器的引用，则返回这个工厂Bean实例对象
 		// 如果指定的名称是容器的解引用(dereference，即对象本身而非内存地址)
-		// 且Bean实例也不是创建Bean实例对象的工厂Bean
+		// 且Bean实例也不是创建Bean实例对象的工厂Bean |
+		// 如果指定的name是工厂相关的以(&为前缀)且 beanInstance 又不是 FactoryBean 类型则验证不通过
 		if (BeanFactoryUtils.isFactoryDereference(name) && !(beanInstance instanceof FactoryBean)) {
 			throw new BeanIsNotAFactoryException(transformedBeanName(name), beanInstance.getClass());
 		}
@@ -1770,7 +1780,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
 		// 如果Bean 实例不是工厂Bean,或者指定名称是容器的解引用
-		// 调用者获取对容器的引用时，直接返回当前的Bean的实例
+		// 调用者获取对容器的引用时，直接返回当前的Bean的实例 | 现在我们有了个bean 的实例，这个实例可能会是正常的 bean 或者是 FactoryBean
+		//  如果是 FactoryBean 我们使用它创建实例，但是如果用户想要直接获取工厂实例而不是工厂的 getObject 方法对应的实例，那么传入的 name 应该加入前缀 &
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
 			LogUtils.info("getObjectForBeanInstance xxxxxxxx  beanInstance name :" + beanInstance.getClass().getName());
 			return beanInstance;
@@ -1779,24 +1790,28 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// 处理指定名称不是容器的解引用，或者根据名称获取Bean 实例对象是一个工厂Bean
 		// 使用工厂Bean创建一个Bean 的实例对象
-
+		// 加载 FactoryBean
 		Object object = null;
 		if (mbd == null) {
-			// 从Bean工厂缓存中获取指定名称的Bean的实例对象
+			// 从Bean工厂缓存中获取指定名称的Bean的实例对象| 尝试从缓存中加载 bean
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		// 让Bean 工厂产生指定名称Bean的实例对象
 		if (object == null) {
 			// Return bean instance from factory.
+			// 到这里已经里已经明确的知道 beanInstance 一定是一个 FactoryBean 类型
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// 如果从Bean 工厂生成的Bean 是单例模式，则缓存
 			// Caches object obtained from FactoryBean if it is a singleton.
+			// containsBeanDefinition检测 beanDefinitionMap 中也就是所有的已经加载的类中检测是否定义了 beanName
 			if (mbd == null && containsBeanDefinition(beanName)) {
-				// 从容器中获取指定名称的Bean的定义，如果继承了基类，则合并基类的相关的属性
+				// 从容器中获取指定名称的Bean的定义，如果继承了基类，则合并基类的相关的属性 |  将存储在 XML 配置文件中的 GernericBeanDefinition
+				// 转换成 RootBeanDefinition，如果指定的是 beanName 是子的 bean 的话，同时会合并父类的相关的属性
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			// 如果从容器中得到了Bean定义信息，并且Bean定义信息不是虚构的
 			// 则让工厂Bean产生Bean的实例对象
+			// 是否用户定义的而不是应用程序本身定义的
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
 			// 调用FactoryBeanRegistrySupport类的getObjectFromFactoryBean()方法
 			// 实现工厂Bean生产Bean实例对象的过程

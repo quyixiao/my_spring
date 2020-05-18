@@ -94,10 +94,17 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @return the object obtained from the FactoryBean
 	 * @throws BeanCreationException if FactoryBean object creation failed
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
-	 * Bean工厂生产Bean 的实例对象
+	 * Bean工厂生产Bean 的实例对象 |
+	 *	很遗憾，在这个代码中我们还是没有看到想要看到的代码，在这个方法里只做了一个事情，就是返回 bean ，如果是单例的，那就必需要保证全局
+	 *唯一，同时也因为是单例，所以不必重复创建，可以使用缓存 来提高性能，，也就是说已经加载的过就要记录下来以便下次复用，否则的话就直接获取 了
+	 * 在 doGetObjectFromFactoryBean  方法中我们终于看到了我们想要看到的方法，也就是说 object=factory.getObject()，是的，就是这句
+	 * 代码，我们历程犹如肃洋葱一样，一层一层的直到最内部的代码实现
+	 *
+	 *
+	 *
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
-		// Bean工厂是单例模式，并且Bean工厂缓存中存在指定名称的Bean实例对象
+		// Bean工厂是单例模式，并且Bean工厂缓存中存在指定名称的Bean实例对象 | 如果是单例模式
 		if (factory.isSingleton() && containsSingleton(beanName)) {
 			// 多线程同步，以防止数据不一致
 			synchronized (getSingletonMutex()) {
@@ -105,7 +112,6 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				// 如果Bean 工厂缓存 中没有指定名称的实例对象，则生产该实例对象
 				if (object == null) {
-					//
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
@@ -135,6 +141,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (object != null && shouldPostProcess) {
 				try {
+					// 调用 objectFactory 的后处理器
 					object = postProcessObjectFromFactoryBean(object, beanName);
 				}
 				catch (Throwable ex) {
@@ -160,6 +167,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 		Object object;
 		try {
+			// 需要权限验证
 			if (System.getSecurityManager() != null) {
 				AccessControlContext acc = getAccessControlContext();
 				try {
@@ -175,7 +183,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				}
 			}
 			else {
-				// 调用BeanFactory接口实现类的创建对象方法
+				// 调用BeanFactory接口实现类的创建对象方法 | 直接调用 getObject 方法
 				object = factory.getObject();
 			}
 		}
