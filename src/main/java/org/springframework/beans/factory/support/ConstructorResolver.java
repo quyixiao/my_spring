@@ -95,7 +95,42 @@ class ConstructorResolver {
 	 * @return a BeanWrapper for the new instance
 	 * 对于实例的创建 Spring 中分成两种情况，一种是通用的实例化，另一种是带有参数的实例化，带有的实例化过程相当的复杂，因为存在着不确定性
 	 * ，所以在判断对应的参数做了大量的工作
+	 *  逻辑很复杂，函数代码量很大，不知道你是否坚持读完了整个函数并理解了整个功能呢？ 这里要先吐个，笔者觉得这个函数的写法完全不符合
+	 *  Spring 的一的风格，如果你一直跟笔者分析思路到这里，相信你或多或少对 Spring 的编码风格有所了解，Spring 的一的做法就是将复杂的
+	 *  逻辑分解，分成 N 个小函数的嵌套，每一层都是对下一层的逻辑的总结要概要，这样使得每一层的逻辑会变得简单容易理解，在上面的函数中，包含了
+	 *  很多的逻辑实现，笔者觉得至少应该将逻辑封装在不同的函数而使得在 autowireConstructor 中的逻辑清晰明了
+	 *  我们总览一下整个函数，其实现在功能考虑以下的几个方面
+	 *  	1.构造函数参数的确定
+	 *  根据 explicitArgs 参数判断
+	 *   如果传入的参数 explicitArgs 不为空，那边可以直接确定参数，因为 explicitArgs 参数在调用 Bean 的时候用户指定的，在 BeanFactory
+	 *   类中存在这样的方法
+	 *   Object getBean(String name,Object ...args ) throws BeansException;
+	 *   在获取 bean 的时候，用户不但可以指定 bean 的名称还可以指定的 bean 所对应的类的构造函数或者工厂方法的参数，主要用于静态工厂方法的
+	 *   调用，而这里需要给定完全匹配的参数，所以，便可以判断，如果传入的参数explicitArgs 不为空，而可以确定构造函数参数就是它了。
+	 *   缓存中获取
+	 *   除此之外 ，确定参数的办法如果之前已经分析过了，也就是说构造函数的参数已经记录在缓存中，那么便可以直接拿来使用，而且，这里要提到
+	 *   是，在缓存中可能是参数的最终类型也可能是参数的初始化类型，例如，构造函数参数要求的是 int 类型，但是原始参数可能是 String 类型，
+	 *   那么即使在缓存中得到了参数，也需要经过类型转换器的过滤以确保参数类胡萝卜素 与对应的构造函数完全对应
+	 *   配置文件的获取
+	 *   如果不能根据传入的参数 explicitArgs 确定构造函数参数也无法在缓存中得到相关的信息，那么只能开始新一轮的分析了
+	 *   分析获取配置文件中配置的构造函数信息开始，经过之前的分析，我们知道，Spring 中配置文件中的信息经过转换都会通过 BeanDefinition
+	 *   实例承载，也就是参数的 mdb 中包含，那么可以通过调用 mbd.getConstructorArgmentValues()中来获取配置的构造函数信息，有了配置中的信息
+	 *   就可以获取对应的参数信息，获取参数的信息包括直接指定值，如:直接指定构造函数中的某个值为原始类型的 String 类型，或者是其对其他的
+	 *   bean 的引用，而这一处理委托给 resolveContructorArguments 方法，并返回能解析到的参数的个数
+	 *   2.构造函数的确定
+	 *   经过第一步后已经确定构造函数的参数，接下来的任务就是根据构造函数的所有构造函数中锁定的对应的构造函数，而匹配的方法就是根据参数的
+	 *   匹配，所以在这个匹配之前需要先对构造函数按照 public 构造函数优先参数的数量降序，非 public 构造函数参数数量降序，这样可以遍历的情况
+	 *   下迅速判断排在后面的构造函数参数的个数是否符合条件
+	 *   由于配置文件中并不是唯一限制使用参数的位置索引的方式去创建，同样还支持指定参数名称进行设定参数的情况，如<constructor-arg name="aa">
+	 *       那么这种情况下就需要首先确定的构造函数的参数名称
 	 *
+	 *   获取参数的名称可以有两种方式，一种是通过注解的方式来获取，另一种就是使用 Spring 中提供的工具类 ParameterNameDiscoverer 来获取
+	 *   ，构造函数，参数名称，参数类型，参数值都确定后就可以锁定构造函数以及转换对应的参数类型了
+	 *   3.根据确定的构造函数转换对应的参数类型
+	 *   主要是使用 Spring中提供的类型转换器或者用户提供的自定义类型转换器进行转换
+	 *  4.构造函数不确定性的验证
+	 * 		当然，有时候即使构造函数，参数名称，参数类型，参数值确定后也不一定直接锁定构造函数，不同的构造函数的参数为父子关系，所以 Spring 在最后双做了一次验证
+	 * 	5.根据实例化策略以及得到的构造函数及构造函数参数实例化 Bean ，后面的将进行继承的讲解
 	 */
 	public BeanWrapper autowireConstructor(final String beanName, final RootBeanDefinition mbd,
 			Constructor<?>[] chosenCtors, final Object[] explicitArgs) {
@@ -145,8 +180,11 @@ class ConstructorResolver {
 				minNrOfArgs = explicitArgs.length;
 			}
 			else {
+				// 提取配置文件中配置构造函数参数
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
+				// 用于承载解析后的构造函数的参数值
 				resolvedValues = new ConstructorArgumentValues();
+				// 能解析到这个参数的个数
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 			}
 
@@ -164,6 +202,7 @@ class ConstructorResolver {
 									"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 				}
 			}
+			// 排序给定的构造函数，public 构造函数优先参数数量降序，非 public  构造函数数量降序
 			AutowireUtils.sortConstructors(candidates);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;
@@ -176,22 +215,28 @@ class ConstructorResolver {
 				if (constructorToUse != null && argsToUse.length > paramTypes.length) {
 					// Already found greedy constructor that can be satisfied ->
 					// do not look any further, there are only less greedy constructors left.
+					// 如果已经找到选用的构造函数或者需要的参数个数小于当前的构造函数个数的终止，因此 已经按照参数个数降序排序
 					break;
 				}
 				if (paramTypes.length < minNrOfArgs) {
+					// 参数个数不相等
 					continue;
 				}
 
 				ArgumentsHolder argsHolder;
 				if (resolvedValues != null) {
 					try {
+						// 有参数则根据值构造对应的参数类型的参数
+						// 注释上获取参数的名称
 						String[] paramNames = ConstructorPropertiesChecker.evaluate(candidate, paramTypes.length);
 						if (paramNames == null) {
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
 							if (pnd != null) {
+								// 获取指定构造函数的参数名称
 								paramNames = pnd.getParameterNames(candidate);
 							}
 						}
+						// 根据名称和数据类型创建参数持有者
 						argsHolder = createArgumentArray(
 								beanName, mbd, resolvedValues, bw, paramTypes, paramNames, candidate, autowiring);
 					}
@@ -210,15 +255,17 @@ class ConstructorResolver {
 				}
 				else {
 					// Explicit arguments given -> arguments length must match exactly.
+					// 构造函数没有参数的情况
 					if (paramTypes.length != explicitArgs.length) {
 						continue;
 					}
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
-
+				// 探测是否有不确定性构造函数存在，例如不同的构造函数的参数为父子关系
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
+				// 如果它代表着当前最接近匹配则选择作为构造函数
 				if (typeDiffWeight < minTypeDiffWeight) {
 					constructorToUse = candidate;
 					argsHolderToUse = argsHolder;
@@ -255,6 +302,7 @@ class ConstructorResolver {
 			}
 
 			if (explicitArgs == null) {
+				// 将解析的构造函数加入到缓存中
 				argsHolderToUse.storeCache(mbd, constructorToUse);
 			}
 		}
@@ -277,7 +325,7 @@ class ConstructorResolver {
 				beanInstance = this.beanFactory.getInstantiationStrategy().instantiate(
 						mbd, beanName, this.beanFactory, constructorToUse, argsToUse);
 			}
-
+			// 将构建的实例加入到 BeanWapper 中
 			bw.setWrappedInstance(beanInstance);
 			return bw;
 		}

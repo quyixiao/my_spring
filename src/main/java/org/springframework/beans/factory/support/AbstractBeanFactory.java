@@ -1856,6 +1856,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @see RootBeanDefinition#getDependsOn
 	 * @see #registerDisposableBean
 	 * @see #registerDependentBean
+	 * Spring 中不但提供了对初始化方法入口的扩展，同样也提供了销毁方法的扩展入口，对于销毁方法的扩展，除了我们熟知的配置属性
+	 *  destroy-method 方法外，用户还没写作业可以注册后处理 DestructionAwareBeanPostProcessor 来统一处理 bean 的销毁方法
+	 *  代码如下：
+	 *
 	 */
 	protected void registerDisposableBeanIfNecessary(String beanName, Object bean, RootBeanDefinition mbd) {
 		AccessControlContext acc = (System.getSecurityManager() != null ? getAccessControlContext() : null);

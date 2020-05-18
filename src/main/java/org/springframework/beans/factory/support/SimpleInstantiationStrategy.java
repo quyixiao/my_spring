@@ -60,6 +60,12 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	public Object instantiate(RootBeanDefinition bd, String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
 		// 如果Bean定义中没有方法覆盖，就不需要CGLib父类方法
+		// 如果有需要覆盖或者动态替换的方法则当然需要使用 cglib 进行动态代理，因为可以在创建代理的同时将动态方法织入 类中，但是如果没有需要动态
+		// 但是如果没有需要动态改变得方法，为了方便直接反射就可以了，
+		// 看了上面两个函数后我似乎我们已经感觉到了Spring 的良苦用心以及为了能更加方便的使用 Spring 而做了大量的工作，程序中，首先判断
+		// 如果 beanDefinition.getMethodOverrides()为空也就是用户没有使用 replace 或者 lookup 配置方法，那么直接使用反射的方式，简单
+		// 快捷，但是如果使用了这两个特性，在直接使用反射的方式创建实例就不妥了，因为需要将这两个配置提供的功能切进去才可以保证在调用方法
+		// 的时候会被相应的拦截器增强，返回值为包含拦截器代理的实例
 		if (bd.getMethodOverrides().isEmpty()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {

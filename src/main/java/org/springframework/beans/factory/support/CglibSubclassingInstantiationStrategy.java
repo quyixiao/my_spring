@@ -108,6 +108,7 @@ public class CglibSubclassingInstantiationStrategy extends SimpleInstantiationSt
 		 * Ignored if the {@code ctor} parameter is {@code null}.
 		 * @return new instance of the dynamically generated subclass
 		 * 使用CGlib进行Bean的实例化
+		 *
 		 */
 		public Object instantiate(Constructor<?> ctor, Object... args) {
 			// 创建代理子类

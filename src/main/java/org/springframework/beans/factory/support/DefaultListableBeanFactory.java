@@ -1025,26 +1025,35 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		descriptor.initParameterNameDiscovery(getParameterNameDiscoverer());
 		if (descriptor.getDependencyType().equals(javaUtilOptionalClass)) {
+			// ObjectFactory 类注入的特殊处理
 			return new OptionalDependencyFactory().createOptionalDependency(descriptor, beanName);
 		}
 		else if (ObjectFactory.class == descriptor.getDependencyType()) {
 			return new DependencyObjectFactory(descriptor, beanName);
 		}
+
 		else if (javaxInjectProviderClass == descriptor.getDependencyType()) {
+			// javaxInjectProviderClass类注入的特殊处理
 			return new DependencyProviderFactory().createDependencyProvider(descriptor, beanName);
 		}
 		else {
 			Object result = getAutowireCandidateResolver().getLazyResolutionProxyIfNecessary(descriptor, beanName);
 			if (result == null) {
+				// 通用处理逻辑
 				result = doResolveDependency(descriptor, beanName, autowiredBeanNames, typeConverter);
 			}
 			return result;
 		}
 	}
 
+	// 寻找类型的匹配执行顺序时，首先尝试使用解析器进行解析，如果解析器没有成功解析，那么可能是使用默认的解析器没有做任何处理，或者使用
+	// 自定义解析器，但是对于集合等类型来说并不在解析的范围之内，所以再次对不同的类型进行不同的情况的处理，虽说对于不同的类型处理方式不一样
+	// 但是大致的思路还是相似的，所以函数中只对数组类型进行详细的注释
 	public Object doResolveDependency(DependencyDescriptor descriptor, String beanName,
 			Set<String> autowiredBeanNames, TypeConverter typeConverter) throws BeansException {
-
+		/***
+		 * 用于支持的 Spring 中新增的注解@Value
+		 */
 		Class<?> type = descriptor.getDependencyType();
 		Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
 		if (value != null) {
@@ -1058,13 +1067,17 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					converter.convertIfNecessary(value, type, descriptor.getField()) :
 					converter.convertIfNecessary(value, type, descriptor.getMethodParameter()));
 		}
-
+		// 如果解析器没有成功解析，则需要考虑各种情况
+		// 属性是数组类型
 		if (type.isArray()) {
 			Class<?> componentType = type.getComponentType();
 			DependencyDescriptor targetDesc = new DependencyDescriptor(descriptor);
 			targetDesc.increaseNestingLevel();
+			// 根据属性类型找到 beanFactory 中所有的类型匹配 bean
+			//  返回值的构成为：key = 匹配的 beanName ，value = beanName 对应的实例化的 bean （通过 getBean (beanName) 返回）
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, componentType, targetDesc);
 			if (matchingBeans.isEmpty()) {
+				// 如果 autowire 的 require 属性为 true 而找到的匹配项却为空则只能抛出异常
 				if (descriptor.isRequired()) {
 					raiseNoSuchBeanDefinitionException(componentType, "array of " + componentType.getName(), descriptor);
 				}
@@ -1074,12 +1087,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 				autowiredBeanNames.addAll(matchingBeans.keySet());
 			}
 			TypeConverter converter = (typeConverter != null ? typeConverter : getTypeConverter());
+			// 通过转换器将 bean 的值转换成为对应的 type 类型
 			Object result = converter.convertIfNecessary(matchingBeans.values(), type);
 			if (getDependencyComparator() != null && result instanceof Object[]) {
 				Arrays.sort((Object[]) result, adaptDependencyComparator(matchingBeans));
 			}
 			return result;
 		}
+		// 如果属性值是Collection 类型
 		else if (Collection.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> elementType = descriptor.getCollectionType();
 			if (elementType == null) {
@@ -1107,6 +1122,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			return result;
 		}
+		// 如果属性是 Map 类型
 		else if (Map.class.isAssignableFrom(type) && type.isInterface()) {
 			Class<?> keyType = descriptor.getMapKeyType();
 			if (String.class != keyType) {
@@ -1125,6 +1141,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			}
 			DependencyDescriptor targetDesc = new DependencyDescriptor(descriptor);
 			targetDesc.increaseNestingLevel();
+			// 已经可以确定只有一个匹配的项
 			Map<String, Object> matchingBeans = findAutowireCandidates(beanName, valueType, targetDesc);
 			if (matchingBeans.isEmpty()) {
 				if (descriptor.isRequired()) {
