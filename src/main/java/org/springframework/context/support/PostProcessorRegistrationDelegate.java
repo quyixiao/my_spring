@@ -38,6 +38,118 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class PostProcessorRegistrationDelegate {
 
+    /***
+     * BeanFactory 的后处理
+     * BeanFactory 作为 Spring 中容器功能基础，用于存在所有已经加载的 bean ,为了保证程序上的高可扩展性，Spring 针对BeanFactory
+     *  做了大量的扩展，比如我们熟知的 PostProcessor 等都是在这里实现的
+     *  激活注册 beanFactoryPostProcessor
+     *   正式开始介绍之前，我们先了解一下 BeanFactoryPostProcessor 的用法
+     *   BeanFactoryPostProcessor 接口跟 BeanPostProcessor 类似，可以对 bean 的定义配置无数进行处理，也就是说，Spring IOC
+     *    容器允许 BeanFactoryPostProcessor 在容器实际实例化任何其他的 bean 之前读取配置元数据，并有可能修改它，如果你愿意，
+     *    你可以配置多个 BeanFactoryPostProcessor ，你还能通过设置"order" 属性来控制 beanFactoryPostProcessor 的执行次序
+     *  仅当 BeanFactoryPostProcessor 实现了 Ordered 接口时你才可以设置此属性，因此 在实现 beanFactoryPostProcessor 时，就
+     *  应当考虑实现 Ordered接口。请参考 BeanFactoryPostProcessor 和 Ordered 接口的 JavaDoc 以获取更加详细的信息
+     * 如果你想改变实际的 bean 的实例，例如从配置元数据创建的对象，那么你最好使用 BeanPostProcessor ，同样的，BeanFactoryPostProcessor
+     * 的作用作用域范围的容器级的，它只和你使用的容器相关，如果你在容器中定义了一个 BeanFactoryPostProcessor，它仅仅对此容器中的 bean
+     * 进行后置处理，BeanFactoryPostProcessor 不会对定义在另一个容器上的 bean 进行后置处理，即使这两个容器都是在同一层次上，在 Spring
+     * 中存在对 BeanFactoryPostProcessor 的典型应用，比如 PropertyPlaceHolderConfigurer
+     * 1.BeanFactoryPostProcessor的典型应用 ：PropertyPlaceholderConfigurer
+     *   有个时候，阅读 Spring 的 Bean 描述文件时，你也许会遇到类似的如下的一些配置
+     *   <bean id ="message" class="distconfig.HelloMessage">
+     *      <property name="msg">
+     *             <value>${bean.message}</value>
+     *      </property>
+     *   </bean>
+     *   其中竟然出现了变量引用：${bean.message} 就是 Spring分散配置，可以在另外的配置文件中bean.message 指定值，如在 bean.property 配置如下定义
+     *   bean.message=Hi.can you find me?
+     *   当访问名为 message 的 bean 时，mes 的属性会被设置为字符串"Hi can you find me ?" 但是 Spring 框架是怎样知道这样的配置文件的呢？
+     *   这就要靠 PropertyPlaceholderConfigurer 这个类的 bean :
+     *   <bean id="msgHandler" class="org.Springframework.beans.factory.config.Property.PlaceholerConfigure">
+     *      <property name="locations">
+     *          <list>
+     *              <value>config/bean.properties</value>
+     *          </list>
+     *      </property>
+     *   </bean>
+     *   在这个 bean 中指定的配置文件为 config/bean.properties，到这里似乎找到问题的答案了,但是其实还有问题，这个"mesHandler" 只不过
+     *   是 Spring 框架管理的一个 bean ,并没有被识别 bean 或者对象引用，Spring 的 beanFactory 是怎样知道要从这个 bean 获取配置信息
+     *   的呢？
+     *      查看层级结构可以看出 PropertyPlaceHolderConfigere 这个类间接的继承了 BeanFactoryPostProcessor接口，这是一个很特别的接口
+     *  当 Spring 加载任何实现了这个接口的 bean 的配置时，都会在 bean 工厂加载所有的 bean 的配置之后执行PostProcessoBeanFactory
+     *  方法，在 PropertyResourceConfigurer 类中实现了，postProcessBeanFactory 方法，在方法中先后调用了 mergeProperties，
+     *  convertProperties，processProperties 这3个方法，分别得到配置，将得到的配置转换为合适的类型，最后将配置内容告知 BeanFacotry
+     *      正是通过实现 BeanFactoryPostProcessor 接口，beasnFactory会在实例化任何的 bean 之前获得配置信息，从而能够
+     *       正确的解析 bean 描述文件中的变量引用
+     *  2.使用自定义的 BeanFactoryPostProcessor
+     *      我们以实现一个 BeanFactoryPostProcessor ，去除潜在的流氓属性值的功能来展示自定义BeanFactoryPostProcessor 的创建及使用
+     *  例如 bean 的定义中留下 bollcokes 这样的字眼
+     *  <?xml version="1.0" encoding="UTF-8"?>
+     * <beans xmlns="http://www.springframework.org/schema/beans"
+     *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+     *        <bean id="bfapp" class="com.spring.ch04.ObscenityRemovingBeanFactoryPostProcessor">
+     *          <property name="obscenties">
+     *                 <set>
+     *                     <value>bollocks</value>
+     *                     <value>winky</value>
+     *                     <value>bum</value>
+     *                     <value>Microsoft</value>
+     *                 </set>
+     *          </property>
+     *          <bean id="simpleBean" class="com.Spring.ch04.SimplePostProcessor">
+     *              <property name="connectionString" value="bollocks"> </property>
+     *              <property name="password" value="imaginecup"></property>
+     *              <property name="username" value="Microsoft"></property>
+     *          </bean>
+     *        </bean>
+     *
+     *    public class ObscenityRemovingBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
+     *        private Set<String> obscenties;
+     *        public ObscenityRemovingBeanFactoryPostProcessor(){
+     *              this.obscenties = new HashSet();
+     *        }
+     *        public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException{
+     *              String []  beanNames = beanFactory.getBeanDefinitionNames();
+     *              for(String beanName:beanNames){
+     *                  BeanDefinition bd = beanFactory.getBeanDefinition(beanName);
+     *                  StringValueResolver valueResover = new StringValueResovler(){
+     *                      public String resolveStringValue(String strVal){
+     *                          if(isObscene(strVal)){
+     *                              return "*****";
+     *                          }
+     *                          return strVal;
+     *                      }
+     *                  };
+     *                  BeanDefinitionVisitor visitor = new BeanDefintionVisitor(valueResover);
+     *                  visitor.visiBeanDefintion(bd);
+     *              }
+     *        }
+     *        public boolean isObscene(Object value){
+     *          String potentialObscenity = value.toString().toUpperCase();
+     *          return this.obscenties.contains(potentialObscenity);
+     *        }
+     *
+     *        public void setObscenties(Set<String> obscenties){
+     *          this.obscenties.clear();
+     *          for(String obscenity :obscenties){
+     *                  this.obscenties.add(obscenity.toUpperCase());
+     *          }
+     *        }
+     *    }
+     *    执行类
+     *    public class PropertyConfigurerDemo{
+     *        public static void main(String [] args){
+     *            ConfigurableListableBeanFactory bf = new XmlBeanFactory(new ClassPathResource("/META-INF/BeanFactory.xml"));
+     *            BeanFactoryPostProcessor bfpp = (BeanFactoryPostProcessor)bf.getBean("bfpp");
+     *            bfpp.postProcessBeanFactory(bf);
+     *            sout(bf.getBean("simpleBean"));
+     *        }
+     *    }
+     *
+     *
+        * 输出结果
+     * SimplePostProcessor{connectionString=*****,username=****,password=imaginecup}
+     */
     public static void invokeBeanFactoryPostProcessors(
             ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 

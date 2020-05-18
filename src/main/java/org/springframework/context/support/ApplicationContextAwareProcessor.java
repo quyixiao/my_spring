@@ -91,6 +91,8 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 			}, acc);
 		}
 		else {
+			// postProcessBeforeInitialization  方法中调用了invokeAwareInterfaces 从 invokeAwareInterfaces 方法中
+			// 我们或许已经或多或少的了解了 Spring 的用意，实现这些 Aware 接口的 bean 在被初始化之后，可以取得一些对应的资源
 			invokeAwareInterfaces(bean);
 		}
 
