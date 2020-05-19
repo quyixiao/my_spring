@@ -538,8 +538,10 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 	 * @param returnValue the return value from the method execution (may be null)
 	 * @param ex the exception thrown by the method execution (may be null)
 	 * @return the empty array if there are no arguments
+	 *
 	 */
-	protected Object[] argBinding(JoinPoint jp, JoinPointMatch jpMatch, Object returnValue, Throwable ex) {
+	protected Object[]
+	argBinding(JoinPoint jp, JoinPointMatch jpMatch, Object returnValue, Throwable ex) {
 		calculateArgumentBindings();
 
 		// AMC start
@@ -609,7 +611,7 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 
 		return invokeAdviceMethodWithGivenArgs(argBinding(jp, jpMatch, returnValue, t));
 	}
-
+	//
 	protected Object invokeAdviceMethodWithGivenArgs(Object[] args) throws Throwable {
 		Object[] actualArgs = args;
 		if (this.aspectJAdviceMethod.getParameterTypes().length == 0) {

@@ -65,12 +65,15 @@ class InstantiationModelAwarePointcutAdvisorImpl
 
 	public InstantiationModelAwarePointcutAdvisorImpl(AspectJAdvisorFactory af, AspectJExpressionPointcut ajexp,
 			MetadataAwareAspectInstanceFactory aif, Method method, int declarationOrderInAspect, String aspectName) {
-
+		// test()
 		this.declaredPointcut = ajexp;
+		// pubic void test.AspectJTest.beforeTest()
 		this.method = method;
 		this.atAspectJAdvisorFactory = af;
 		this.aspectInstanceFactory = aif;
+		// 0
 		this.declarationOrder = declarationOrderInAspect;
+		// this.AspectJTest
 		this.aspectName = aspectName;
 
 		if (aif.getAspectMetadata().isLazilyInstantiated()) {
@@ -86,6 +89,9 @@ class InstantiationModelAwarePointcutAdvisorImpl
 		}
 		else {
 			// A singleton aspect.
+			// 在封装的过程中只是简单的将信息封装在类的实例中，所有的信息单纯的赋值，在实例初始化的过程中还完成了对于增强初始化，因为不同的
+			//  增强所体现的逻辑是不同的，比如@Before("test()") 与@After("test()") 标签的不同就是增强的位置不同，所以就需要不同的增强器
+			// 完成不同的逻辑，而根据注解中的信息初始化对应的增强器就是在 initiateAdvice 函数中实现的
 			this.instantiatedAdvice = instantiateAdvice(this.declaredPointcut);
 			this.pointcut = declaredPointcut;
 			this.lazy = false;

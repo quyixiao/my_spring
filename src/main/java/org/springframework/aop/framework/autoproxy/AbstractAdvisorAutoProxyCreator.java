@@ -82,6 +82,9 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @see #findCandidateAdvisors
 	 * @see #sortAdvisors
 	 * @see #extendAdvisors
+	 *  对于 bean 的增强谅地的获取一定是包含两个步骤，获取所有的增强以及寻找所有的增强适用于 bean 的增强并应用，那么findCandidateAdvisors
+	 *  也 findAdvisorsThatCanApply 便是做这两个事情，当然，如果无法找到对应的增强器便返回DO_NOT_PROXY ，其中DO_NOT_PROXY=null;
+	 *
 	 */
 	protected List<Advisor> findEligibleAdvisors(Class<?> beanClass, String beanName) {
 		List<Advisor> candidateAdvisors = findCandidateAdvisors();
@@ -109,12 +112,15 @@ public abstract class AbstractAdvisorAutoProxyCreator extends AbstractAutoProxyC
 	 * @param beanName the target's bean name
 	 * @return the List of applicable Advisors
 	 * @see ProxyCreationContext#getCurrentProxiedBeanName()
+	 * 寻找匹配的增强器
 	 */
 	protected List<Advisor> findAdvisorsThatCanApply(
 			List<Advisor> candidateAdvisors, Class<?> beanClass, String beanName) {
-
+		// 前面函数中已经完成了所有的增强器的解析，但是对于未增强的来讲，并不一定都适用于当前的 Bean ,还要挑选出适合的增强器，也就是满足
+		// 我们配置的通配符的增强器，具体的实现 findAdvisorsThatCanApply 中
 		ProxyCreationContext.setCurrentProxiedBeanName(beanName);
 		try {
+			// 过滤已经得到的 advisors
 			return AopUtils.findAdvisorsThatCanApply(candidateAdvisors, beanClass);
 		}
 		finally {

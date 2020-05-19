@@ -46,8 +46,7 @@ import org.springframework.util.Assert;
  * @see AspectJAdvisorFactory
  */
 @SuppressWarnings("serial")
-public class
-AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
+public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
 
 	private List<Pattern> includePatterns;
 

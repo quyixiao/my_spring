@@ -61,6 +61,14 @@ public class BeanFactoryAdvisorRetrievalHelper {
 	 * ignoring FactoryBeans and excluding beans that are currently in creation.
 	 * @return the list of {@link org.springframework.aop.Advisor} beans
 	 * @see #isEligibleBean
+	 * 在真正的研究代码之前读者可以尝试着自己想象一下解析思路，看看是不是实现与 Spring 是否有差别，或者我们一改以往的的方式，先来了解
+	 *  函数提供了大概的功能框架，读者可以在头脑中尝试实现这些功能点，看是否有思路
+	 *  1.获取所有的 beanName，这一步骤所在的 beanFactory 中注册的 bean 都会被提取出来
+	 *  2.遍历所有的 beanName ，并找出声明 AspectJ的注解类，进行进一步的处理
+	 *  3.对标记的 AspectJ 注解的类进行增强器的提取
+	 *  4.将提取的结果加入到缓存中
+	 *  现在我们看来函数的实现，在 Spring 中所有的类进行分析，提取 Advisor
+	 *
 	 */
 	public List<Advisor> findAdvisorBeans() {
 		// Determine list of advisor bean names, if not cached already.
@@ -70,6 +78,7 @@ public class BeanFactoryAdvisorRetrievalHelper {
 			if (advisorNames == null) {
 				// Do not initialize FactoryBeans here: We need to leave all regular beans
 				// uninitialized to let the auto-proxy creator apply to them!
+				// 获取所有的 beanName
 				advisorNames = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 						this.beanFactory, Advisor.class, true, false);
 				this.cachedAdvisorBeanNames = advisorNames;
@@ -80,7 +89,9 @@ public class BeanFactoryAdvisorRetrievalHelper {
 		}
 
 		List<Advisor> advisors = new LinkedList<Advisor>();
+		// 循环所有的 beanName 找出对应的增强方法
 		for (String name : advisorNames) {
+			// 不合法的 bean 略过，由子类定义规则，默认返回 true
 			if (isEligibleBean(name)) {
 				if (this.beanFactory.isCurrentlyInCreation(name)) {
 					if (logger.isDebugEnabled()) {

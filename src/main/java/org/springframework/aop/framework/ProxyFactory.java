@@ -91,6 +91,8 @@ public class ProxyFactory extends ProxyCreatorSupport {
 	 * <p>Uses a default class loader: Usually, the thread context class loader
 	 * (if necessary for proxy creation).
 	 * @return the proxy object
+	 * 由于 Spring 中涉及过多的拦截器，增强器，增强方法等方式来对逻辑进行增强，所以非常的有必要统一封装 Advisor 来进行代理的创建
+	 * 完成了增强的封装过程，那么解析最重要的一步就是代理的创建和获取了
 	 */
 	public Object getProxy() {
 		return createAopProxy().getProxy();
