@@ -994,6 +994,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		return result;
 	}
 
+	//  可以看到，在 registerBeanPostProcessors 方法实现中其实已经确保了，beanPostProcessor 的唯一性，个人猜想，之所以
+	// 选择在 registerBeanPostProcessors 中没有进行重复的移除操作或者是了为保持分类效果，使逻辑更加清楚吧
 	@Override
 	public void addBeanPostProcessor(BeanPostProcessor beanPostProcessor) {
 		Assert.notNull(beanPostProcessor, "BeanPostProcessor must not be null");

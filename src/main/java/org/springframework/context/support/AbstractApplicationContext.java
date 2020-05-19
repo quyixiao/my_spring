@@ -375,6 +375,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      *                  or a payload object to be turned into a {@link PayloadApplicationEvent})
      * @param eventType the resolved event type, if known
      * @since 4.2
+     * 当完成 ApplicationContext 初始化的时候，要通过 Spring 中的事件发布机制来发出 ContextRefreshedEvent 事件，以保证对应的
+     * 监听器可以做进一步的逻辑处理
+     *
      */
     protected void publishEvent(Object event, ResolvableType eventType) {
         Assert.notNull(event, "Event must not be null");
@@ -625,6 +628,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
                 // Initialize event multicaster for this context.
                 // 8.初始化容器事件传播器 | 初始化应用消息广播器，并放入到"applicationEventMulticaster" bean 中
                 log.info("start initApplicationEventMulticaster");
+
+
+
                 initApplicationEventMulticaster();
                 log.info("end initApplicationEventMulticaster");
 
@@ -1022,6 +1028,90 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     /**
      * Initialize the MessageSource.
      * Use parent's if none defined in this context.
+     * 6.6.3 初始化消息资源
+     * 在进行这段函数的解析之前，我们同样先来回顾一下 Spring 国际化的使用方法
+     * 假设我们正在开发一个支持多国语言的 WEb 应用程序 , 要求系统能够根据客户端系统的语言类型返回对应的界面，英文的操作系统返回英文界面
+     *  而中文的操作系统则返回中文的操作界面，这便是典型的 il8n 国际化问题，对于有国际化的要求的应用系统，我们不能简单的采用硬编码的方式编写
+     *   用户界面信息，报错信息等内容，而必需为这些需要的信息进行特殊的处理，简单的来说，就是为了每种语言提供一套相应的资源文件，并以
+     *   规范化命名的方式保存在特定的目录中，由系统自动的根据客户端语言选择适合的资源文件
+     *
+     * 国际化信息也称为本地化我就算，一般需要两个条件才可以确定一个特定的类型本地化信息，它们分别是语言类型，和国家/地区的类型，如中文本地
+     * 化作息既中国大陆的地区中文，又有中国台湾地区的，中国香港地区的中文，还有新加坡地区的中文，java 通过 java.util.Locale 类表示一个
+     * 本地对象，它允许通过语言参数和国家参数创建一个确定的本地对象
+     * java.util.Locale 是表示语言和国家/地区信息的本地化类，它是创建国际化应用的基础，下面给出几个创建本地化对象的示例：
+     * 1.带有语言和国家/地区信息的本地化对象
+     * Locale locale1 = new Locale("zh","CN");
+     * 2.只有语言信息的本地化对象
+     * Locale locale3 = new Locale("zh");
+     * 3.等同于 Locale("zh","CN");
+     * 4.等同于 Locale("zh")
+     * Locale locale4 = Locale.CHINESE;
+     * 5.获取本地系统默认的本地化的对象
+     * Locale locale5 = Locale.getDefault();
+     * JDK 的 java.util 包中提供了几个支持本化格式的操作工具类，NumberFormate,DateFormat,MessageFormat ,而在 Spring 中
+     * 国际化资源操作也无非是对于这些类的封装操作，我们仅仅介绍下 MessageFormat 的用法帮助大家回顾
+     *
+     *
+     *
+     *
+     * 1.信息格式化串
+     * String pattern1 = "{0} 你好！你于{1}在工商银行存入{2}元。"
+     * String pattern2 = "At {1,time,short} On {1,date,long} ,{0} paid {2,number,currency}."
+     * 2. 用于用户动态替换占位符的参数
+     * Object[] params = {"John" ,new GregorianCalendar().getTime,1839288932}
+     * 3.使用默认的本地化对象格式信息
+     * String msg1 = MessageFormat.format(pattern1,params);
+     *
+     * 4.使用指定的本地批格式信息
+     * MessageFormat mf = new MessageFormat (Pattern2,Locale.US);
+     * String msg2 = mf.formate(params);
+     * System.out.println(msg1);
+     * System.out.println(msg2);
+     * Spring 定义了访问国际化信息的 MessageSource 接口，并提供了几个易用的实现类，MessageSource 分别被 HierarchicalMessageSource
+     * 和 ApplicationContext 接口扩展，这里主要看 HierarchicalMessageSource 接口的几个实现类
+     *
+     * HierarchicalMessageSource 接口最重要的两个实现类是 ResourceBundleMessageSource 和 ReloadableResourceBundleMessageSource
+     * ,它们是基于 java 的 ResourceBundle 基础类实现，允许仅通过资源名加载国际化资源，ReloadableResourceBundleMessageSource
+     * 提供了定时刷新的功能，允许在不重启系统的情况下，更新资源信息，StaticMessageSource 主要用于程序测试，它允许通过编程方式提供国际
+     * 化信息，而 DelegatingMessageSource 是为了方便操作父 MessageSource 而提供的代理类，仅仅举例 ResourceBundleMessageSource 的实现方式
+     * 定义资源文件
+     * message.properties (默认：英文) , 内容仅一句，如下
+     * test=test
+     * message_zh_CN.properties(简体中文)
+     * test=测试
+     * 然后 cmd 打开命令行容器，输入 xxx ,转码一下
+     * 2.定义配置文件
+     * <bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+     *      <property name="basenames">
+     *          <list>
+     *              <value>/test/messages</value>
+     *          </list>
+     *      </property>
+     * </bean>
+     * 其中这个 beanId 的命名为 messageSource ，否则会抛出 NoSuchMessageException 异常
+     * 使用，通过ApplicationContext 访问国际化信息
+     * String [] configs = {"applicationContext.xml"}
+     * ApplicationContext ctx = new ClassPathXmlApplicationContext(configs);
+     * // 直接通过访问国际化信息
+     * Object[] params = {"John",new GregorianCalendar().getTime()};
+     * String str1 = ctx.getMessage("test",params,Locale.US);
+     * String str2 = ctx.getMessage("test",params,Locale.CHINA);
+     * System.out.println(str1);
+     * System.out.println("str2");
+     *
+     * 在了解了 Spring国际化的使用后便可以进行源码的分析了
+     * 在 initMessageSource中的方法主要功能是提取配置中定义的 messageSource ，并将其记录在 Spring 容器中，也就是 AbstractApplicationContext
+     * 中，当然，如果用户未设置资源文件的话，Spring 中也提供了默认的配置 DelegatingMessageSource
+     * 在 initMessageSource 中获取自定义资源的方式为 beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME,MessageSource.class) ,
+     * 在这里 Sprng 使用了硬编码的方式硬性的规定了定义资源文件必需是 message ，否则便会获取不到自定义的资源文件的配置，这也是为什么之前
+     * 提到的 Bean 的 Id 如果部位 message 会抛出异常
+     *
+     *  通过读取并将自定义的资源文件配置记录在容器中，那么就可以在获取资源文件的时候直接使用了，例如：在 AbstractApplicationContext
+     *  中获取资源文件属性的方法
+     *  public String getMessage(String code,Object args[] ,Locale locale ) throws NoSuchMessageException{
+     *      return getMessageSource().getMessage(code,args,locale);
+     *  }
+     *  其中 getMessageSource()方法正是获取之前定义好的自定义资源配置信息
      */
     protected void initMessageSource() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -1029,6 +1119,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
 
             LogUtils.info("beanFactory containsLocalBean  messageSource");
+            // 如果配置文件中配置了messageSource，那么将messageSource 提取并记录在 this.messageSource 中
             this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
             // Make MessageSource aware of parent MessageSource.
             if (this.parent != null && this.messageSource instanceof HierarchicalMessageSource) {
@@ -1045,6 +1136,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         } else {
             LogUtils.info("initMessageSource else ");
             // Use empty MessageSource to be able to accept getMessage calls.
+            // 如果用户并没有定义配置文件，那么使用临时的 DelegatingMessageSource 以便作为调用 getMessage 方法的返回
             DelegatingMessageSource dms = new DelegatingMessageSource();
             MessageSource messageSource = getInternalParentMessageSource();
             LogUtils.info("initMessageSource messageSource " + (messageSource == null ? messageSource : messageSource.getClass().getName()));
@@ -1063,6 +1155,57 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * Uses SimpleApplicationEventMulticaster if none defined in the context.
      *
      * @see SimpleApplicationEventMulticaster
+     * 初始化 ApplicationEventMulticaster
+     * 在讲解 Spring 的时候传播器之前，我们还是先来看一下 Spring 的事件监听的简单的用法
+     * 定义监听事件
+     * public class TestEvent extents ApplicationEvent {
+     *
+     *     public String msg ;
+     *
+     *     public TestEvent (Object source){
+     *         super(source);
+     *     }
+     *
+     *     public TestEvent(Object source ,String msg ){
+     *         super(source);
+     *         this.msg = msg ;
+     *     }
+     *
+     *     public void print(){
+     *         System.out.println(msg);
+     *     }
+     *
+     * }
+     *
+     * 2.定义监听器
+     * public class TestListener implements ApplicationListener {
+     *     public void onApplicationEvent(ApplicationEvent event ){
+     *         if(event instanceof TestEvent){
+     *             TestEvent test = (TestEvent) event ;
+     *             testEvent.print();
+     *         }
+     *     }
+     * }
+     * 3.添加配置文件
+     * <bean id="testListener" class="com.test.event.TestListener"></bean>
+     *
+     * 4. 测试
+     * public class Test(){
+     *     public static void main(String [] args){
+     *         ApplicationContext context = new ClassPathXmlApplicationContext("classpath:applicationContext.xml");
+     *         TestEvent event = new TestEvent("hello","msg");
+     *         context.publishEvent(event);
+     *     }
+     * }
+     * 当程序运行时，Spring 会将发出的 TestEvent  事件给我们自定义的 TestListener 进行进一步的处理
+     * 或者很多的人一下子会反映出设置模式中的观察者模式，这确实就是一个典型的应用，可以在此比较关心的事件结束后及时处理，那么我们要看看
+     * ApplicationEventMulticaster 是如何被初始化的，以确保功能的正确性呢？
+     * initApplicationEventMulticaster 的方式是比较简单的，无非是考虑两种情况
+     * 如果用户自定义了事件广播器，那么使用用户自定义的事件广播器
+     * 如果用户没有自定义事件广播器，那么使用默认的 ApplicationEventMulticaster 。
+     *  按照之前介绍的顺序及逻辑，我们推断，作为广播器，一定要用于存在监听器并合适的时候调用监听器，那么我们不妨进行默认的
+     *  广播器实现 SimpleApplicationEventMulticaster 来探究一下
+     *
      */
     protected void initApplicationEventMulticaster() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -1085,6 +1228,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * Uses DefaultLifecycleProcessor if none defined in the context.
      *
      * @see DefaultLifecycleProcessor
+     * 当 ApplicationContext 启动或者停止时，它会通过 LifecycleProcessor 来与所有的声明的 bean 的周期做状态更新，
+     * 而在 LifecycleProcessor 的使用前首先需要初始化
+     *
      */
     protected void initLifecycleProcessor() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
@@ -1123,6 +1269,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     /**
      * Add beans that implement ApplicationListener as listeners.
      * Doesn't affect other listeners, which can be added without being beans.
+     *  之前在介绍 Spring 广播时反复提到过事件监听器，那么在 Spring 注册监听器的时候，又做了哪些逻辑操作呢？
+     *  硬编码的方式注册监听处理器
+     *
+     *
+     *
+     *   完成 BeanFactory 的初始化工作，其中包括 ConversionService 的设置，配置冰结以及非延迟加载的 bean 的初始化了工作了
+     *
+     *   冻结所有的 bean 的定义，说明注册的 bean 定义将不修改，
+     *
      */
     protected void registerListeners() {
         // Register statically specified listeners first.
@@ -1133,6 +1288,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
         // Do not initialize FactoryBeans here: We need to leave all regular beans
         // uninitialized to let post-processors apply to them!
+        // 配置文件注册的监听器处理
         String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
         LogUtils.info("registerListeners listenerBeanNames :" + Arrays.toString(listenerBeanNames));
         for (String listenerBeanName : listenerBeanNames) {
@@ -1157,6 +1313,41 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * 当Bean 定义资源被载入IoC容器之后，容器将Bean定义资源解析成容器内部的数据结构BeanDefinition，并注册到容器中，AbstractApplicationContext
      * 类中的finishBeanFactoryInitialization() 方法配置了预实例化属性的Bean进行预初始化如下：
      * 对配置了lazy-init属性进行预实例化处理
+     *
+     *  完成 BeanFactory 的初始化工作，其中包括 ConversionService 的设置，配置，冻结以及非延迟加载的 bean 的初始化工作
+     *
+     *  1.ConversionService 的设置
+     *  之前我们提到过使用自定义类型转换器从 String 转换成 Date 的方式，那么 Spring 中还提供了另一种转换方式：使用 Converter
+     *  同样，我们使用了一个简单的示例来了解一下 Converter 的使用方式
+     *
+     *  1. 定义转换器
+     *  public class String2DateConverter implements Converter<String,Date> {
+     * @Override
+     *      public Date convert(String arg0){
+     *          return DateUtils.parseDate(arg0,new String []{"yyyy-MM-dd HH:mm:ss"});
+     *      }
+     *  }
+     *  2.注册
+     *  <bean id="conversionService" class="org.Springframework.context.suppeort.ConversionServiceFactoryBean">
+     *      <property name="converters">
+     *           <list>
+     *               <bean class="String2DateConverter"></bean>
+     *           </list>
+     *      </property>
+     *  </bean>
+     *
+     * 3. 测试
+     * 这样便可以使用 Converter 为我们提供功能了，下面我们通过一个简单的方法来对此直接测试
+     * public void testStringToPhoneNumberConvert(){
+     *     DefaultConversionService conversionService = new DefaultConversionService();
+     *     conversionService.addConverter(new StringToPhoneNumberConverter());
+     *     String phoneNumberStr = "010-12345678";
+     *     PhoneNumberModel phoneNumber = conversionService.convert(PhoneNumberStr,PhoneNumberModel.class);
+     *     Assert.assertEquals("010",phoneNumber.getAreaCode());
+     * }
+     * 这个例子有点奇怪
+     * 通过以上的功能我们看到了 Converter 以及 ConversionService 提供了便利的功能，其中的配置就是在当前函数中被初始化的
+     *
      */
     protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
         // Initialize conversion service for this context.
@@ -1181,11 +1372,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         beanFactory.setTempClassLoader(null);
 
         // Allow for caching all bean definition metadata, not expecting further changes.
-        // 缓存容器中所有的注册的BeanDefinition元数据，以防止被修改
+        // 缓存容器中所有的注册的BeanDefinition元数据，以防止被修改 | 冻结所有的 bean 的定义，说明注册的 bean 定义将不被修改
+        // 或者进一步的处理
         beanFactory.freezeConfiguration();
 
         // Instantiate all remaining (non-lazy-init) singletons.
-        // 对配置了lazy-init属性的单例模式的Bean进行预实例化处理
+        // 对配置了lazy-init属性的单例模式的Bean进行预实例化处理 |  初始化剩下的单实例(非惰性的)
         beanFactory.preInstantiateSingletons();
     }
 
@@ -1193,12 +1385,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      * Finish the refresh of this context, invoking the LifecycleProcessor's
      * onRefresh() method and publishing the
      * {@link ContextRefreshedEvent}.
+     * 在 Spring 中还提供了 Lifecycle接口，Lifecycle 中包含了 start/stop 方法，实现此接口后 Spring 还会保证在启动的时候调用其
+     * start 方法开始生命周期，并在 Spring 关闭的时候调用stop 方法来结束生命周期，通常用来配置后台程序，在启动后一直运行
+     *  如对 MQ 进行轮询等，而 ApplicationContext 在初始化最后正是保证了
      */
     protected void finishRefresh() {
         // Initialize lifecycle processor for this context.
         initLifecycleProcessor();
 
         // Propagate refresh to lifecycle processor first.
+        // 启动所有实现了 Lifecycle 接口的 bean
         getLifecycleProcessor().onRefresh();
 
         // Publish the final event.

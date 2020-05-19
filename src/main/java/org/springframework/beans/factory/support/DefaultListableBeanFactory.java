@@ -734,6 +734,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		clearByTypeCache();
 	}
 
+	// 冻结所有的 bean 的定义，说明注册的 bean 定义将不被悠或者进行任何进一步的处理
 	@Override
 	public void freezeConfiguration() {
 		this.configurationFrozen = true;
@@ -759,6 +760,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// 通过对lazy-init处理源码分析可以看出，如果设置了lazy-init属性，则容器在完成Bean定义的注册后，会通过getBean()方法触发指定的
 	// Bean 的初始化和依赖注入，如果前面所述，这样当应用程序第一次向容器索取所需要的Bean时，容器不再需要对Bean进行初始化的依赖注入
 	// 可直接从已经完成的实例化和依赖注入的Bean中取一个现在的Bean ,提高第一次获取Bean的性能
+	// 3 .初始化非延迟加载
+	// ApplicationContext 实现默认的行为就是在启动时将所有的单例 bean 提前进行实例化，提前实例化就意味着为初始化过程的一部分，
+	// ApplicationContext 实例会创建并配置所有的单例 bean ,通常情况下这是一件好事，因为这样在配置中的任何错误就会即刻被发现。
+	// 否则的话，可能要花几个小时甚至几天，而这个实例化的过程就是在 finishBeanFactoryInitialization 中完成
+
 	@Override
 	public void preInstantiateSingletons() throws BeansException {
 		if (this.logger.isDebugEnabled()) {

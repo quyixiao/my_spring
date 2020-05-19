@@ -443,7 +443,6 @@ class PostProcessorRegistrationDelegate {
         //  提取了这个问题，还是因为读者没有完全理解两者实现的功能，对于 BeanFactoryPostProcessor 的处理，不但要实现注册的功能，
         // 而且还要实现对后处理器的激活操作，所以需要载入配置的定义，并进行激活，而对于 BeanPostProcessor 并不需要马上调用，再说
         // 硬编码的方式实现功能只需要将配置文件的 BeanPostProcessor  提取出来并注册进入 beanFactory 就可以了
-
         List<BeanPostProcessor> orderedPostProcessors = new ArrayList<BeanPostProcessor>();
         for (String ppName : orderedPostProcessorNames) {
             LogUtils.info("registerBeanPostProcessors ppName : " + ppName);
