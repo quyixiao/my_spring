@@ -182,6 +182,23 @@ class PostProcessorRegistrationDelegate {
      *
      *   这里需要提到的是，对于硬编码方式手动添加的手处理是不需要做任何排序的，但是在配置文件中读取的处理器，Spring 并不能保证读取的顺序
      *   ，所以，为了保证用户的调用顺序的要求，Spring 对于后处理器的调用支持按照 PriorityOrdered 或者 Ordered 的顺序调用
+     * 6.6.2 注册 BeanPostProcessor
+     *  在这个里面我们提到了 BeanFactoryPostProcessors 的调用，现在我们来探索下 BeanPostProcessor ，但是在这里并不是调用，而是注册
+     *  真正的调用其实是在 bean 的实例化阶段进行的，这是一个很重要的步骤，也是很多功能 BeanFactory 不支持的重要原因，Spring 中大部分
+     *  功能都是通过后处理器的方式野德扩展的，这是spring 框架的一个特性，但是在 BeanFactory 中其实并没有实现后处理自动注册，所以在
+     *  调用的时候如果没有进行手动注册其实是不能使用的，但是在 Applicationcontext 中去添加自动注册的功能，如自定义一样后处理器
+     *  public class MyInstantiationAwareBeanPostProcessor implements InstantiationAwareBeanPostProcessor{
+     *      public Object postProcessBeforeInitialization(Object bean,String beanName){
+     *          sout.printlen("================");
+     *          return null;
+     *      }
+     *  }
+     *  在配置文件中添加了配置
+     *  <bean class="processors.MyInstantiationAwareBeanPostProcessor"></bean>
+     *  那么使用 BeanFactory 方式进行 Spring 的 bean 的加载是不会有任何改变的，但是使用 ApplicationContext 方式获取 Bean 的时候会在获取
+     *  每个 bean 的时打印出"==========" ,而这个特性就是在 registerBeanPostProcessors 方法中完成
+     *  我们继续探索 registerBeanPostProcessors 的方法实现
+     *
      *
      *
      */
@@ -214,7 +231,6 @@ class PostProcessorRegistrationDelegate {
                     regularPostProcessors.add(postProcessor);
                 }
             }
-
             // Do not initialize FactoryBeans here: We need to leave all regular beans
             // uninitialized to let the bean factory post-processors apply to them!
             // Separate between BeanDefinitionRegistryPostProcessors that implement
@@ -371,7 +387,10 @@ class PostProcessorRegistrationDelegate {
         // Register BeanPostProcessorChecker that logs an info message when
         // a bean is created during BeanPostProcessor instantiation, i.e. when
         // a bean is not eligible for getting processed by all BeanPostProcessors.
-        // BeanPostProcessor的目标计数
+        // BeanPostProcessor的目标计数 | BeanPostProcessorChecker 是一个普通的信息打印，可能会有些情况，
+        // 当 Spring 的配置中的后处理器还没有被注册就已经开始了 bean 的初始化时
+        //  便会打印出 beanPostProcessorChecker 中设定的信息
+
         int beanProcessorTargetCount = beanFactory.getBeanPostProcessorCount() + 1 + postProcessorNames.length;
         LogUtils.info("registerBeanPostProcessors beanProcessorTargetCount : " +beanProcessorTargetCount);
         // 2.添加BeanPostProcessorChecker(主要用于记录信息)到beanFactory中
@@ -380,18 +399,22 @@ class PostProcessorRegistrationDelegate {
         // Separate between BeanPostProcessors that implement PriorityOrdered,
         // Ordered, and the rest.
         // 3.定义不同的变量用于区分: 实现PriorityOrdered接口的BeanPostProcessor、实现Ordered接口的BeanPostProcessor、普通BeanPostProcessor
-        // 3.1 priorityOrderedPostProcessors: 用于存放实现PriorityOrdered接口的BeanPostProcessor
+        // 3.1 priorityOrderedPostProcessors: 用于存放实现PriorityOrdered接口的BeanPostProcessor  | 使用 PriorityOrdered   保证顺序
         List<BeanPostProcessor> priorityOrderedPostProcessors = new ArrayList<BeanPostProcessor>();
         // 3.2 internalPostProcessors: 用于存放Spring内部的BeanPostProcessor
         List<BeanPostProcessor> internalPostProcessors = new ArrayList<BeanPostProcessor>();
-        // 3.3 orderedPostProcessorNames: 用于存放实现Ordered接口的BeanPostProcessor的beanName
+        // 3.3 orderedPostProcessorNames: 用于存放实现Ordered接口的BeanPostProcessor的beanName |  使用 Ordered 保证顺序
         List<String> orderedPostProcessorNames = new ArrayList<String>();
-        // 3.4 nonOrderedPostProcessorNames: 用于存放普通BeanPostProcessor的beanName
+        // 3.4 nonOrderedPostProcessorNames: 用于存放普通BeanPostProcessor的beanName |  无序 BeanPostProcessor
         List<String> nonOrderedPostProcessorNames = new ArrayList<String>();
         // 4.遍历postProcessorNames, 将BeanPostProcessors按3.1 - 3.4定义的变量区分开
         for (String ppName : postProcessorNames) {
             LogUtils.info("registerBeanPostProcessors ppName : " + ppName);
             // 4.1 如果ppName对应的Bean实例实现了PriorityOrdered接口, 则拿到ppName对应的Bean实例并添加到priorityOrderedPostProcessors
+            //  对于 BeanFactory 的注册，也不是直接注册就可以了，在 Spring 中支持对于 BeanPostProcessor 的排序，比如根据 PriorityOrderd
+            // 进行排序，根据 Ordered 进行排序或者无序，而 Spring 在 BeanPostProcessor 的激活顺序的时候也会考虑对于顺序问题而先进行排序 的
+            // 这里可能有个地方读者还是不是很理解，对于 internalPostProcessors 中存储的后处理器也就是 MergedBeanDefinitionPostProcessor 类型的
+            // 处理器，在代码中似乎是被重复调用了。如：
             if (beanFactory.isTypeMatch(ppName, PriorityOrdered.class)) {
                 BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
                 priorityOrderedPostProcessors.add(pp);
@@ -405,11 +428,22 @@ class PostProcessorRegistrationDelegate {
             }
         }
 
+
         // First, register the BeanPostProcessors that implement PriorityOrdered.
+        // 第一步，注册所有的实现PriorityOrdered的 BeanPostProcessor
         sortPostProcessors(beanFactory, priorityOrderedPostProcessors);
         registerBeanPostProcessors(beanFactory, priorityOrderedPostProcessors);
 
         // Next, register the BeanPostProcessors that implement Ordered.
+        // 第二步 ，注册所有实现Ordered的BeanPostProcessor
+        // 配合源码及注释，在 registerBeanPostProcessors 方法中所做的逻辑相信大家已经很清楚了，我们再做一些总结
+        // 首先，我们会发现，对于 BeanPostProcessor 的处理与 BeanFactoryPostProcessor 的处理极为相似，但是似乎又有些不一样的地方
+        //  经过反复的对比，我们发现，对于 BeanFactoryPostProcessor 的处理要区分两种情况，一种方式是通过硬编码的方式来处理，另一种
+        // 是通过配置文件的方式来处理，那么为什么在 BeanPostProcessor 的处理只考虑了配置文件的而不考虑硬编码的方式呢？
+        //  提取了这个问题，还是因为读者没有完全理解两者实现的功能，对于 BeanFactoryPostProcessor 的处理，不但要实现注册的功能，
+        // 而且还要实现对后处理器的激活操作，所以需要载入配置的定义，并进行激活，而对于 BeanPostProcessor 并不需要马上调用，再说
+        // 硬编码的方式实现功能只需要将配置文件的 BeanPostProcessor  提取出来并注册进入 beanFactory 就可以了
+
         List<BeanPostProcessor> orderedPostProcessors = new ArrayList<BeanPostProcessor>();
         for (String ppName : orderedPostProcessorNames) {
             LogUtils.info("registerBeanPostProcessors ppName : " + ppName);
@@ -423,6 +457,7 @@ class PostProcessorRegistrationDelegate {
         registerBeanPostProcessors(beanFactory, orderedPostProcessors);
 
         // Now, register all regular BeanPostProcessors.
+        // 第三步，注册所有无序的 BeanPostProcessor
         List<BeanPostProcessor> nonOrderedPostProcessors = new ArrayList<BeanPostProcessor>();
         for (String ppName : nonOrderedPostProcessorNames) {
             LogUtils.info("registerBeanPostProcessors ppName : " + ppName);
@@ -435,6 +470,7 @@ class PostProcessorRegistrationDelegate {
         registerBeanPostProcessors(beanFactory, nonOrderedPostProcessors);
 
         // Finally, re-register all internal BeanPostProcessors.
+        // 第四步，注册所有 MergedBeanDefinitionPostProcessor 类型的 BeanPostProcessor ，并非重复注册
         sortPostProcessors(beanFactory, internalPostProcessors);
         registerBeanPostProcessors(beanFactory, internalPostProcessors);
 
