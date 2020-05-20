@@ -108,12 +108,15 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 
 	@Override
 	public Object getProxy() {
-		return getProxy(ClassUtils.getDefaultClassLoader());
+		return
+				getProxy(ClassUtils.getDefaultClassLoader());
 	}
 
 	// 获取代理类要实现的接口，除了Advised对象中配置，还会加上Spring Proxy,Advised(opaque=false) 检查
 	// 得到的接口中没有定义的equals或者hashcode的接口
 	// 调用Proxy.newProxyInstance()方法创建代理对象
+	// 通过之前的示例我们知道，JDKProxy 的使用是关键是创建自定义的 InvocationHandler ，而 InvocationHandler 中包含了需要覆盖的
+	// 函数getProxy() ,而当前的方法正是完成了这个操作，再
 	@Override
 	public Object getProxy(ClassLoader classLoader) {
 		if (logger.isDebugEnabled()) {
@@ -154,6 +157,11 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 	 *  主要实现思路，先获取应用到此方法上的拦截器，如果有拦截器，则应用拦截器，并执行连接点，如果没有拦截器，则直接反射执行连接点
 	 *  这里的关键是拦截器是如何获取的，以及它们是如何执行的，下面来逐个的分析
 	 *
+	 *
+	 *   下面的函数中最主要的工作就是创建一个拦截器链，并使用 ReflectiveMethodInvocation 类进行了链的封装，而在 ReflectiveMethodInvocation
+	 *   类的 proceed 方法中实现了拦截器的逐一调用，那么我们继续来探究，在 proceed 方法中是如何的实现前置增强在目标方法前调用后置增强，在
+	 *   目标方法后调用的逻辑呢？
+	 *
 	 */
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -166,17 +174,26 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 		Object target = null;
 
 		try {
-			// 目标未实现eqauls()方法
+			// 目标未实现eqauls()方法 | equals 方法处理
 			if (!this.equalsDefined && AopUtils.isEqualsMethod(method)) {
 				// The target does not implement the equals(Object) method itself.
 				return equals(args[0]);
 			}
-			// 目标对象未实现hashCode()方法
+			// 目标对象未实现hashCode()方法 | hash 方法处理
 			if (!this.hashCodeDefined && AopUtils.isHashCodeMethod(method)) {
 				// The target does not implement the hashCode() method itself.
 				return hashCode();
 			}
-			//  直接反射调用Advised接口或者父接口中定义的方法，不应用通知
+			//  直接反射调用Advised接口或者父接口中定义的方法，不应用通知 |
+			// Class 类的isAssignableFrom(Class cls) 方法:
+			// 如果调用这个方法的 class 或接口与参数 cls 表示的类或者接口相同
+			//  或者是参数 cls 表示类或者接口的父类，则返回 true
+			//  形象的：自身类.class.isAssignableFrom(自身类或子类.class) 返回 true
+			// 例如：
+			// 	System.out.println(ArrayList.class.isAssignableFrom(Object.class));
+			//  false
+			// System.out.println(Object.class.isAssignableFrom(ArrayList.class));
+			// true
 			if (!this.advised.opaque && method.getDeclaringClass().isInterface() &&
 					method.getDeclaringClass().isAssignableFrom(Advised.class)) {
 				// Service invocations on ProxyConfig with the proxy config...
@@ -184,7 +201,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 			}
 
 			Object retVal;
-
+			// 有时候目标对象的内部的自我调用将无法实施切面中的增强则需要骑过此属性暴露代理
 			if (this.advised.exposeProxy) {
 				// Make invocation available if necessary.
 				oldProxy = AopContext.setCurrentProxy(proxy);
@@ -200,7 +217,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 			}
 
 			// Get the interception chain for this method.
-			// 获取可以应用到此方法上的拦截器列表
+			// 获取可以应用到此方法上的拦截器列表 |  获取当前方法的拦截器链
 			List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 
 			// Check whether we have any advice. If we don't, we can fallback on direct
@@ -210,6 +227,7 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// We can skip creating a MethodInvocation: just invoke the target directly
 				// Note that the final invoker must be an InvokerInterceptor so we know it does
 				// nothing but a reflective operation on the target, and no hot swapping or fancy proxying.
+				//  如果没有发现任何拦截器那么就直接调用切点方法
 				retVal = AopUtils.invokeJoinpointUsingReflection(target, method, args);
 			}
 			else {
@@ -217,11 +235,13 @@ final class JdkDynamicAopProxy implements AopProxy, InvocationHandler, Serializa
 				// We need to create a method invocation...
 				invocation = new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
 				// Proceed to the joinpoint through the interceptor chain.
+				// 执行拦截器链
 				retVal = invocation.proceed();
 			}
 
 			// Massage return value if necessary.
 			Class<?> returnType = method.getReturnType();
+			// 返回结果
 			if (retVal != null && retVal == target && returnType.isInstance(proxy) &&
 					!RawTargetAccess.class.isAssignableFrom(method.getDeclaringClass())) {
 				// Special case: it returned "this" and the return type of the method

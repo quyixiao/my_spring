@@ -152,6 +152,56 @@ class CglibAopProxy implements AopProxy, Serializable {
 		return getProxy(null);
 	}
 
+	/****
+	 *  CBLIB 使用示例
+	 *  CBLIB 是一个强大的高性能的代码生成包，它广泛的被许多的 AOP 的构架使用，例如，Spring AOP 和 Dynaop ,为他们提供了方法的
+	 *  Interception拦截，最流行的 OR Mapping 工具 Hibernate 也使用了 CBLIB 来代理单端 single-ended （多对一 和 一对一） 关联
+	 *  （对集合的延迟抓取是采用其他机制实现的） EasyMock 和 JMock 是通过使用模仿 moke 对象来测试 java 代码的包，它们都通过使用 CGLIB
+	 *  来为那此没有接口的类创建模仿(moke) 对象
+	 *  CGLIB 包的底层通过使用一个小而快的字节码处理框架 ASM ，来转换字节码并生成新的类，除了 CBLIB 包，脚本语言例如 Groovy 和
+	 *  BeanShell ,也是使用 ASM 来生成 java 字节码，当然，不鼓励直接使用 ASM ,因为它要求你必须对 JVM  内部结构包括 class 文件格式
+	 *  和指令集都是很熟悉的
+	 *  我们来先快速的了解 CBLIB 的使用示例
+	 *  public class EnhancerDemo{
+	 *      public static void main(String [] args){
+	 *          Enhancer enhancer = new Enhancer();
+	 *          enhancer.setSuperclass(EnhancerDemo.class);
+	 *          enhancer.setCallback(new MethodInterceptorImpl());
+	 *          EnhancerDemo demo = (EnhancerDemo)enhancer.create();
+	 *          demo.test();
+	 *          System.out.println(demo);
+	 *      }
+	 *
+	 *      public void test(){
+	 *          System.out.println("EnhancerDemo test()");
+	 *      }
+	 *
+	 *      public static class MethodInterceptorImpl implements MethodInterceptor{
+	 * @Override
+	 * 			public Object intercept(Object obj ,Method method,Object [] args,MethodProxy proxy) throws Throwable{
+	 * 			 	   System.err.println("before invoke " + method);
+	 * 			 	   Object result = proxy.invokeSuper(obj,args);
+	 * 			 	   System.err.println("After invoke "+method);
+	 * 			 	   return result ;
+	 * 			}
+	 *      }
+	 *  }
+	 *  运行结果如下：
+	 *  Before invoke public void EnhancerDemo.test();
+	 *  EnhancerDemo test()
+	 *  After invoke public void EnhancerDemo.test()
+	 *  Before invoke public java.lang.String java.lang.Object.toString()
+	 *  Before invoke public native int java.lang.Object.hashCode()
+	 *  After invoke public native int java.lang.Object.hashCode()
+	 *  After invoke public java.lang.String java.lang.Object.toString()
+	 *  EnhancerDemo$$EnhancerByCGLIB$$bc89328329832
+	 *   可以看到 System.out.println(demo) ,demo 首先调用 toString()方法，然后调用了 hashCode
+	 *    生成了对象EnhancerDemo$$EnhancerByCGLIB$$bc89328329832 的实例，这个类是运行时由 CBLIB 产生的
+	 *     完成了  CGLIB 代理的类的委托给 CglibAopProxy 类去实现，我们进入了这个类的一探究竟，
+	 *  按照前面提供的示例，我们容易判断出来，cglibAopProxy 的入口应该是 getPoxy，也就是说在 cglib2AopProxy 类的 getProxy 方法中
+	 *   实现了 Enhancer 的创建及接口的封装
+	 *
+	 */
 	@Override
 	public Object getProxy(ClassLoader classLoader) {
 		if (logger.isDebugEnabled()) {
@@ -172,9 +222,11 @@ class CglibAopProxy implements AopProxy, Serializable {
 			}
 
 			// Validate the class, writing log messages as necessary.
+			// 验证 class
 			validateClassIfNecessary(proxySuperClass, classLoader);
 
 			// Configure CGLIB Enhancer...
+			// 创建及配置 Enhancer
 			Enhancer enhancer = createEnhancer();
 			if (classLoader != null) {
 				enhancer.setClassLoader(classLoader);
@@ -188,6 +240,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new UndeclaredThrowableStrategy(UndeclaredThrowableException.class));
 
+			// 设置拦截器
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
@@ -222,6 +275,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 	protected Object createProxyClassAndInstance(Enhancer enhancer, Callback[] callbacks) {
 		enhancer.setInterceptDuringConstruction(false);
 		enhancer.setCallbacks(callbacks);
+		//  生成代理类以及创建代理
 		return (this.constructorArgs != null ?
 				enhancer.create(this.constructorArgTypes, this.constructorArgs) :
 				enhancer.create());
@@ -275,7 +329,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 			doValidateClass(proxySuperClass.getSuperclass(), proxyClassLoader);
 		}
 	}
-
+	// 以上的函数完整的阐述了一个创建 Spring 中 Enhancer 的过程，读者可以参考 Enhancer 的文档查看每个步骤的含义，这里最重要的是通过
+	// getCallBacks 方法设置拦截器链
 	private Callback[] getCallbacks(Class<?> rootClass) throws Exception {
 		// Parameters used for optimisation choices...
 		boolean exposeProxy = this.advised.isExposeProxy();
@@ -283,6 +338,12 @@ class CglibAopProxy implements AopProxy, Serializable {
 		boolean isStatic = this.advised.getTargetSource().isStatic();
 
 		// Choose an "aop" interceptor (used for AOP calls).
+		// 将拦截器封装在 DynamicAdvisedInterceptor 中
+		// 在 getCallBack 中 Spring 考虑了很多，但是对于我们来说，只需要理解最常用的就可以了，比如将 advised 属性封装在DynamicAdvisedInterceptor
+		// 并加入到 callbacks中，这么做的目的是什么呢？  如何调用呢？在前面的示例中，我们了解到 CBLIB 中对于方法的拦截是通过将自定义的
+		// 的拦截器（ 实现 MethodInterceptor 接口） 加入到 CallBack 中并在调用代理时直接激活拦截器中的 intercept 方法来实现的
+		// 那么在 getCallBack 中正是实现了这样的一个目的，Dynamic用 DynamicAdvisedInterceptor 中的 intercept 方法，由此推断
+		// 对于 CGLIB方式的实现了代理，其核心逻辑必然在 DynamicAdvisedInterceptor 中的 intercept 中
 		Callback aopInterceptor = new DynamicAdvisedInterceptor(this.advised);
 
 		// Choose a "straight to target" interceptor. (used for calls that are
@@ -305,6 +366,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				new StaticDispatcher(this.advised.getTargetSource().getTarget()) : new SerializableNoOp();
 
 		Callback[] mainCallbacks = new Callback[]{
+				// 将拦截器链加入到 Callback 中
 			aopInterceptor, // for normal advice
 			targetInterceptor, // invoke target without considering advice, if optimized
 			new SerializableNoOp(), // no override for methods mapped to this
@@ -610,6 +672,14 @@ class CglibAopProxy implements AopProxy, Serializable {
 	/**
 	 * General purpose AOP callback. Used when the target is dynamic or when the
 	 * proxy is not frozen.
+	 * 这个方法中实现也 JDK 方法实现代理中的 invoke 方法大同小异，都是首先构造链，然后封装此链进行串联调用，稍有区别的就是 JDK 中直接构造
+	 * RelectiveMethodInvocation ,然而在 cglib 中使用了 CglibMethodInvocation ,CglibMethodInvocation 继承自
+	 * ReflectiveMethodInvocation ,但是 proceed 方法并没有重写
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	private static class DynamicAdvisedInterceptor implements MethodInterceptor, Serializable {
 
@@ -637,6 +707,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 				if (target != null) {
 					targetClass = target.getClass();
 				}
+				//  获取拦截器链
 				List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 				Object retVal;
 				// Check whether we only have one InvokerInterceptor: that is,

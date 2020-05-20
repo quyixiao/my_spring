@@ -150,19 +150,26 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 	}
 
 
+	/***
+	 * 的proceed 方法中，或许代码逻辑并没有我们想象中的复杂，ReflectiveMethodInvocation中主要职责是维护了链接调用的计数器，记录前当前调用
+	 * 链接的位置，以便链接可以有序的进行下去，那么在这个方法中并没有我们之前设想的维护各种增强的顺序，而是将此工作委托给了各个增强器，使得
+	 * 各个增强器的内部进行逻辑实现
+	 *
+	 */
 	@Override
 	public Object proceed() throws Throwable {
 		//	We start with an index of -1 and increment early.
-		// 如果拦截器执行完成了，则执行接连点
+		// 如果拦截器执行完成了，则执行接连点 | 执行完所有的增强后执行切点方法
 		if (this.currentInterceptorIndex == this.interceptorsAndDynamicMethodMatchers.size() - 1) {
 			return invokeJoinpoint();
 		}
-
+		// 获取下一个要执行的拦截器
 		Object interceptorOrInterceptionAdvice =
 				this.interceptorsAndDynamicMethodMatchers.get(++this.currentInterceptorIndex);
 		if (interceptorOrInterceptionAdvice instanceof InterceptorAndDynamicMethodMatcher) {
 			// Evaluate dynamic method matcher here: static part will already have
 			// been evaluated and found to match.
+			// 动态匹配
 			InterceptorAndDynamicMethodMatcher dm =
 					(InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;
 			// 动态匹配，运行时参数是否满足条件
@@ -172,14 +179,14 @@ public class ReflectiveMethodInvocation implements ProxyMethodInvocation, Clonea
 			else {
 				// Dynamic matching failed.
 				// Skip this interceptor and invoke the next in the chain.
-				// 动态匹配失败，略过当前拦截器，直接调用下一个拦截器
+				// 动态匹配失败，略过当前拦截器，直接调用下一个拦截器 | 匹配失败则不执行拦截器
 				return proceed();
 			}
 		}
 		else {
 			// It's an interceptor, so we just invoke it: The pointcut will have
 			// been evaluated statically before this object was constructed.
-			// 执行当前拦截器
+			// 执行当前拦截器 | 普通拦截器，直接调用拦截器，比如 | 将 this 作为参数传递以保证当前实例中调用链的执行
 			return ((MethodInterceptor) interceptorOrInterceptionAdvice).invoke(this);
 		}
 	}
