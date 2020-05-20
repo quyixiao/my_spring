@@ -382,7 +382,21 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	//-------------------------------------------------------------------------
 	// Methods dealing with static SQL (java.sql.Statement)
 	//-------------------------------------------------------------------------
-
+	// 这个 execute 与之前的 execute 并无太大的差别，都是做了一些常规的处理，诸如获取连接，释放连接，
+	// 但是，有一个地方是不一样的，就是 statement 的创建，这里是直接使用 connection 创建，而带有参数的 SQL  使用的是 preparedStatementCreator
+	// 类来创建的，一个普通的 Statement ，另一个是 PreparedStatement ,两都空间是何区别呢？
+	// PreparedStatement 接口继承 Statement , 并与之在两方面有所不同
+	// PrepareStatement 实例包含已经编译的 SQL 语句，也就是是使语句准备好，包含于 PreparedStatement 对象中的 SQL 语句具有一个或者多个
+	// IN参数，NI 参数值在 SQL 语句创建时未被指定，相反的，该语句为每个 IN 参数保留一个问号 ("?") 作为占位符，每个问号的值必需在该语句执行之前
+	// 通过适当的 setXXX 方法来提供，
+	// 由于 PreparedStatement 对象已预编译过，所以其执行速度要快于 Statement  对象，因此，多次执行的 SQL 语句经常创建为 PreparedStatement 对象
+	// 以提高效率
+	// 作为 Statement 的子类 ，PreparedStatement 继承了 Statement 的所有功能，另外，它还添加了一整套方法，用于设置发送给数据库以
+	// 取代 IN 参数占位符的值，同时，三种方法 execute
+	// executeQuery ,和 executeUpdate 已被更改以使之不再需要参数，这些方法的 Statement 形式 接受 SQL  语句参数的形式，不应该用
+	// PreparedStatement 对象
+	// Spring 中不仅仅为我们提供了 query 方法，还在此基础上做了封装，提供了不同的类型的 query 方法，如图 8-1  所示
+	//
 	@Override
 	public <T> T execute(StatementCallback<T> action) throws DataAccessException {
 		Assert.notNull(action, "Callback object must not be null");
@@ -439,6 +453,15 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		execute(new ExecuteStatementCallback());
 	}
 
+	/***
+	 * 上面的代码并没有什么复杂的逻辑，只是对返回的结果遍历以此使用 rowMapper 进行转换，之前
+	 * 讲了 update 方法以及 query 方法，使用这两个函数示例的 SQL 都带上了参数的，也是带有了? 的，那么还有一种情况 ？ 的，
+	 * Spring 使用的是另一种处理方式
+	 * List<User> list = jdbcTemplate.query("select * from user ",new UserRowMapper());
+	 * 与之前的 query 方法最大的不同是少了参数的传递及参数类型的传递，自然也少了 PreparedStatementSetter 类型的封装，
+	 * 既然少了 PreparedStatementSetter 类型的传入，调用 execute 方法自然也会有改变了
+	 *
+	 */
 	@Override
 	public <T> T query(final String sql, final ResultSetExtractor<T> rse) throws DataAccessException {
 		Assert.notNull(sql, "SQL must not be null");
@@ -456,6 +479,8 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 					if (nativeJdbcExtractor != null) {
 						rsToUse = nativeJdbcExtractor.getNativeResultSet(rs);
 					}
+					// 可以看到整体套路也 update 差不多的，只不过在回调类 PreparedStatementCallback 的实现中使用的是 ps.executeQuery()执行
+					// 查询操作，而且在返回方法上也做了一些额外的处理
 					return rse.extractData(rsToUse);
 				}
 				finally {

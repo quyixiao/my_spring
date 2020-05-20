@@ -85,6 +85,13 @@ public class RowMapperResultSetExtractor<T> implements ResultSetExtractor<List<T
 	}
 
 
+	/***
+	 *  rse.extractData(rsToUse) 方法钢表将结果进行寺并转换到 POJO，rse 当前代表的类为 RowMapperResultSetExtractor ，而在构造
+	 *  RowMapperResultSetExtractor 的进修我们双将自定义的 rowMapper 设置了野德，调用代码如下
+	 *  上面的代码中并没有什么复杂的逻辑，只是对返回的结果遍历并以此使用 rowMapper 进行转换，之前讲到过 update 方法以及 query 方法，使用了
+	 *  这两个函数示例的 SQL 都是带有参数也，就是带有？的，那么还有另一种情况下是不带有? 有，Spring 中使用的是另一种处理方式
+	 *
+	 */
 	@Override
 	public List<T> extractData(ResultSet rs) throws SQLException {
 		List<T> results = (this.rowsExpected > 0 ? new ArrayList<T>(this.rowsExpected) : new ArrayList<T>());
