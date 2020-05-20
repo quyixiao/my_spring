@@ -961,6 +961,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         if (beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
             //如果有LoadTimeWeaver，加入bean后处理器
             LogUtils.info("prepareBeanFactory beanFactory containsBean loadTimeWeaver ");
+            // 在 AbstractApplicationContext 中的 prepareBeanFactory  函数是在容器初始化时候调用的，也就是说只有在注册了 LoadTimeWeaverAwareProcessor
+            // 才会激活整个 AspectJ 的功能
             beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
             // Set a temporary ClassLoader for type matching.
             // 为匹配类型设置一个临时的ClassLoader

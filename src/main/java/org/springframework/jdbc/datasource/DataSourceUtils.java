@@ -92,6 +92,71 @@ public abstract class DataSourceUtils {
 	 * @return a JDBC Connection from the given DataSource
 	 * @throws SQLException if thrown by JDBC methods
 	 * @see #doReleaseConnection
+	 * JDBC （java Data Base Connectivity ,java 数据库连接） 是一种用于执行 SQL 语句的 Java API ，可以为多种关系数据库提供了
+	 * 统一的访问，它由一组用 java 语言编写的类和接口组成，JDBC 为数据库开发人员提供了一个标准的 API ,据此可以构建更高级的工具和接口，
+	 * 使数据库开发人员能够用纯 java API 编写数据库应用程序，并且可跨平台运行，并且不受数据库供应商限制，
+	 * (1) 在开发环境中加载指定的数据库驱动程序，接下来的实验中，使用数据库是 MYSQL ,所以要去下载 JDBC 驱动程序
+	 * (2) 在 java 程序中加载驱动程序，在 Java 程序中，可以通过"Class.forName(" 指定数据库的驱动程序")"的方式来加载添加到开发环境中
+	 * 中的驱动程序，例如加载 MySQL 的数据库驱动程序的代码为 Class.forName("com.mysql.jdbc.Driver");
+	 * (3) 创建数据库连接对象，通过 DriverManager 类创建数据库连接对象 Connnection ，DriverManager 类作用于 Java 程序和 JDBC 驱动
+	 * 驱动程序之间，用于检查所加载的驱动程序是否以建立连接，然后通过它 getConnection 方法根据数据库 URL ，用户名和密码，创建一个 JDBC
+	 * Connection 对象，例如 Connection connectonMySql = DriverManager.getConnection("数据库的 URL ","用户名"," 密码") ，其中 URL =
+	 * 协义名+IP 地址 +  端口 +  数据库名称;用户名和密码是指登录数据库时所使用的用户名和密码，具体的示例创建 MySql 的数据库连接代码如下：
+	 * Connection connectionMySQL = DriverManager.getConnection("jdbc:mysql://localhost:3306/myuser","root","123456");
+	 * (4) 创建Statement 对象，Statement 类主要用于执行静态的 SQL 语句并返回它所生成的结果对象，通过 Connection 对象的 createStatement()
+	 * 方法可以创建一个 Statement 对象，例如 Statement statement = connection.createConnection() ，具体的示例如下：
+	 * 	Statement statementMysql = connectonMySql.createStatement();
+	 * (5) 调用 Statement 对象相关的方法执行相对应的 SQL 语句，通过 execuUpdate()方法来对数据更新，包括插入的和删除操作，例如
+	 *  向 staff 表中插入一条数据的代码
+	 *  statement.excuteUpdate("INSERT INTO staff(name,age,sex,address,depart,worklen,wage) VALUES ('tom1',321,'M','china','Personnel','3','3000')");
+	 *  通过调用 Statement 对象的 executeQuery()方法进行数据的查询，而查询的结果会得到 ResultSet 对象，ResultSet 表示执行查询数据库后
+	 *  返回的数据的集合，ResultSet 对象具有可以指向当前数据行的指针，通过该对象的 next() 方法，使得指针下一行，然后将数据以列号或者字段
+	 *  名取出，如果当 next() 方法返回了 null,则表示下一行中没有数据存在，使用示例代码如下：
+	 *  ResultSet resultSel = statement.executeQuery("select * from staff");
+	 *  (6) 关闭数据库连接，使用完数据库或者不需要访问数据库时，通过 Connection 的 close()方法及相关的关闭数据库连接
+	 *
+	 *  8.1 Spring  连接数据库程序实现
+	 *  Spring 中的 JDBC 连接与直接使用 JDBC 去连接还是有所差别的，Spring 对 JDBC 做了大量的封装，消除了冗余的代码，使得开发量大大的
+	 *  减少了，下面通过一个小例子让大家简单的认识一下 Spring 中的 JDBC 操作
+	 *  (1)创建数据库
+	 *  create table user {
+	 *      id int (11) not null auto_increatement,
+	 *      name varchar(255) default null,
+	 *      age int default null ,
+	 *      sex varchar(255) default null,
+	 *      primary key (id)
+	 *  }engine = innodb default charset=utf=8 ;
+	 *
+	 *  (2) 创建对应的数据库表 PO
+	 *  public class User {
+	 *      private int id ;
+	 *      private String name;
+	 *      private int age ;
+	 *      private String sex;
+	 *  }
+	 *  (3) 创建表与实体间的映射
+	 *  public class UserRowMapper implements RowMapper{
+	 * @Override
+	 * 		public Object mapRow(ResultSet set,int index) throws SQLException {
+	 * 		 	User person = new User(
+	 * 		 	set.getInt("id"),
+	 * 		 	set.getString("name"),
+	 * 		 	set.getInt("age"),
+	 * 		 	set.getString("sex")
+	 * 		 );
+	 * 		}
+	 *  }
+	 *  (4) 创建数据库操作接口
+	 *  public interface UserService{
+	 *      public void save(User user);
+	 *
+	 *      public List<User> getUsers();
+	 *  }
+	 *
+	 *  (5) 创建数据库操作接口实现类
+	 *
+	 *
+	 *
 	 */
 	public static Connection doGetConnection(DataSource dataSource) throws SQLException {
 		Assert.notNull(dataSource, "No DataSource specified");

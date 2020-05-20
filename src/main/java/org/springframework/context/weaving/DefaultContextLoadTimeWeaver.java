@@ -66,6 +66,20 @@ public class DefaultContextLoadTimeWeaver implements LoadTimeWeaver, BeanClassLo
 		setBeanClassLoader(beanClassLoader);
 	}
 
+	/***
+	 *  这个代码中有一句代码很容易忽略但是很关键的代码
+	 * this.loadTimeWeaver = new InstrumentationLoadTimeWeaver(classLoader);
+	 * 这句代码不仅仅在实例化了一个 InstrumentationLoadTimeWeaver 类型的实例，而且还实例化过程中还做了一些额外的操作
+	 *  在实例化过程中会对当前的 this.instrumentation 属性进行初始化，而初始化的代码如下：
+	 *  	this.instrumentation = getInstrumentation();
+	 *  也就是说在 InstrumentationLoadTimeWeaver 实例化后其属性 Instrumentation 已经被初始化为代表着的当前虚拟机的实例了。
+	 *  综合我们讲过的例子，对于注册转换器，如 AddTransformer 函数等，便可以直接使用此属性进行操作了
+	 *  也就是经过以上的程序处理后，在 Spring 中的 bean 之间的关系如下：
+	 *  AspectJWeavingEnabler 类型 bean 中的 loadTimeWeaver 属性被初始化为 DefaultContextLoadTimeWeaver 类型的 bean ;
+	 *  DefaultContextLoadTimeWeaver 类型的 bean 中的 loadTimeWeaver 属性被初始化为 InstrumentationLoadTimeWeaver 。
+	 *  因为 AspectJWeavingEnabler 类同时实现了 BeanFactoryPostProcessor，所以当所有的 bean 解析结束后调用其 postProcessBeanFactory 方法
+	 *
+	 */
 	@Override
 	public void setBeanClassLoader(ClassLoader classLoader) {
 		LoadTimeWeaver serverSpecificLoadTimeWeaver = createServerSpecificLoadTimeWeaver(classLoader);
@@ -78,6 +92,7 @@ public class DefaultContextLoadTimeWeaver implements LoadTimeWeaver, BeanClassLo
 		}
 		else if (InstrumentationLoadTimeWeaver.isInstrumentationAvailable()) {
 			logger.info("Found Spring's JVM agent for instrumentation");
+			// 查看当前虚似机中的 Instrumentation  实例是不是可用
 			this.loadTimeWeaver = new InstrumentationLoadTimeWeaver(classLoader);
 		}
 		else {

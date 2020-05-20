@@ -47,6 +47,14 @@ class LoadTimeWeaverBeanDefinitionParser extends AbstractSingleBeanDefinitionPar
 			"org.springframework.context.weaving.AspectJWeavingEnabler";
 
 
+	/***
+	 * 单凭以上的信息我们至少可以推断，当 Spring 在读取到自定义标签<context:load-time-weaver/> 后会生产一个 bean ，而这个 bean
+	 * 的 id 为 loadTimeWeaver，class 为 org.springframework.context.weaving.DefaultContextLoadTimeWeaver，也就是完成了
+	 * DefaultContextLoadTimeWeaver 类来注册
+	 * 完成了以后的注册功能后，并不意味着这在 Spring 中就可以使用 AspectJ 了，因为我们还有一个很重要的步骤忽略了，就是 LoadTimeWeaverAwareProcessor 注册
+	 * ，在 AbstractApplicationContext 中的 prepareBeanFactory  函数中有这样一段代码
+	 *
+	 */
 	@Override
 	protected String getBeanClassName(Element element) {
 		if (element.hasAttribute(WEAVER_CLASS_ATTRIBUTE)) {
@@ -82,7 +90,8 @@ class LoadTimeWeaverBeanDefinitionParser extends AbstractSingleBeanDefinitionPar
 		//  将 org.springframwwork.context.weaving.AspectJWeavingEnabler 封装在 BeanDefinition 中注册
 		// 当通过 AspectJ 功能验证后便可以进行 AspectJWeavingEnabler 的注册了，注册方式很简单，无非是将类路径注册在新的初始化的 RootBeanDefinition 中
 		//  在 RootBeanDefinition 的获取时会转换成对应的 class
-		//
+		// 尽管在 init 方法中注册了 AspectWeavingEnabler 但是对于标签本身 Spring 也会以 bean 的形式保存，也就是当 Spring  解析到
+		// <context:load-time-weaver/> 标签的时候也会产生一个 bean ，而这个 bean 中信息是什么呢？
 		if (isAspectJWeavingEnabled(element.getAttribute(ASPECTJ_WEAVING_ATTRIBUTE), parserContext)) {
 			RootBeanDefinition weavingEnablerDef = new RootBeanDefinition();
 
