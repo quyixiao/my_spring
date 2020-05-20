@@ -600,7 +600,8 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	//-------------------------------------------------------------------------
 	// Methods dealing with prepared statements
 	//-------------------------------------------------------------------------
-
+	// execute 作为数据库操作的核心入口，将大多数数据库操作相同的步骤统一封装，而将个性化的操作使用参数 PreparedStatementCallBack 进行回调
+	//
 	@Override
 	public <T> T execute(PreparedStatementCreator psc, PreparedStatementCallback<T> action)
 			throws DataAccessException {
@@ -611,7 +612,7 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			String sql = getSql(psc);
 			logger.debug("Executing prepared SQL statement" + (sql != null ? " [" + sql + "]" : ""));
 		}
-
+		// 获取数据库连接
 		Connection con = DataSourceUtils.getConnection(getDataSource());
 		PreparedStatement ps = null;
 		try {
@@ -621,18 +622,23 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 				conToUse = this.nativeJdbcExtractor.getNativeConnection(con);
 			}
 			ps = psc.createPreparedStatement(conToUse);
+			// 应用用户设定的输入参数
 			applyStatementSettings(ps);
 			PreparedStatement psToUse = ps;
 			if (this.nativeJdbcExtractor != null) {
 				psToUse = this.nativeJdbcExtractor.getNativePreparedStatement(ps);
 			}
+			// 3.调用回调函数
+			//  处理一些通用的方法外的个性化处理，PreparedStatementCallBack 类型的参数是 doInPreparedStatement 方法的回调
 			T result = action.doInPreparedStatement(psToUse);
+			// 4.  警告处理
 			handleWarnings(ps);
 			return result;
 		}
 		catch (SQLException ex) {
 			// Release Connection early, to avoid potential connection pool deadlock
 			// in the case when the exception translator hasn't been initialized yet.
+			// 释放数据库连接避免当异常转换器没有被初始化的时候出现的潜在的连接池死锁
 			if (psc instanceof ParameterDisposer) {
 				((ParameterDisposer) psc).cleanupParameters();
 			}
@@ -640,6 +646,9 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 			psc = null;
 			JdbcUtils.closeStatement(ps);
 			ps = null;
+			// 5.数据库的连接释放并不是直接调用了 Connection 的 API 中的 close 方法，考虑到存在事务的情况，如果当前线程存在事务
+			// 那么说明当前线程中存在共用的数据库连接，这种情况下直接使用 ConnectionHolder 中的 released 方法进行连接数减一。
+			//  而不是真正的释放数据库连接
 			DataSourceUtils.releaseConnection(con, getDataSource());
 			con = null;
 			throw getExceptionTranslator().translate("PreparedStatementCallback", sql, ex);
@@ -859,17 +868,64 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 		return query(sql, args, new SqlRowSetResultSetExtractor());
 	}
 
+	/***
+	 * 8.2 save /update 功能的实现
+	 * 我们在以前的例子中为基础开发分析 Spring 对 JDBC 的支持，首先寻找整个功能的切入点，在示例中我们可以看到所有的数据库操作
+	 * 都封装在了 UserServiceImpl 中，而 UserServiceImpl 中的所有的数据库操作又以其内部属性 jdbcTemplate 为基础，这个 jdbcTemplate
+	 * 可以作为源码分析切入点，我们一起看看它是如何实现又是如何被初始化的
+	 * 在 UserServiceImpl 中的 jdbcTemplate 的初始化是从 setDataSource 函数开始的，DataSource 实例通过参数的注入，DataSource
+	 * 的创建过程是引入第三方的连接池，这里不做过多的介绍，DataSource是整个数据库操作的基础，里面封装了整个数据库的信息，我们首先以保存
+	 * 实体类为例进行代码的跟踪
+	 * public void save(User user ){
+	 *     jdbcTemplate.update("insert into user (name,age,sex value (? ,? ,? ))",
+	 *     new Object[] { user.getName(),user.getAge(),user.getSex()},
+	 *     new int[]{java.sql.Types.VARCHAR,java.sql.Types.INTEGER,java.sql.Types.VARCHAR} );
+	 * }
+	 *  对于保存一个实体类来讲，在操作中我们只需要提供 SQL 语句以及语句中对应的参数和参数类型，其他的操作便可以交由 Spring 来完成
+	 * 这些工作到底是包括什么呢？进入 jdbcTemplate 的 update 方法
+	 *
+	 *
+	 *  |
+	 *
+	 * 进入了update 方法后，Spring 并不急于进行核心的处理操作，而是先做足准备工作，使用 ArgTypePreparedStatementSetter 对参数进行
+	 * 封装，同时又使用了 SimplePreparedStatementCreator 对 SQL 语句进行封装，至于为什么要这么进行封装，暂且不写在代码里了
+	 * 经过数据封装后便可以进行核心的数据处理代码了。
+	 *
+	 * |
+	 * 如果读者了解其他的操作方法，可以知道 execute 方法是最基础的操作，而其他的操作比如 update ，query,等方法则是传入不同的 PreparedStatementCallBack
+	 * 参数来执行不同的逻辑了。
+	 *
+	 */
 	protected int update(final PreparedStatementCreator psc, final PreparedStatementSetter pss)
 			throws DataAccessException {
 
 		logger.debug("Executing prepared SQL update");
+		// PreparedStatementCallBack 作为一个接口，其中只有函数 doInPreparedStatement ，这个函数是用于调用能用的方法的
+		//   execute 的时候无法处理一些个性化的处理方法，在 update 中的函数实现
 		return execute(psc, new PreparedStatementCallback<Integer>() {
 			@Override
 			public Integer doInPreparedStatement(PreparedStatement ps) throws SQLException {
 				try {
 					if (pss != null) {
+						// 设置 PreparedStatement 所需的全部参数
+						//但是，对于设置输入参数的函数 pss.setValues(ps) ，我们有必要去研究一下，在没有分析源码之前，我们至少可以
+						// 知道其功能，不妨再回顾一下，Spring 中使用 SQL 执行过程，直接使用
+						// jdbcTemplate.update("insert into user(name,age,sex) values (?,?,?)" ,
+						// new Object[]{user.getName(),user.getAge(),user.getSex()},
+						// java.sql.Types.VARCHAR,java.sql.Types.VARCHAR);
+						// SQL 语句对应的参数的类型清晰明了了，这些都归功于 Spring 为我们所做的封装，而真正的 JDBC 调用其实非常的繁琐
+						// 你需要这样做
+						// PreparedStatement updateSales = con.prepareStatement("insert into user (name,age,sex value(? ,? ,? ))");
+						// updateSales.setString(1,user.getName());
+						// updateSales.setInt(2,user.getAge());
+						// updateSales.setString(3,user.getSex());
+						// 那么看看 Spring 是如何做到的封装上面的操作呢？
+						// 首先，所有的操作都是以 pss.setValues(ps) 为入口的,还记得我们之前的分析路程吗？ 这个 pss 所代表的当前类
+						// 正是 ArgPreParedStateMentSetter，其中的 setValues 如下：
 						pss.setValues(ps);
 					}
+					// 其中用于真正的执行 SqL 的 ps.executeUpdate() 并没有太多的需要讲解的，因为我们平时在直接使用 JDBC 方式进行调用
+					// 的时候会经常的使用此方法，
 					int rows = ps.executeUpdate();
 					if (logger.isDebugEnabled()) {
 						logger.debug("SQL update affected " + rows + " rows");
@@ -1349,10 +1405,15 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	protected void applyStatementSettings(Statement stmt) throws SQLException {
 		int fetchSize = getFetchSize();
 		if (fetchSize >= 0) {
+			// setFetchSize 最主要的是为了减少网络交互的次数设计，访问 ResultSet 时，如果它每次只从服务器上读取一行数据，则会产生
+			//  大量的网络开销，setFetchSize 的意思是当调用 rs.next 时，ResultSet 会一次性的从服务器上取得多少行数据回来，这样
+			// 下次 rs.next 时，它可以直接从内存中获取数据而不需要网络交互，提高了效率，这个设置可能会被某些 JDBC 驱动忽略，而且设置过大
+			//  也会造成内存上升
 			stmt.setFetchSize(fetchSize);
 		}
 		int maxRows = getMaxRows();
 		if (maxRows >= 0) {
+			// setMaxRows 将此 Statement 对象生成的所有 resultSet 对象可以包含最大行数的限制设置为给定数
 			stmt.setMaxRows(maxRows);
 		}
 		DataSourceUtils.applyTimeout(stmt, getDataSource(), getQueryTimeout());
@@ -1389,8 +1450,17 @@ public class JdbcTemplate extends JdbcAccessor implements JdbcOperations {
 	 * @see org.springframework.jdbc.SQLWarningException
 	 */
 	protected void handleWarnings(Statement stmt) throws SQLException {
+		// 当设置为忽略警告时只尝试打印日志
 		if (isIgnoreWarnings()) {
 			if (logger.isDebugEnabled()) {
+				// 如果日志开启的情况下打印日志 | 这里用到了一个类 SQLWarning，SQL WARNING  提供关于数据库访问警告信息异常，这些
+				// 警告直接连接到导致报告警告的方法所有的对象，警告可以从 Connection,Statement 和 ResultSet 对象中获取得，
+				// 试图在已经关闭连接上获取警告将导致抛出异常，类似了，试图在已经的语句上或已经关闭的结果集上获取警告也将导致抛出异常
+				// 注意，关闭语句时还会关闭它可能生成的结果集
+				//  很多人不是很理解什么情况下会产生警告现是不是异常，在这里给读者提示个最觉的警告 DataTruncation: DataTruncation
+				// 直接继承 SQLWarning , 由于某种原因意外地截断数据值是会以 DataTruncation 警告形式报告异常
+				// 对于警告的处理方式并不是直接抛出异常，出现警告很可能是出现数据错误，但是并不是一定会影响程序执行，所以用户可以自己
+				// 设置处理警告的方式，如默认的忽略警告，当出现警告时只打印警告日志，而另一种方式直接抛出异常
 				SQLWarning warningToLog = stmt.getWarnings();
 				while (warningToLog != null) {
 					logger.debug("SQLWarning ignored: SQL state '" + warningToLog.getSQLState() + "', error code '" +

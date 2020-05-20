@@ -155,8 +155,91 @@ public abstract class DataSourceUtils {
 	 *
 	 *  (5) 创建数据库操作接口实现类
 	 *
+	 *	public class UserServiceImpl implements UserService {
+	 *	   private JdbcTemplate jdbcTemplate ;
+	 *
+	 *	   // 设置数据源
+	 *	   public void setDatasource(DataSource dataSource){
+	 *	       this.jdbcTemplate = new JdbcTemplate(dataSource);
+	 *	   }
+	 *
+	 *	   public void save(User user ){
+	 *	       jdbcTemplate.update("insert into user (name,age,sex) values (?,?,?)",new Object []
+	 *	       {
+	 *	           user.getName(),user.getAge(),
+	 *	           user.getSex()
+	 *	       },
+	 *	       new int[] {java.sql.Types.VARCHAR,java.sql.Types.INTEGER,java.sql.Types.VARCHAR}
+	 *	       );
+	 *	   }
+	 *
+	 * @SuppreWarnings("unchecked")
+	 * 		public List<User> getUsers(){
+	 * 			List<User> list = jdbcTemplate.query("select * from user",new UserRowMapper());
+	 * 		return list ;
+	 * 	}
+	 *	}
+	 *
+	 * (6)  创建 spring  配置文件
+	 * <?xml version="1.0" encoding="UTF-8"?>
+	 * <beans xmlns="http://www.springframework.org/schema/beans"
+	 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	 *
+	 *            <!--配置数据源-->
+	 *            <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+	 *            		<property name="DriverClassName" value="com.mysql.jdbc.Driver"></property>
+	 *            		<property name="url" value="jdbc:mysql://locahost:3306/test"></proprty>
+	 *            		<property name="username" value="root"></property>
+	 *            		<property name="password" value="123456"></property>
+	 *            	 	<!--连接池启动时的初始值-->
+	 *            		<property name="initialSize" value ="1"></property>
+	 *            		<!--连接池最大值-->
+	 *            		<property name="maxActive" value ="300"></property>
+	 *            		<!-- 最大空闲值，当经过一个高峰时间后，连接池可以慢慢的将已经用不到的连接慢慢的释放一部分，一直减少到 maxIdle 为止-->
+	 *            		<property name="maxIdle" value ="2"></property>
+	 *            		<!-- 最小空闲值，当空闲的连接数少于阀值时，连接池就会增申请一些连接，以免洪峰来不及申请-->
+	 *            		<property name="minIdle" value ="1"></property>
+	 *            		<property name="" value =""></property>
+	 *            		<property name="" value =""></property>
+	 *            		<property name="" value =""></property>
+	 *            		<property name="" value =""></property>
+	 *            </bean>
+	 *            <!--配置业务 bean : PersonServiceBean-->
+	 *			<bean id="userService" class="service.UserServiceImpl">
+	 *			 	<!--向属性 dataSource 注入数据源-->
+	 *			 	<property name="dataSource" ref="dataSource"></property>
+	 *			 </bean>
+	 *
+	 * (7)测试
+	 * 	public class SpringJDBCTest{
+	 * 	    public static void main(String [] args ){
+	 * 	        ApplicationContext act = new ClassPathXmlApplicationContext("bean.xml");
+	 * 	        UserService userSerivce = (UserService)act.getBean("userService");
+	 * 	        User user = new User();
+	 * 	        user.setName("张三");
+	 * 	        user.setAge(20);
+	 * 	        user.setSex("男");
+	 * 	        userService.save(user);
+	 * 	        List<User>  person1 = userService.getUsers();
+	 * 	        for(User person2 : person1 ){
+	 * 	        	System.out.println(person2.getId() + " " + person2.getName() + " "+ person2.getAge() + " "+person2.getSext());
+	 * 	        }
+	 *
+	 * 	    }
+	 * 	}
 	 *
 	 *
+	 *
+	 *
+	 *
+	 * 	|
+	 *
+	 * 	1. 获取数据库连接
+	 * 	获取数据库连接也并非直接使用 dataSource.getConnection()方法那样的简单，同样也考虑了诸多的情况
+	 *
+	 *  在数据库连接方面，Spring 主要考虑的是关于事务方面的处理，基于事务的处理的特殊性，Spring 需要保证线程中的数据库操作都是使用同
+	 *  一个事务连接
 	 */
 	public static Connection doGetConnection(DataSource dataSource) throws SQLException {
 		Assert.notNull(dataSource, "No DataSource specified");
@@ -174,11 +257,12 @@ public abstract class DataSourceUtils {
 
 		logger.debug("Fetching JDBC Connection from DataSource");
 		Connection con = dataSource.getConnection();
-
+		//  当前线程支持同步
 		if (TransactionSynchronizationManager.isSynchronizationActive()) {
 			logger.debug("Registering transaction synchronization for JDBC Connection");
 			// Use same Connection for further JDBC actions within the transaction.
 			// Thread-bound object will get removed by synchronization at transaction completion.
+			// 在事务中使用同一数据库连接
 			ConnectionHolder holderToUse = conHolder;
 			if (holderToUse == null) {
 				holderToUse = new ConnectionHolder(con);
@@ -186,6 +270,7 @@ public abstract class DataSourceUtils {
 			else {
 				holderToUse.setConnection(con);
 			}
+			// 记录数据库连接
 			holderToUse.requested();
 			TransactionSynchronizationManager.registerSynchronization(
 					new ConnectionSynchronization(holderToUse, dataSource));
@@ -382,6 +467,8 @@ public abstract class DataSourceUtils {
 			return;
 		}
 		if (dataSource != null) {
+			// 当前线程存在事务的情况下说明存在共用的数据库连接直接使用 ConnectionHoler 中的 released 方法进行连接数减一而不是真正的
+			//  释放连接
 			ConnectionHolder conHolder = (ConnectionHolder) TransactionSynchronizationManager.getResource(dataSource);
 			if (conHolder != null && connectionEquals(conHolder, con)) {
 				// It's the transactional Connection: Don't close it.
