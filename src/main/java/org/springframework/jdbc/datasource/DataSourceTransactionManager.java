@@ -177,9 +177,12 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	@Override
 	protected Object doGetTransaction() {
 		DataSourceTransactionObject txObject = new DataSourceTransactionObject();
+		//
 		txObject.setSavepointAllowed(isNestedTransactionAllowed());
+		// 如果当前线程已经记录数据库连接则使用原有的连接
 		ConnectionHolder conHolder =
 				(ConnectionHolder) TransactionSynchronizationManager.getResource(this.dataSource);
+		// false 表示非新创建的连接
 		txObject.setConnectionHolder(conHolder, false);
 		return txObject;
 	}
@@ -192,6 +195,30 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 	/**
 	 * This implementation sets the isolation level but ignores the timeout.
+	 * 构造transaction ,包括设置ConnectionHolder ，隔离级别，timeout ，如果是新连接，绑定到当前线程
+	 *
+	 *
+	 * 可以说事务是从这个函数中开始的，因为这个函数中已经开始尝试了对数据库的连接获取，当然，在获取数据库连接的同时，一些必要的设置也是需要同步设置的
+	 * 尝试获取连接：
+	 * 当然并不是每次都会获取新的连接，如果当前线程中connectionHolder已经存在，则没有必要再次获取了，或者，对于事务的同步表示设置为true
+	 * 的需要重新获取连接
+	 * 设置隔离级别以及只读标识
+	 * 你是否有过这样的错觉，事务中的只读配置是Spring 中做了一些处理呢？Spring 中确实针对只读操作做了一些处理，但是核心的实现是设置
+	 * connection 上的readOnly 属性，同样，对于隔离级别的控制也是交由connection 去控制的
+	 * 3.更改默认的提交设置
+	 * 如果事务设置属性是自动提交，那么需要改变这种设置，而将提交操作委托给Spring 来处理，
+	 * 4.设置标志位，标识当前连接已经被事务激活
+	 * 5.设置过期时间
+	 * 6.将connectionHolder 绑定到当前线程
+	 * 设置隔离级别的prepareConnectionForTransaction 函数用于负责对底层数据库连接的设置，当然，只是包含只读标识和隔离级别的设置，
+	 * 由于强大的日志及异常处理，显得函数代码量比较大，但是单从业务的角度去看，关键代码其实不多的
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
+	 *
 	 */
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
@@ -210,13 +237,14 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 			txObject.getConnectionHolder().setSynchronizedWithTransaction(true);
 			con = txObject.getConnectionHolder().getConnection();
-
+			// 设置隔离级别
 			Integer previousIsolationLevel = DataSourceUtils.prepareConnectionForTransaction(con, definition);
 			txObject.setPreviousIsolationLevel(previousIsolationLevel);
 
 			// Switch to manual commit if necessary. This is very expensive in some JDBC drivers,
 			// so we don't want to do it unnecessarily (for example if we've explicitly
 			// configured the connection pool to set it already).
+			// 更改自动提交设置，由Spring 控制提交
 			if (con.getAutoCommit()) {
 				txObject.setMustRestoreAutoCommit(true);
 				if (logger.isDebugEnabled()) {
@@ -224,6 +252,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 				}
 				con.setAutoCommit(false);
 			}
+			// 设置判断当前线程是否存在事务依据
 			txObject.getConnectionHolder().setTransactionActive(true);
 
 			int timeout = determineTimeout(definition);
@@ -233,6 +262,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 			// Bind the session holder to the thread.
 			if (txObject.isNewConnectionHolder()) {
+				// 将当前获取到的连接绑定到当前线程
 				TransactionSynchronizationManager.bindResource(getDataSource(), txObject.getConnectionHolder());
 			}
 		}
@@ -307,15 +337,19 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 
 		// Remove the connection holder from the thread, if exposed.
 		if (txObject.isNewConnectionHolder()) {
+			// 将数据库连接从当前线程中解除绑定
 			TransactionSynchronizationManager.unbindResource(this.dataSource);
 		}
 
 		// Reset connection.
+		// 释放连接
 		Connection con = txObject.getConnectionHolder().getConnection();
 		try {
 			if (txObject.isMustRestoreAutoCommit()) {
+				// 恢复数据库连接的自动提交属性
 				con.setAutoCommit(true);
 			}
+			// 重置数据库连接
 			DataSourceUtils.resetConnectionAfterTransaction(con, txObject.getPreviousIsolationLevel());
 		}
 		catch (Throwable ex) {
@@ -326,6 +360,7 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 			if (logger.isDebugEnabled()) {
 				logger.debug("Releasing JDBC Connection [" + con + "] after transaction");
 			}
+			// 如果当前事务是独立的新创建的事务则在事务完成时释放数据库连接
 			DataSourceUtils.releaseConnection(con, this.dataSource);
 		}
 

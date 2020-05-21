@@ -34,9 +34,14 @@ abstract class TransactionAttributeSourcePointcut extends StaticMethodMatcherPoi
 
 	@Override
 	public boolean matches(Method method, Class<?> targetClass) {
+		//  自定义标签解析时注入
 		if (TransactionalProxy.class.isAssignableFrom(targetClass)) {
 			return false;
 		}
+		// 此时的tas 表示AnnotationTransactionAttributeSource 类型，而AnnotationTransactionAttributeSource 类型的
+		// getTransactionAttribute 方法如下 ，很遗憾，在getTransactionAttribute 函数中并没有找到我们想要的代码，这里是指常规的
+		// 一贯的套路，尝试从缓存中加载，如果对应的信息没有被缓存的话，工作又委托给了computeTransactionAttribute 函数 ，在
+		// computeTransactionAttribute 函数终于的我们看到了事务标签的提取过程
 		TransactionAttributeSource tas = getTransactionAttributeSource();
 		return (tas == null || tas.getTransactionAttribute(method, targetClass) != null);
 	}

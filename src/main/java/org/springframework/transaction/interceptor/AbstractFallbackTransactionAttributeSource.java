@@ -130,6 +130,12 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 	 * Same signature as {@link #getTransactionAttribute}, but doesn't cache the result.
 	 * {@link #getTransactionAttribute} is effectively a caching decorator for this method.
 	 * @see #getTransactionAttribute
+	 * 提取事务标签
+	 * 对于事务属性的获取规则相信大家都已经很清楚了，如果方法中存在事务属性，则使用方法上的属性，否则使用方法所在的类上的属性，如果方法所在
+	 * 的类的属性上还是没有搜寻到对应的事务属性，那么再搜寻接口中的方法，再没有的话，最后尝试搜寻接口的类上面的声明，对于函数computeTransactionAttribute
+	 * 中的逻辑与我们所认识的规则并无差别，但是上面的函数中并没有正正的去做搜寻事务的属性的逻辑，而是搭建了个执行框架，将搜寻的事务属性的任务
+	 * 委托给了findTransactionAttribute 方法去执行
+	 *
 	 */
 	protected TransactionAttribute computeTransactionAttribute(Method method, Class<?> targetClass) {
 		// Don't allow no-public methods as required.
@@ -143,27 +149,32 @@ public abstract class AbstractFallbackTransactionAttributeSource implements Tran
 		// If the target class is null, the method will be unchanged.
 		Method specificMethod = ClassUtils.getMostSpecificMethod(method, userClass);
 		// If we are dealing with method with generic parameters, find the original method.
+		// method 代表接口中的方法，specificMethod 代表实现类中的方法
 		specificMethod = BridgeMethodResolver.findBridgedMethod(specificMethod);
 
 		// First try is the method in the target class.
+		// 查看方法中是否存在事务声明
 		TransactionAttribute txAtt = findTransactionAttribute(specificMethod);
 		if (txAtt != null) {
 			return txAtt;
 		}
 
 		// Second try is the transaction attribute on the target class.
+		// 查看方法所在类中是否存在事务声明
 		txAtt = findTransactionAttribute(specificMethod.getDeclaringClass());
 		if (txAtt != null) {
 			return txAtt;
 		}
-
+		// 如果存在接口，则在接口中去寻找
 		if (specificMethod != method) {
 			// Fallback is to look at the original method.
+			// 查找接口方法
 			txAtt = findTransactionAttribute(method);
 			if (txAtt != null) {
 				return txAtt;
 			}
 			// Last fallback is the class of the original method.
+			// 到接口中的类去寻找
 			return findTransactionAttribute(method.getDeclaringClass());
 		}
 		return null;

@@ -188,13 +188,19 @@ public abstract class AopUtils {
 	 * @param hasIntroductions whether or not the advisor chain
 	 * for this bean includes any introductions
 	 * @return whether the pointcut can apply on any method
+	 * 通过这个函数大致可以理清大体的脉络，首先获取对应的类的所有的接口，并连同类的本身一起遍历，一旦匹配成功便认为这个类适用于当前的增强器
+	 * 到这里我们不禁对类中的方法再次遍历，一旦匹配成功便认为这个类适用于当前的增强器，
+	 * 到这里我们不禁会有疑问，对于事物的配置不仅仅局限于在函数上的配置，我们都知道，在类的活接口上的配置可以延续到类的每个函数，那么，如果
+	 * 针对每个函数进行检测，在类的本身上配置的事务属性岂不是检测不到了吗？  带着疑问，我们继续探求 matcher 方法
+	 *
 	 */
 	public static boolean canApply(Pointcut pc, Class<?> targetClass, boolean hasIntroductions) {
 		Assert.notNull(pc, "Pointcut must not be null");
 		if (!pc.getClassFilter().matches(targetClass)) {
 			return false;
 		}
-
+		// 此时的 pc  表示 TransactionAttributeSourcePointcut
+		// pc.getMethodMatcher()  返回的正是自身的(this)
 		MethodMatcher methodMatcher = pc.getMethodMatcher();
 		IntroductionAwareMethodMatcher introductionAwareMethodMatcher = null;
 		if (methodMatcher instanceof IntroductionAwareMethodMatcher) {
@@ -208,6 +214,7 @@ public abstract class AopUtils {
 			for (Method method : methods) {
 				if ((introductionAwareMethodMatcher != null &&
 						introductionAwareMethodMatcher.matches(method, targetClass, hasIntroductions)) ||
+						// 使用 TransactionAttributeSourcePointcut 方法
 						methodMatcher.matches(method, targetClass)) {
 					return true;
 				}

@@ -150,6 +150,9 @@ public class AnnotationTransactionAttributeSource extends AbstractFallbackTransa
 	 * or {@code null} if none was found
 	 */
 	protected TransactionAttribute determineTransactionAttribute(AnnotatedElement ae) {
+		// this.annotationParsers 是在当前类的AnnotationTransactionAttributeSource 初始化的时候初始化的，其中加入的值
+		// 被加入了SpringTransactionAnnotationParser ，也就是说当进行属性的获取时，其实是使用SpringTransactionAnnotationParser
+		// 类的parseTransactionAnnotation 方法进行解析的
 		for (TransactionAnnotationParser annotationParser : this.annotationParsers) {
 			TransactionAttribute attr = annotationParser.parseTransactionAnnotation(ae);
 			if (attr != null) {

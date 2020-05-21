@@ -50,6 +50,13 @@ public class TxNamespaceHandler extends NamespaceHandlerSupport {
 	}
 
 
+	/***
+	 * 10.2  事务自定义标签
+	 *  对于 Spring 中的事务功能代码分析，我们首先从配置文件中开始入手，在配置文件中会有这样的一个配置<tx:annotation-driver/>
+	 *  可以说此处的配置是事务的开头，如果没有此配置，那么 Spring 中将不存在事务的功能，那么我们就从这个配置开始分析
+	 *  根据之前的分析，我们因此可以判断，在自定义标签中的解析过程中一定是做了一些辅助的操作的，于是我们先从自定义的标签入手进行分析
+	 *
+	 */
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("advice", new TxAdviceBeanDefinitionParser());
