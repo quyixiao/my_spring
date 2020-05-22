@@ -893,6 +893,12 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * with a {@code NoBodyResponse} that just captures the content length.
 	 * @see #doService
 	 * @see #doHead
+	 * DispacherServlet 处理逻辑
+	 * 根据之前的示例，我们知道在HttpServlet 类中分别提供了相应的服务方法，它们是doDelete() ，doGet() ,doOptions() ,doPost(),doPut() ,doTrace()
+	 * 它会根据请求不同的形式将程序引导至对应的函数进行处理，这几个函数中最常用的函数无非就是doGet() 和doPost() ，那么我们就直接查看
+	 * DispacherServlet 中对于这两个函数的处理逻辑实现
+	 * 对于不同的方法，Spring 并没有做特殊的处理，而是统一将程序再一次引导到processRequest(request ,response )中
+	 *
 	 */
 	@Override
 	protected final void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -988,13 +994,18 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * Process this request, publishing an event regardless of the outcome.
 	 * <p>The actual event handling is performed by the abstract
 	 * {@link #doService} template method.
+	 * 函数中已经开始对请求的处理，虽然把细节转移到了doService()函数中实现，但是我们不难看出处理请求前后所做的准备与处理工作
+	 * （1） 为了保证当前线程的LocaleContext 以及RequestAttributes 可以在当前请求后不能恢复，提取当前线程的两个属性
+	 * （2） 根据当前的request创建对应的LocaleContext 和RequestAttributes,并绑定到当前线程中
+	 *  (3) 委托给doService方法进一步的处理
+	 *  (4) 请求处理结束后恢复线程的原始状态
+	 *  (5) 请求处理结束后无论成功与否发布事件通知
 	 */
 	protected final void processRequest(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-
+		// 记录当前时间，用于计算web 请求的处理时间
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
-
 		LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
 		LocaleContext localeContext = buildLocaleContext(request);
 

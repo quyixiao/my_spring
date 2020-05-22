@@ -655,10 +655,58 @@ public class DispatcherServlet extends FrameworkServlet {
 		//
 		initHandlerExceptionResolvers(context);
 		// 初始化视图预处理器
+		// (7) 初始化RequestToViewNameTranslator
+		// 当Controller 处理器方法没有返回一个View的对象或者逻辑视图名称，并且在该方法中没有直接往response 的输出流里写数据的时候，
+		// Spring 就会采用约定好的方式提供一个逻辑视图名称，这个逻辑视图名称是通过Spring 定义的org.springframework.web.servlet.RequestToViewNameTranslator
+		// 接口的getViewName 方法来实现的，我们可以实现自己的RequestToViewNameTranslator 接口来约定好没有返回的视图名称
+		// 的时候如何确定视图名称，Spring 已经给我们提供了一个它自己的实现，那就是org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator
+		// 在介绍DefaultRequestToViewNameTranslator是如何约定视图名称之前，先来看一下它支持用户定义的属性
+		// prefix : 前缀，表示约定好的视图名称需要加上前缀，默认是空串
+		// suffix : 后缀，表示约定好的视图名称需要加上的后缀，默认是空串
+		// separator : 分隔符，默认是斜杠 "/"
+		// stripLeadingSlash : 如果首字符分隔符，是否要去除，默认是true
+		// stripTailingSlash : 如果最后一个字符是分隔符，是否要去除，默认是true
+		// stripExtension : 如果请求路径包含扩展名是否要去除，默认是true
+		// urlDecode : 是否需要对URL 解码，默认是true ,它会采用request 指定的编码或者ISO-8859-1 编码URL进行解码
+		// 当我们没有在Spring MVC 的配置文件中手动定义一个名为viewNameTranslator 的bean 的时候，Spring 就会为我们提供一个默认的
+		// viewNameTranslator ,即DefaultRequestToViewNameTranslator ，
+		// 接下来看一下，当Controller 处理器方法没有返回逻辑视图名称时，DefaultRequestToViewNameTranslator 是如何约定视图名称的，
+		// 然后根据提供的属性做一些改造，把发广告后的结果作为视图名称返回，这里请求的路径是http://localhost/app/test/index.html 为例
+		// 来说明一下DefaultRequestToViewNameTranslator 是如何工作的，请求的路径对应的请求URI 为/test/index.html，我们来看以下的几种情况，它分别对应
+		// 的逻辑视图的名称是什么
+		// prefix 和suffix 如果都存在，其他的默认值，那么对应的返回的逻辑视图名称应该是prefixtest/indexsuffix
+		// stripLeadingSlash 和stripExtension 都为false ，其他默认，这时候对应的逻辑视图名称/product/index.html
+		// 都采用的是默认值配置时，返回的逻辑视图名称应该是product/index
+		// 如果逻辑视图的名称跟请求的路径相同或者相关关系都是一样的，那么我们就可以采用Spring 为我们事先约定好的逻辑视图名称返回
+		// ，这可以大大的简化我们的开发工作，而以上的功能实现关系属性viewNameTranslator ，则是在initRequestToViewNameTranslator 来完成
 		initRequestToViewNameTranslator(context);
 		// 初始化视图转换器
+		// 初始化ViewResolves
+		// 在Spring MVC 中，当Controller 将请求处理结果放入到ModelAndView 中以后DispatcherServlet 会根据ModelAndView选择合适的
+		// 视图进行渲染，那么在Spring MVC 中是如何选择合适的View 的呢？View 对象是如何创建的呢？ 答案就是ViewResolver中，ViewResolver
+		// 接口定义了resolverViewName 方法，根据viewName 创建合适的类型View实现
+		// 那么如何配置ViewResolver 的呢？ 在Spring 中，ViewResolver 作为Spring Bean 的存在，可以在Spring 配置文件中进行配置
+		// 例如下面的代码，配置了JSP 相关的ViewResolver
+		/***
+		 * <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		 * 		<property name="prefix" value="/WEB-INF/views/"></property>
+		 * 		<property name="suffix" view=".jsp"></property>
+		 * </bean>
+		 * viewResolvers 属性初始化工作在initViewResolvers 中完成
+		 *
+		 */
 		initViewResolvers(context);
 		// 初始化 FlashMap管理器
+		/**
+		 * (9) 初始化FlashMapManager
+		 * Spring MVC Flash attributes 提供了一个请求存在属性，可供其他的请求使用，在使用重定向时候非常必要，例如Post/Redirect/Get
+		 * 模式，Flash attributes 在重定向之前暂存（就像存在session 中） 以便重定向之后还能使用，并立即删除
+		 * Spring MVC 有两个主要的抽象来支持flash attributes ，FlashMap 用于保存flash attributes ，在FlashMapManager 用于存储
+		 * 检索，管理flashMap 实例
+		 * flash attribute 支持默认的开启（"on"） 并不需要显示的启用，它永远不会导致HTTP Session 的创建，这两个FlashMap 实例都可以通过
+		 * 静态方法RequestContextUtils 从Spring MVC 的任意位置访问
+		 * flashMapManager 的初始化在initFlashMapManager 中完成
+		 */
 		initFlashMapManager(context);
 	}
 
@@ -1064,6 +1112,11 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Exposes the DispatcherServlet-specific request attributes and delegates to {@link #doDispatch}
 	 * for the actual dispatching.
+	 * 我们猜想对请求处理至少应该包括一些诸如寻找Handler 并页面跳转之类的逻辑处理，但是，在doService 中我们并没有看到想看到的
+	 * 的逻辑，相反却同样是一些准备工作，但是这些准备工作却是必不可少的，Spring 将已经初始化的功能辅助工具变量比如localeResolver
+	 * ,themeResolver等设置request 属性中，而这些属性会在接下来的处理中派上用场
+	 * 经过层层的准备工作，终于在doDispatch 函数中看到了完整的请求处理过程
+	 *
 	 */
 	@Override
 	protected void doService(HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -1137,27 +1190,27 @@ public class DispatcherServlet extends FrameworkServlet {
 			Exception dispatchException = null;
 
 			try {
-				// 检查是否是文件上传请求
+				// 检查是否是文件上传请求 ，如果是MultipartContent 类型的request 则转换成 MultipartHttpServletRequest类型的request
 				processedRequest = checkMultipart(request);
 				multipartRequestParsed = (processedRequest != request);
-
 				// Determine handler for the current request.
 				// 2.取得处理当前请求的Controller，这里也称为Handler ，即处理器
 				// 第一步的意义就是在这里体现了，这里并不是直接返回Controller
-				// 该对象封装了Handler和Interceptor
+				// 该对象封装了Handler和Interceptor | 根据request 寻找Handler
 				mappedHandler = getHandler(processedRequest);
 				// 如果Handler 为空，则返回404
 				if (mappedHandler == null || mappedHandler.getHandler() == null) {
+					// 如果没有找到对应的handler ，则通过response 反馈错误信息
 					noHandlerFound(processedRequest, response);
 					return;
 				}
 
 				// Determine handler adapter for the current request.
-				// 3.获取处理请求的处理器适配器HandlerAdapter
+				// 3.获取处理请求的处理器适配器HandlerAdapter | 根据当前的request 寻找对应的HandlerAdapter
 				HandlerAdapter ha = getHandlerAdapter(mappedHandler.getHandler());
 
 				// Process last-modified header, if supported by the handler.
-				// 处理last-modified请求头
+				// 处理last-modified请求头 | 如果当前handler 支持last-modified 头处理
 				String method = request.getMethod();
 				boolean isGet = "GET".equals(method);
 				if (isGet || "HEAD".equals(method)) {
@@ -1175,14 +1228,15 @@ public class DispatcherServlet extends FrameworkServlet {
 				}
 
 				// Actually invoke the handler.
-				// 4.实际处理器处理请求，返回结果视图对象
+				// 4.实际处理器处理请求，返回结果视图对象 | 真正的激活Handler 并返回视图
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
 					return;
 				}
-				// 结果视图对象的处理
+				// 结果视图对象的处理 | 视图名称转换应用于需要添加前缀后缀的情况
 				applyDefaultViewName(processedRequest, mv);
+				// 应用所有拦截器postHandle方法
 				mappedHandler.applyPostHandle(processedRequest, response, mv);
 			}
 			catch (Exception ex) {
@@ -1191,6 +1245,7 @@ public class DispatcherServlet extends FrameworkServlet {
 			processDispatchResult(processedRequest, response, mappedHandler, mv, dispatchException);
 		}
 		catch (Exception ex) {
+
 			triggerAfterCompletion(processedRequest, response, mappedHandler, ex);
 		}
 		catch (Error err) {
@@ -1244,7 +1299,9 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		// Did the handler return a view to render?
+		// 如果在Handler 实例的处理中返回了view ,那么需要做页面的处理
 		if (mv != null && !mv.wasCleared()) {
+			// 处理页面跳转
 			render(mv, request, response);
 			if (errorView) {
 				WebUtils.clearErrorRequestAttributes(request);
@@ -1263,6 +1320,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 
 		if (mappedHandler != null) {
+			// 完成处理激活触发器
 			mappedHandler.triggerAfterCompletion(request, response, null);
 		}
 	}
