@@ -111,6 +111,71 @@ public abstract class HttpServletBean extends HttpServlet
 	 * invoke subclass initialization.
 	 * @throws ServletException if bean properties are invalid (or required
 	 * properties are missing), or if subclass initialization fails.
+	 * 通过上面的实例我们了解到，在Servlet初始化阶段会调用其init方法，所以我们首先要查看DispatchServlet 中是否重写了init方法，
+	 * 我们在其父类HttpServletBean 中找到该方法
+	 *
+	 * |
+	 * DispatcherServlet 的初始化过程主要通过将当前的servlet类型实例转换为BeanWrapper 类型实例，以便使用Spring 中提供的注入功能
+	 * 进行对应的属性的注入，这些属性如contextAttribute,contextClass,nameSpace,contextConfigLocation 等，都可以在web.xml
+	 * 文件中以初始化参数的方式配置在Servlet地声明中，DisPatcherServlet继承自FrameworkServlet，FrameworkServlet类上包含对应的
+	 * 同名属性，Spring 会保证这些参数被注入到对应的值中，属性的注入主要包含以下的几个步骤
+	 *
+	 * 1.封装及验证初始化参数
+	 *
+	 * PropertyValues implementation created from ServletConfig init parameters.
+	 * ServletConfigPropertyValues 除了封装属性外还对属性验证的功能
+
+
+	private static class ServletConfigPropertyValues extends MutablePropertyValues {
+
+		 Create new ServletConfigPropertyValues.
+		 @param config ServletConfig we'll use to take PropertyValues from
+		 @param requiredProperties set of property names we need, where
+		 we can't accept default values
+		 @throws ServletException if any required properties are missing
+
+		public ServletConfigPropertyValues(ServletConfig config, Set<String> requiredProperties)
+				throws ServletException {
+
+			Set<String> missingProps = (requiredProperties != null && !requiredProperties.isEmpty()) ?
+					new HashSet<String>(requiredProperties) : null;
+
+			Enumeration<String> en = config.getInitParameterNames();
+			while (en.hasMoreElements()) {
+				String property = en.nextElement();
+				Object value = config.getInitParameter(property);
+				addPropertyValue(new PropertyValue(property, value));
+				if (missingProps != null) {
+					missingProps.remove(property);
+				}
+			}
+
+			// Fail if we are still missing properties.
+			if (missingProps != null && missingProps.size() > 0) {
+				throw new ServletException(
+						"Initialization from ServletConfig for servlet '" + config.getServletName() +
+								"' failed; the following required properties were missing: " +
+								StringUtils.collectionToDelimitedString(missingProps, ", "));
+			}
+		}
+	}
+		  从代码中得知，封装属性主要是对初始化的参数进行封装，也是servlet中配置<init-param>中配置封装，当然，用户可以通过requiredProperties参数
+		   的初始化强制验证某些属性的必要性，这样，在属性封装的过程中，一旦检测到requireProperties中的属性没有指定值，就会抛出异常
+	 2.将当前的servlet实例转化成BeanWrapper 实例
+		 PropertyAccessorFactory.forBeanPropertyAccess 是Spring 中提供的工具方法，主要用于将指定的实例转化成Spring 中可以处理的
+	 BeanWrapper 类型的实例中
+
+	 3.注册相对于Resource和属性编辑器
+	 属性编辑器，我们在上下文中已经介绍并且分析过其原理，这里使用属性编辑器的目的就是在对当前的实例（DispatcherServlet）属性注入的过程中
+	 一旦遇到Resource类型的属性就会使用ResourceEditor去解析
+	 4.属性的注入
+	 BeanWrapper 为Spring 中的方法，支持Spring 自动注入，其实我们最常用的属性注入无非是contextAttribute,contextClass,nameSpace ,
+	 contextConfigLocation 等属性
+	 5.servletBean 的初始化
+	 在ContextLoaderListener加载的时候已经创建了WebApplicationContext实例，而这个函数中最重要的就是对这实例进行进一步的补充初始化
+	 继续查看initServletBean() ，父类FrameworkServlet覆盖了HttpServletBean 中的initServlet Bean 函数，如下
+	 *
+	 *
 	 */
 	@Override
 	public final void init() throws ServletException {
@@ -120,11 +185,16 @@ public abstract class HttpServletBean extends HttpServlet
 
 		// Set bean properties from init parameters.
 		try {
+			// 解析init-param并封装只pvs中
 			PropertyValues pvs = new ServletConfigPropertyValues(getServletConfig(), this.requiredProperties);
+			// 将当前这个类转化成一个BeanWrapper ，从而能够以Spring 方式来对init-param的值进行注入
 			BeanWrapper bw = PropertyAccessorFactory.forBeanPropertyAccess(this);
 			ResourceLoader resourceLoader = new ServletContextResourceLoader(getServletContext());
+			// 注册自定义属性编辑器，一旦遇到Resource 类型的属性将会使用ResourceEditor进行解析
 			bw.registerCustomEditor(Resource.class, new ResourceEditor(resourceLoader, getEnvironment()));
+			// 空实现，留给子类覆盖
 			initBeanWrapper(bw);
+			// 属性注入
 			bw.setPropertyValues(pvs, true);
 		}
 		catch (BeansException ex) {
@@ -133,6 +203,7 @@ public abstract class HttpServletBean extends HttpServlet
 		}
 
 		// Let subclasses do whatever initialization they like.
+		// 留给子类扩展
 		initServletBean();
 
 		if (logger.isDebugEnabled()) {
@@ -218,6 +289,9 @@ public abstract class HttpServletBean extends HttpServlet
 
 	/**
 	 * PropertyValues implementation created from ServletConfig init parameters.
+	 * ServletConfigPropertyValues 除了封装属性外还对属性验证的功能
+	 * 从代码中得知，封装属性主要是对初始化的参数进行封装，也是servlet中配置<init-param>中配置封装，当然，用户可以通过requiredProperties参数
+	 * 的初始化强制验证某些属性的必要性，这样，在属性封装的过程中，一旦检测到requireProperties中的属性没有指定值，就会抛出异常
 	 */
 	private static class ServletConfigPropertyValues extends MutablePropertyValues {
 

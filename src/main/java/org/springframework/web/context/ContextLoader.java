@@ -113,7 +113,7 @@ public class ContextLoader {
 	/**
 	 * Config param for {@link ApplicationContextInitializer} classes to use
 	 * for initializing the root web application context: {@value}
-	 * @see #customizeContext(ServletContext, ConfigurableWebApplicationContext)
+	 * @see #customizeContext(ServletContext, ConfigurableWebApplicationContext)√
 	 */
 	public static final String CONTEXT_INITIALIZER_CLASSES_PARAM = "contextInitializerClasses";
 
@@ -171,6 +171,13 @@ public class ContextLoader {
 		// Load default strategy implementations from properties file.
 		// This is currently strictly internal and not meant to be customized
 		// by application developers.
+		// 根据静态代码块的内容，我们可以推断在当前类ContextLoader 同样的目录下，必定会存在属性文件ContextLoader.properties
+		// 查看后，果然存在
+		// org.springframework.web.contexxt.WebApplicationContext=org.springframework.web.context.support.XmlWebApplicationContext
+		// 综合以上的代码分析，在初始化的过程中，程序首先会读取ContextLoader类的同目录下的属性文件ContextLoader.properties
+		// 并根据其中的配置提取将要实现的WebApplicationContext接口的实现类，并根据这个实现类通过反射的方式进行实例的创建
+		// (3) 将实例记录在servletContext 中
+		// (4) 映射当前的类加载器也创建的实例到全局变量currentContextPerThread 中
 		try {
 			ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, ContextLoader.class);
 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
@@ -293,14 +300,22 @@ public class ContextLoader {
 	 * @see #ContextLoader(WebApplicationContext)
 	 * @see #CONTEXT_CLASS_PARAM
 	 * @see #CONFIG_LOCATION_PARAM
+	 * 这里涉及了一个常用的类，webApplicationContext 在 web 应用中，我们会用到webApplicationContext ，webApplicationContext
+	 * 继承自ApplicationContext,在ApplicationContext 的基础上又追加了一些特定的web操作，及属性，非常类似于我们通过编程方式使用
+	 * Spring 时使用的classPathXmlApplicatoinContext 类提供以功能，继续跟踪代码
+	 * initWebApplicationContext 函数主要体现了创建webApplicationContext 实例的一个功能构架，从函数中我们可以看到初始化的大致步骤
+	 * （1） WebApplicationContext 存在性验证
+	 *  在配置中只允许声明一次ServletContextListener ,多冷声明会扰乱Spring 的执行逻辑，所以这里首先要做的就是对此验证，在Spring 中
+	 *  如果创建WebApplicationContext 实例会记录在ServletContext 中以方便全局调用，而使用的key 就是WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
+	 *  所以验证的方式就是查看ServletContext 实例中是否有对应的key 的属性
 	 */
 	public WebApplicationContext initWebApplicationContext(ServletContext servletContext) {
 		if (servletContext.getAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE) != null) {
+			// web.xml 中存在多次ContextLoader的定义
 			throw new IllegalStateException(
 					"Cannot initialize context because there is already a root application context present - " +
 					"check whether you have multiple ContextLoader* definitions in your web.xml!");
 		}
-
 		Log logger = LogFactory.getLog(ContextLoader.class);
 		servletContext.log("Initializing Spring root WebApplicationContext");
 		if (logger.isInfoEnabled()) {
@@ -312,6 +327,9 @@ public class ContextLoader {
 			// Store context in local instance variable, to guarantee that
 			// it is available on ServletContext shutdown.
 			if (this.context == null) {
+				// 初始化context
+				// (2) 创建WebApplicationContext 实例
+				// 通过验证，则Spring 将创建的WebApplicationContext 实例的工作委托给了createWebApplicationContext函数
 				this.context = createWebApplicationContext(servletContext);
 			}
 			if (this.context instanceof ConfigurableWebApplicationContext) {
@@ -328,6 +346,7 @@ public class ContextLoader {
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
+			// 记录在servletContext 中
 			servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE, this.context);
 
 			ClassLoader ccl = Thread.currentThread().getContextClassLoader();

@@ -152,6 +152,32 @@ import org.springframework.web.util.WebUtils;
  * @see org.springframework.web.HttpRequestHandler
  * @see org.springframework.web.servlet.mvc.Controller
  * @see org.springframework.web.context.ContextLoaderListener
+ * 在Spring 中，ContextLoaderListener 只是辅助功能，用于创建webApplicationContext 类型的实例，而真正的逻辑实现其实是在
+ * DispatcherServlet 中进行的，DispatcherServlet是实现servlet接口的实现类，servlet是一个java 编写的程序，此程序是基于
+ * HTTP协义的，在服务器端口运行的，如tomcat ，是按照servlet规范编写的一个java 类，主要是处理客户端请求并将其结果发送到客户端，
+ * servlet 的生命周期是由servlet 的容器来控制，它可以分为3个阶段，初始化，运行和销毁
+ * （1）servlet容器加载servlet 类，把servlet类的.class文件中的数据读到内存中
+ *      servlet创建一个ServletConfig 对象，ServletConfig 对象包含了servlet的初始化配置信息
+ *      servlet容器创建了一个servlet对象
+ *      servlet容器调用servlet对象的init方法进行初始化
+ * （2）运行阶段
+ * 	当servlet 容器接收到一个请求时，servlet容器会针对这个请求创建了servletRequest 和servletResponse对象，然后调用service方法
+ * 	并将这个两个参数传递给了service方法，。service方法通过servletRequest 对象获得请求的信息，并处理该请求，再通过servletResponse
+ * 	对象生成这个请求的响应结果，然后销毁servletRequest 和servletResponse对象，我们不管这个请求是post还是get 提交的，最终这个请求
+ * 	都是由service 方法来处理的
+ * 	（3） 销毁方法
+ * 	当web 应用被终止时，servlet容器会先调用这个servlet 对象的destory方法，然后再销毁servlet 对象，同时也会销毁与servlet 对象相关的
+ * 	联的servletConfig 对象，我们可以在destory方法的实现中，释放servlet所占用的资源，如关闭数据库连接，关闭文件输入，输出流等
+ * 	servlet的构架是由两个java 包组成的，javax.servlet和javax.servlet.http，在javax.servlet包中定义了所有的servlet类都必需实现或
+ * 	扩展的通用接口和类，在javax.servlet.http 包中定义了采用HTTP 通信协义的HttpServlet类
+ * 	servlet 被设计成请求驱动，servlet的请求可能包含多个数据项，当Web 容器接收到某个servlet请求时，servlet把请求封装成一个HttpServletRequest
+ * 	对象，然后把对象传给servlet的对应的服务方法
+ * 	HTTP 的请求方式包括delete,get,options,post,put和trace，在HttpServlet类中分别提供了相应的服务方法，它们是doDelete(),doGet(),
+ * 	doOptions(),doPost(),doPut()和doTrace()
+ *
+ *
+ *
+ *
  */
 @SuppressWarnings("serial")
 public class DispatcherServlet extends FrameworkServlet {

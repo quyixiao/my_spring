@@ -16,6 +16,8 @@
 
 package org.springframework.web.context;
 
+import org.apache.poi.ss.formula.EvaluationName;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 

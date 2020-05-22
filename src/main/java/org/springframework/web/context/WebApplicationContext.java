@@ -142,9 +142,27 @@ import org.springframework.context.ApplicationContext;
  * 	     // 该方法在ServletContext启动之后调用，并准备好处理客户端请求
  * 	     public void contextInitialized(ServletContextEvent event ){
  * 	         this.context = event.getServletContext();
+ * 	         // 通过你可以实现自己的逻辑并将结果记录在属性中
+ * 	         context = setAttribute("myData","this is a myData");
  * 	     }
- * 	  	// 通过
+ *
+ * 		// 这个方法在ServletContext将要关闭的时候调用
+ * 		public void contextDestroyed(ServletContextEvent event){
+ * 		 	this.context = null;
+ * 		}
+ * 		2 注册监听器
+ * 		在web.xml 文件中需要注册自定义的监听器
+ * 		<listener>
+ * 		 	com.test.MyDataContextListener
+ * 		</listener>
  * 	 }
+ * 	 一旦web 应用启动的时候，我们就能在任意的servlet 或者JSP 通过下面的方式获取初始化参数如下
+ * 	 String myData = (String) getServletContext().getAttribute("myData");
+ * 	 11.2.2 Spring 中的ContextLoaderListener
+ * 	 分析了ServletContextListener
+ *
+ *
+ *
  *
  *
  */
