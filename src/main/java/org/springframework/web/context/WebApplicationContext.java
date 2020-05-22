@@ -110,7 +110,8 @@ import org.springframework.context.ApplicationContext;
  * InternalResourceViewResolver 是一个辅助Bean ,会在ModelAndView返回的视图名前加上prefix 指定前缀，再在最后加上suffix 指定后缀，
  * 例如：由于XXController 返回的ModelAndView 中的视图名是testview ，故该视图解析器将在/WEB-INF/jsp/testview.jsp处查找视图
  * (3) 创建model
- *  模型对于Spring MVC 来说并不是必不可少的。如果处理程序非常的简单，完全可以忽略，模型创建主要的目的就是承载数据，
+ *  模型对于Spring MVC 来说并不是必不可少的。如果处理程序非常的简单，完全可以忽略，模型创建主要的目的就是承载数据，使数据传输更加的方便
+ *
  */
 public interface WebApplicationContext extends ApplicationContext {
 

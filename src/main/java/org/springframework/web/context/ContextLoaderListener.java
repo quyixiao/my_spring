@@ -37,6 +37,8 @@ import javax.servlet.ServletContextListener;
  * @see #setContextInitializers
  * @see org.springframework.web.WebApplicationInitializer
  * @see org.springframework.web.util.Log4jConfigListener
+ * 对于Spring MVC 功能的实现的分析，我们首先从web.xml 开始，在web.xml 文件中我们首先配置的就是ContextLoaderListener ，那么它所提供
+ * 的功能又是
  */
 public class ContextLoaderListener extends ContextLoader implements ServletContextListener {
 
