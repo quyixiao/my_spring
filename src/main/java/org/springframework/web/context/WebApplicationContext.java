@@ -111,6 +111,41 @@ import org.springframework.context.ApplicationContext;
  * 例如：由于XXController 返回的ModelAndView 中的视图名是testview ，故该视图解析器将在/WEB-INF/jsp/testview.jsp处查找视图
  * (3) 创建model
  *  模型对于Spring MVC 来说并不是必不可少的。如果处理程序非常的简单，完全可以忽略，模型创建主要的目的就是承载数据，使数据传输更加的方便
+ * 	因为Spring MVC 是基于Servlet 的实现的，所以在Web 开启的时候，服务器会首先尝试加载对应的Servlet 配置文件，而为了让项目更加模块化
+ * 	通常我们将Web 部分的配置都存放于此配置文件中
+ * 	至此，已经完成Spring MVC 的搭建，启动服务器，输入网址，http://locahost:8080/Springmvc/userlist.htm
+ * 	看到服务器返回界面，如图，11-1 所示
+ *
+ * 11.2 ContextLoaderListener
+ * 	对于Spring MVC 功能实现的分析，我们首先要从web.xml 开始，在web.xml 文件中我们首先配置的就是ContextLoaderListener ，那么它所提供
+ * 	的功能哪些又是如何实现呢？
+ * 	ApplicationContext ac = new ClassPathXmlApplicationContext("applicationContext.xml");
+ * 	但是在Web 下，我们需要更多的是与Web 环境相互结合，通常的办法是将路径以context-param 的方式注册并使用ContextLoaderListener 进行监听读取
+ * 	ContextLoaderListener 的作用就是启动Web 启动容器时，自动装配ApplicationContext 的配置信息，因为它现了ServletContextListener 这个接口
+ * 	，在web.xml配置这个监听器，启动容器时，就会默认的执行它实现的方法，使用ServletContextListener接口，开发者能够在为客户端请求提供服务
+ * 	之前向ServletContext中添加任意的对象，这个对象在ServletContext 启动时候被初始化，然后在ServletContext 整个运行期间都是可见的
+ * 	每一个Web 应用都有一个ServletContext与之相关联，ServletContext 中添加任意的对象，这个对象在ServletContext 启动的时候被初始化
+ * 	，然后在ServletContext 整个运行期间都是可见
+ * 	每一个Web 应用都有一个ServletContext 与之相关联, 在ServletContextListener 中的核心逻辑是初始化WebApplicationContext 实例并存放至
+ * 	ServletContext 中
+ * 	11.2.1 ServletContextListener 的使用
+ * 	正式分析代码前我们同样还是首先了解ServletContextListener 的使用
+ * 	（1）创建自定义ServletContextListener
+ * 	 首先我们创建ServletContextListener ，目标是在系统启动是添加自定义的属性，以便于在全局范围内可以随时调用，系统启动的时候会调用
+ * 	 ServletContextListener 实现类的
+ * 	 contextInitialized 方法，所以需要在这个方法中实现我们初始化逻辑
+ * 	 public class MyDataContextListener implements ServletContextListener {
+ * 	     private ServletContext context = null;
+ * 	     public MyDataContextListener(){
+ *
+ * 	     }
+ * 	     // 该方法在ServletContext启动之后调用，并准备好处理客户端请求
+ * 	     public void contextInitialized(ServletContextEvent event ){
+ * 	         this.context = event.getServletContext();
+ * 	     }
+ * 	  	// 通过
+ * 	 }
+ *
  *
  */
 public interface WebApplicationContext extends ApplicationContext {
