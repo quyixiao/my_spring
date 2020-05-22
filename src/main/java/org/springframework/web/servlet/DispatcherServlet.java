@@ -616,8 +616,22 @@ public class DispatcherServlet extends FrameworkServlet {
 		// HandlerMapping 能够返回可用的Handler ，DispatcherServlet 则使用当前返回的Handler 进行web请求的处理，而不再继续询问其他的
 		// HandlerMapping ，否则，DispathcherServlet 将继续按照各个HandlerMapping 的优先级进行询问，直到获取一个可用的Handler为止
 		// 初始化配置如下：
+		// ... handlerMapping
+		// 默认情况下，Spring MVC 将加载当前系统中所有实现了HandlerMapping 接口的 Bean ,如果只期望SpringMVC 加载指定的handlerMapping 时，
+		// 可以修改web.xml 中的dispatcherServlet 的初始化参数，将detectAllHandlerMapping 的值设置为false :
+		//  <init-param>
+		// 		<param-name>detectAllHandlerMapping</param-name>
+		//		<param-value>false</param-value>
+		//  </init-param>
+		// 此时，Spring MVC 将查找名为"handlerMapping" 的bean ,并作用当前系统中唯一的handlerMapping ，如果没有定义handlerMapping的话，
+		// 则Spring MVC 将按照org.springframework.web.servlet.DispatcherServlet 所在的目录下DispatcherServlet.properties ，
+		// 中所定义的org.springframework.web.servlet.HandlerMapping 的内容来加载默认的handlerMapping （用户没有自定义Strategies的情况下）
 		initHandlerMappings(context);
 		// 初始化参数适配器
+		// (5) 初始化HandlerAdapters
+		// 你名字也能联想到这是一个典型的适配器模式的使用，在计算机编程中，适配器模式将这个类的接口适配成用户所期待的，使用适配器，可以使用
+		// 接口在不兼容而无法在一起工作的类协同工作，做法是将类自己的接口包裹在一个已经存在的类中，那么处理Handler 时为什么会使用适配器
+		// 模式呢？回答这个问题我们首先分析他的初始化逻辑
 		initHandlerAdapters(context);
 		// 初始化异常拦截器
 		initHandlerExceptionResolvers(context);
@@ -947,6 +961,31 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param context the current WebApplicationContext
 	 * @param strategyInterface the strategy interface
 	 * @return the List of corresponding strategy objects
+	 * 同样在初始化的过程中涉及了一个变量detectAllHandlerAdapters,detectAllHandlerAdapters作用和detectAllHandlerMapping 类似
+	 * 只不过作用的对象handlerAdapter ，变可以通过如下的配置来强制系统只加载bean Name 为"hanlerAdapter" handlerAdapter
+	 * <init-param>
+	 *     <param-name>detectAllHandlerAdapters</param-name>
+	 *     <param-value>false</param-value>
+	 * </init-param>
+	 * 如果无法找到对应的bean ，那么系统会尝试加载默认的配置器
+	 * 在getDefaultStrategies 函数中，Spring 会尝试众defaultStrategies 中加载对应的HandlerAdapter属性，那么defalutStrategies
+	 * 是如何实现初始化的呢？
+	 * ...
+	 * ClassPathResource resource = new ClassPathResource(DEFAULT_STRATEGIES_PATH, DispatcherServlet.class);
+	 * 			defaultStrategies = PropertiesLoaderUtils.loadProperties(resource);
+	 * 在系统加载的时候，defaultStrategies 根据当前的路径DispatcherServlet.properties来初始化本身，查看disPatcherServlet.properties
+	 * 中对应HandlerAdapter属性
+	 *
+	 * org.springframework.web.servlet.HandlerAdapter=org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter,\
+	 * 	org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter,\
+	 * 	org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter
+	 *
+	 * 	由此得知，如果在程序开发人员没有在配置文件中定义自己的适配器，那么Spring 会默认的加载配置文件中的3个适配器
+	 * 	作为总控制器的派遣器servlet通过处理器映射得到处理器后，会轮询处理器适配器模块，查找能够处理当前HTTP 请求的处理器适配器的实现
+	 * 	，处理适配器模块根据处理器映射返回的处理器类型，例如简单的控制器类型，注解控制器类型或者远程调用处理器类型，来选择某一个适当的
+	 *
+	 *
+	 *
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> List<T> getDefaultStrategies(ApplicationContext context, Class<T> strategyInterface) {
