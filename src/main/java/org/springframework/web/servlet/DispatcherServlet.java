@@ -634,6 +634,25 @@ public class DispatcherServlet extends FrameworkServlet {
 		// 模式呢？回答这个问题我们首先分析他的初始化逻辑
 		initHandlerAdapters(context);
 		// 初始化异常拦截器
+		// (6) 初始化HandlerExceptionResolvers
+		// 基于HnalderExceptionResolver 接口的异常处理，使用这种方式只需要实现resolverException 方法，该方法返回了一个modelAndView对象
+		// 在方法的内部对异常的类型进行判断，然后尝试生成对象的ModelAndView 对象，如果该方法返回了null,则Spring 会继续寻找其他的实现了
+		// HandlerExceptionResolver 接口的bean ,换名话说，Spring 会搜索所有的注册在其环境中实现了的HandlerExceptionResolver
+		// 接口的bean ,逐个执行，直接返回了一个ModelAndView 对象
+		// @Component
+		// public class ExceptionHandler implements HandlerExceptionResolver {
+		//		private static final Log log = LogFactory.getLog(ExceptionHandler.class);
+		// 		@Override
+		//		public ModelAndView resolverException(HttpServletRequest request ,HttpServletResponse response ,Object obj ,Exception exception){
+		//			request.setAttribute("exception",exception.toString());
+		//			request.setAttribute("exceptionStack",exception);
+		//			logs.error(exception.toString(),exception);
+		//			return new ModelAndView("error/exception");
+		//		}
+		// }
+		// 这个类必需声明到Spring 中去，让Spring 管理它，在Spring 的配置文件中applicationContext.xml 中增加以下的内容
+		// <bean id="exceptionHandler" class="com.test.exception.MyExceptionHandler">
+		//
 		initHandlerExceptionResolvers(context);
 		// 初始化视图预处理器
 		initRequestToViewNameTranslator(context);
@@ -983,8 +1002,18 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * 	由此得知，如果在程序开发人员没有在配置文件中定义自己的适配器，那么Spring 会默认的加载配置文件中的3个适配器
 	 * 	作为总控制器的派遣器servlet通过处理器映射得到处理器后，会轮询处理器适配器模块，查找能够处理当前HTTP 请求的处理器适配器的实现
 	 * 	，处理适配器模块根据处理器映射返回的处理器类型，例如简单的控制器类型，注解控制器类型或者远程调用处理器类型，来选择某一个适当的
-	 *
-	 *
+	 * 处理器适配器实现，从面适配当前的HTTP 请求
+	 * HTTP 请求处理器适配器（HttpRequestHandleAdapter）
+	 * HTTP 请求处理器适配器仅仅支持矣HTTP 请求处理器的适配，它简单地将HTTP请求对象和响应对象传递给HTTP 请求处理器的实现，它并不需要
+	 * 返回值，它主要应用在基于http 的远程调用的实现上
+	 * 	简单控制器处理器适配器（SimpleControllerHandlerAdapter ）
+	 * 	这个实现类将HTTP请求适配到一个控制咕噜的实现进行处理，这里控制器的实现是一个简单的控制器接口的实现，简单控制吕处理器适配器被设计成一个框架类的
+	 * 	的实现，不需要被改写，客户化的业务逻辑通常是在控制器接口的实现类中实现的
+	 * 	注解方法处理器适配器（AnnotationMethodHandlerAdapter）
+	 * 	这个类的实现是基于注解的实现，它需要结合注解方法映射和注解方法处理器协同工作，它通过解析声明在注解控制器的请求映射信息来解析相应的处理器方法来处理当前的http
+	 * 	请求，在处理的过程中，它通过反射来发现探测处理方法的参数，调用处理器方法，并且映射返回值到模型和控制器对象，最后返回模型和控制器对象给作为中主
+	 * 	控控制器的派遣器Servlet 。
+	 * 		所以我们现在基本上可以回答之前的问题了，Spring 中所使用的Handler 并没有任何特殊的联系，但是为了统一的处理，Spring 提供了不同情况下的适配器
 	 *
 	 */
 	@SuppressWarnings("unchecked")
