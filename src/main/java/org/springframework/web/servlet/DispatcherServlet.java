@@ -493,7 +493,8 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * This implementation calls {@link #initStrategies}.
 	 */
 	@Override
-	protected void onRefresh(ApplicationContext context) {
+	protected void
+	onRefresh(ApplicationContext context) {
 		initStrategies(context);
 	}
 
@@ -507,12 +508,114 @@ public class DispatcherServlet extends FrameworkServlet {
 	 */
 	protected void initStrategies(ApplicationContext context) {
 		// 多文件上传的组件
+		// (1)初始化MultipartResolver
+		// 在Spring 中，MultipartResolver主要用来处理文件上传，默认的情况下，Spring 是没有multipart处理的，因为一些开发都想
+		// 要自己处理他们，如果想使用Spring 的multipart，则需要在Web 应用的上下文中添加multipart解析器，这样每个请求就会被检测是否
+		// 包含了multipart，然而，如果请求中包含了multipart，那么上下文中定义的MultipartResolver就会解析它，这样的请求中的multipart
+		// 属性就会像其他的属性一样被处理，常用的配置如下：
+		// <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		// 		<!--该属性用来配置可上传文件的最大byte数-->
+		// 		<property name="maxMumFileSize" />
+		// </bean>
+		// 当然，CommonsMultipartResolver 还提供了其他的功能用于帮助用户完成上传功能，有兴趣的读者可以进一步的查看
+		// 那么MultipartResolver就是在initMultipartResolver中被加入了DispatcherServlet 中的
+		/**
+		 * private void initMultipartResolver(ApplicationContext context) {
+		 * 		try {
+		 * 			this.multipartResolver = context.getBean(MULTIPART_RESOLVER_BEAN_NAME, MultipartResolver.class);
+		 * 			if (logger.isDebugEnabled()) {
+		 * 				logger.debug("Using MultipartResolver [" + this.multipartResolver + "]");
+		 *                        }* 		}
+		 * 		catch (NoSuchBeanDefinitionException ex) {
+		 * 			// Default is no multipart resolver.
+		 * 			this.multipartResolver = null;
+		 * 			if (logger.isDebugEnabled()) {
+		 * 				logger.debug("Unable to locate MultipartResolver with name '" + MULTIPART_RESOLVER_BEAN_NAME +
+		 * 						"': no multipart request handling provided");
+		 *            }
+		 *        }
+		 * }
+		 * 因为之前的步骤已经完成了Spring 中配置文件的解析，所以在这里只要在配置文件中注册过都可以通过ApplicationContext 提供的
+		 * getBean方法来直接获取对应的bean ，进而初始化MultipartResolver中的multipartResolver变量
+		 *
+		 */
+		//
 		initMultipartResolver(context);
 		// 初始化本地语言环境
+		// 初始化LocaleResolver
+		// 在Spring 的国际化配置中一共有3种使用方式
+		// 基于URL 参数的配置
+		// 通过URL 参数控制国际化，比如你的页面上加句<a href="?locale=zh_CN"> 简体中文 </a> 来控制项目中使用的国际化参数，而提供的
+		/***
+		 * 的功能就是AcceptHeaderLocaleResolver，默认的参数名locale ，注意大小写，里面放的就是你提交的参数，比如 en_US,zh_CN 之类的
+		 * 具体的配置如下：
+		 * <bean id="localeResolver" class="org.springframework.web.servlet.ill8n.AccptHeader.LocaleResolver"></bean>
+		 * 基于session 的配置
+		 * 它通过检验用户会话中的预置的属性来解析区域，最常用的是根据用户本次会话过程中的语言设定决定语言类，例如 用户登录时选择语言
+		 * accept-language HTTP 头部确定的默认区域
+		 * <bean id="localeResolver" class="org.springframework.web.servlet.il8n.SessionLocaleResolver"></bean>
+		 * 基于Cookie的国际化配置
+		 * CookieLocaleResolver用于通过浏览器cookie设置取得Locale对象，这种策略在应用程序不支持会话或者状态必需保存的客户端时有用
+		 * ,配置如下：
+		 * 	<bean id="localeResolver" class="org.springframework.web.servlet.il8n.CookieLocaleResolver"></bean>
+		 * 	这3种方式都可以解析国际化问题，但是对于LocalResolver 的使用基础是在DispatcherServlet初始化 localeResolver
+		 * 提取配置文件中设置的LocaleResolver 来初始化DispatcherServlet 中的localeResolver属性
+		 */
 		initLocaleResolver(context);
 		// 初始化模板处理器
+		/**
+		 * (3)初始化ThemeResolver
+		 * 在Web 开发中经常会遇到通过主题Theme 来控制网页风格，这将进一步改善用户体验，简单地说，一个主题是一组静态的资源，比如样式表和图片
+		 * ,它们可以影响应用程序的视觉效果，Spring 中的主题功能和国际化功能非常的相似，构成Spring 主题功能的主要包括如下内容：
+		 * 主题资源
+		 * org.springframework.ui.context.ThemeSource 是Spring 中主题资源接口，Spring 主题需要通过 ThemeSource 接口来实现
+		 * 存放国际化功能非常的类似，构成Spring主题主要包括如下内容
+		 * 主题资源
+		 * org.springframework.ui.context.support.ResourceBundleThemeSource 是themeSource 接口的默认实现类，也就是通过
+		 * ResourceBundle资源的方式定义主题，在Spring 中配置如下
+		 * <bean id="themeSource" class="org.springframework.ui.context.support.ResourceBundleThemeSource">
+		 * 		<property name="basenamePrefix" value="com.test."></property>
+		 * </bean>
+		 * 默认状态下是在类路径目录下查找相应的资源文件，也可以通过basenamePrefix 来制定这样，DispatcherServlet就是在com.test包下查找资源文件
+		 * 主题解析器
+		 * ThemeSource 定义了一些主题资源，那么不同的用户使用什么样的主题资源呢？ 这又是由谁来定义的呢？ org.springframework.web.servlet.ThemeResolver
+		 * 是主题解析器接口，主题解析的工作便是由它的子类来完成的。
+		 * 对于主题解析器的子类主要有3个比较常用的实现，以主题文件summer.properties为例
+		 * <bean id="themeResolver" class="org.springframework.web.servlet.theme.FixedThemeResolver">
+		 * 		<property name="defaultThemeName" value="summer"></property>
+		 * </bean>
+		 * 以上的配置的作用就是设置主题文件为summer.properties ，在整个项目内固定不变
+		 * CookieThemeResolver 用于实现用户所选的主题，以cookie的形式存放在客户端机器上，配置如下：
+		 * <bean id="themeResolver" class="org.springframework.web.servlet.theme.CookieThemeResolver">
+		 * 		<property name="defaultThemeName" value="summper"></property>
+		 * </bean>
+		 *SessionThemeResolver 用于保存在用户的HTTP Session 中
+		 * <bean id="themeResolver" class="org.springframework.web.servlet.theme.SessionThemeResolver">
+		 * 		<property name="defaultThemeName" value="summer"></property>
+		 * </bean>
+		 * AbstractThemeResolver 是一个抽象的类被SessionThemeResolver 和FixedThemeResolver 继承，用户也可以继承它来自定义主题解析器
+		 * <bean id="themeChangeInterceptor" class="org.springframework.web.servlet.theme.ThemeChangeInterceptor">
+		 * 		<property name="paramName" value="themeName"></property>
+		 * </bean>
+		 * 其中设置了用户请求参数名themeName,即URL 为?themeName = 具体的主题名称，此外，还需要在handlerMapping 配置主题拦截器，
+		 * 当然需要在HandlerMapping 中添加拦截器
+		 * <property name="interceptors">
+		 * 		<list>
+		 * 		 	<ref local="themeChangeInterceptor"/>
+		 * 		</list>
+		 * </property>
+		 * 了解了主题文件的简单使用之后，再来查看解析器的初始化工作，与其他的变量初始化工作相同，设计师文件解析器初始化并没有任何特别需要说明的地方
+		 */
 		initThemeResolver(context);
 		// 初始化handlerMapping
+		// (3) 初始化HandlerMappings
+		//  当客户端发出Request时DispatcherServlet 会将Request提交给HandlerMapping ，然后HandlerMapping 根据WebApplicationContext
+		//的配置来回传给DispatcherServlet相应的Controller
+		// 在基于Spring MVC 的Web 应用程序中，我们可以为DispatcherServlet提供了多个HandlerMapping 供其使用，DispatcherServlet 在选用
+		// HandlerMapping 的过程中，将根据我们所指定的一系列的HandlerMapping 的优先级进行排序，然后优先的在前面的HandlerMapping ,如果当前
+		// HandlerMapping 能够返回可用的Handler ，DispatcherServlet 则使用当前返回的Handler 进行web请求的处理，而不再继续询问其他的
+		// HandlerMapping ，否则，DispathcherServlet 将继续按照各个HandlerMapping 的优先级进行询问，直到获取一个可用的Handler为止
+		// 初始化配置如下：
 		initHandlerMappings(context);
 		// 初始化参数适配器
 		initHandlerAdapters(context);

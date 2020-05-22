@@ -492,7 +492,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		try {
 			this.webApplicationContext = initWebApplicationContext();
 			// 设计为子类覆盖
-			//
+			// 这个函数设计了计时器来统计初始化的执行时间，而且提供了一个扩展方法initFrameworkServlet()用于子类的覆盖操作，
+			// 而作为关键的初始化逻辑实现委托给了initWebApplicationContext()
 			initFrameworkServlet();
 		}
 		catch (ServletException ex) {
@@ -519,6 +520,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #FrameworkServlet(WebApplicationContext)
 	 * @see #setContextClass
 	 * @see #setContextConfigLocation
+	 * initWebApplicationContext 函数的主要工作就是创建或者刷新WebApplicationContext实例并对servlet功能所使用的变量进行初始化
+	 *
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
 		// 先从ServletContext中获得父容器WebApplicationContext
@@ -529,6 +532,15 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		// 建立父，子容器之间的关联关系
 		if (this.webApplicationContext != null) {
 			// A context instance was injected at construction time -> use it
+			// context 实例构造函数中被注入
+			// WebApplicationContext 的寻找和创建包括以下的几个步骤
+			// (1) 通过构造函数的注入进行初始化
+			// 当进入initWebApplicationContext 函数后通过判断 this.webApplicationContext != null 后，便可以确定this.webApplicationContext 是否
+			// 通过构造函数来初始化了，可是有读者可能会有疑问，在initServletBean 函数中明明是把创建好的实例记录在了this.webApplicationContext 中了
+			// this.webApplicationContext = initWebApplicationContext()
+			// 何以决定这个参数是通过构造函数初始化，而不是通过上一次的函数返回值初始化呢？如果存在这个问题，那么读者就忽略了一个问题
+			// 在Web中包含了Spring Web 的核心逻辑DispatcherServlet 只可以被声明一次，在Spring 中已经存在验证，所以这就确保了
+			// 如果this.webApplicationContext != null ，则可以直接判定this.webApplicationContext 已经通过构造函数初始化了
 			wac = this.webApplicationContext;
 			if (wac instanceof ConfigurableWebApplicationContext) {
 				ConfigurableWebApplicationContext cwac = (ConfigurableWebApplicationContext) wac;
@@ -540,6 +552,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 						// the root application context (if any; may be null) as the parent
 						cwac.setParent(rootContext);
 					}
+					// 刷新上下文环境
 					configureAndRefreshWebApplicationContext(cwac);
 				}
 			}
@@ -550,11 +563,19 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			// has been registered in the servlet context. If one exists, it is assumed
 			// that the parent context (if any) has already been set and that the
 			// user has performed any initialization such as setting the context id
+			// 根据contextAttribute属性加载WebApplicationContext
+			// (2) 通过contextAttribute 进行初始化
+			// 通过web.xml 文件中配置的servlet参数，contextAttribute()来查找ServletContext中对应的属性，默认为WebApplicationContext.class.getName() + ".ROOT"
+			// , 也就是在 ContextLoaderListener加载时会创建WebApplicationContext实例，并将实例以WebApplicationContext.class.getName() + ".ROOT"
+			// 为key 放入到ServletContext 中，当然，读者可以重写初始化逻辑使用自己创建的WebApplicationContext，并在servlet的配置中通过
+			// 初始化参数contextAttribute指定key
 			wac = findWebApplicationContext();
 		}
 		// 给上一步创建好的ioc容器赋值
 		if (wac == null) {
 			// No context instance is defined for this servlet -> create a local one
+			// (3)重新创建WebApplicationContext 实例
+			// 如果通过以上的两种方式并没有找到任何突破，那就没有办法了，只能在这里重新创建实例了
 			wac = createWebApplicationContext(rootContext);
 		}
 		// 触发onRefresh()方法
@@ -617,6 +638,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see XmlWebApplicationContext
 	 */
 	protected WebApplicationContext createWebApplicationContext(ApplicationContext parent) {
+		// 获取servlet 的初始化参数contextClass ,如果没有配置默认的 XmlWebApplicationContext.class
 		Class<?> contextClass = getContextClass();
 		if (this.logger.isDebugEnabled()) {
 			this.logger.debug("Servlet with name '" + getServletName() +
@@ -629,18 +651,29 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 					"': custom WebApplicationContext class [" + contextClass.getName() +
 					"] is not of type ConfigurableWebApplicationContext");
 		}
+		// 通过反射方式实例化
 		ConfigurableWebApplicationContext wac =
 				(ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
-
 		wac.setEnvironment(getEnvironment());
+		//parent 为在ContextLoaderListener中创建实例
+		// 在ContextLoaderListener加载的时候初始化WebApplicationContext类型的实例
 		wac.setParent(parent);
+		// 获取contextConfigLocation属性，配置在servlet初始化参数中
 		wac.setConfigLocation(getContextConfigLocation());
-
+		// 初始化Spring 环境包括加载配置文件等
 		configureAndRefreshWebApplicationContext(wac);
-
 		return wac;
 	}
 
+	/****
+	 * 无论是通过构造函数注入还是单独创建，都免不了会调用configAndRefreshWebApplicationContext 方法来对已经创建的WebApplicationContext
+	 * 实例进行配置及刷新，那么这个步骤做了哪些工作呢？
+	 *
+	 * 无论调用方式如何变化，只要使用了ApplicationContext所提供的功能最后都免不了使用公共的父类AbstractApplicationContext 提供的
+	 * refresh()进行配置文件的加载
+	 *
+	 *
+	 */
 	protected void configureAndRefreshWebApplicationContext(ConfigurableWebApplicationContext wac) {
 		if (ObjectUtils.identityToString(wac).equals(wac.getId())) {
 			// The application context id is still set to its original default value
@@ -670,6 +703,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 
 		postProcessWebApplicationContext(wac);
 		applyInitializers(wac);
+		// 加载配置文件及整合parent 到wac
 		wac.refresh();
 	}
 
