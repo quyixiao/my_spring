@@ -428,16 +428,19 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	protected View createView(String viewName, Locale locale) throws Exception {
 		// If this resolver is not supposed to handle the given view,
 		// return null to pass on to the next resolver in the chain.
+		// 如果当前解析器不支持当前解析器如viewName 为空的情况
 		if (!canHandle(viewName, locale)) {
 			return null;
 		}
 		// Check for special "redirect:" prefix.
+		// 处理前缀为redirect:xx的情况
 		if (viewName.startsWith(REDIRECT_URL_PREFIX)) {
 			String redirectUrl = viewName.substring(REDIRECT_URL_PREFIX.length());
 			RedirectView view = new RedirectView(redirectUrl, isRedirectContextRelative(), isRedirectHttp10Compatible());
 			return applyLifecycleMethods(viewName, view);
 		}
 		// Check for special "forward:" prefix.
+		// 处理前缀为forward ： xx 的情况
 		if (viewName.startsWith(FORWARD_URL_PREFIX)) {
 			String forwardUrl = viewName.substring(FORWARD_URL_PREFIX.length());
 			return new InternalResourceView(forwardUrl);
@@ -500,11 +503,16 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * @return the View instance
 	 * @throws Exception if the view couldn't be resolved
 	 * @see #loadView(String, Locale)
+	 * 通读以上的代码，我们发现对于InternalResourceViewResolver 所提供的解析功能主要考虑到了以下的几个方法的处理
+	 * 基于效率的考虑，提供了缓存的支持
+	 * 提供了对redirect:xx 和forward:xx前缀的支持
+	 * 添加了前缀及后缀，并向View中加入了必需的属性设置
 	 */
 	protected AbstractUrlBasedView buildView(String viewName) throws Exception {
 		AbstractUrlBasedView view = (AbstractUrlBasedView) BeanUtils.instantiateClass(getViewClass());
+		// 添加前缀以及后缀
 		view.setUrl(getPrefix() + viewName + getSuffix());
-
+		// 设置contextType
 		String contentType = getContentType();
 		if (contentType != null) {
 			view.setContentType(contentType);

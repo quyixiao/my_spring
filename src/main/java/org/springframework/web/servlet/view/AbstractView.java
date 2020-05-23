@@ -290,6 +290,7 @@ public abstract class AbstractView extends WebApplicationObjectSupport implement
 	 * attributes and a RequestContext attribute, if necessary.
 	 * Delegates to renderMergedOutputModel for the actual rendering.
 	 * @see #renderMergedOutputModel
+	 * 当通过viewName 解析到对应的View后 ，就可以进一步处理跳转逻辑了
 	 */
 	@Override
 	public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -306,6 +307,10 @@ public abstract class AbstractView extends WebApplicationObjectSupport implement
 	/**
 	 * Creates a combined output Map (never {@code null}) that includes dynamic values and static attributes.
 	 * Dynamic values take precedence over static attributes.
+	 * 在引导示例中，我们了解对于ModelView的使用，可以将一些属性直接放入到其中，然后在页面上直接通过JSTL 请求或者原始的request获取
+	 * 这是一个很方便也是一个很神奇的功能，但是实现并不是很复杂，无非是把我们将要用到的属性放入到request 中，以便其在其他的地方可以直接调用
+	 * 而解析这些属性的工作就是在createMergedOutPutModel 函数中来完成的
+	 *
 	 */
 	protected Map<String, Object> createMergedOutputModel(Map<String, ?> model, HttpServletRequest request,
 			HttpServletResponse response) {
