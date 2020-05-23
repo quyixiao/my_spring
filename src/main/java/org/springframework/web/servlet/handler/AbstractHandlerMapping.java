@@ -345,22 +345,36 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * @param request current HTTP request
 	 * @return the corresponding handler instance, or the default handler
 	 * @see #getHandlerInternal
+	 *
+	 *
+	 *
+	 * 函数中首先会使用getHandlerInternal方法根据request 信息获取对应的Handler ，如果 SimpleUrlHandlerMapping 为例分析
+	 * ,那么我们推断此步骤提供的功能很可能就是根据url 找到匹配的Controller 并返回，当然如果没有找到对应的Controller 处理器，那么程序
+	 * 就会尝试去查找配置默认处理器，当然，当查找的controller 为String 类型时，那就意味着返回的配置的bean 的名称，需要根据bean 的名称
+	 * 查找对应的bean ,最后，还要通过getHandlerExecutionChain方法返回Handler 进行封装，以保证满足返回的类型是匹配的类型，
+	 *下面将详细的分析整个过程
+	 *
 	 */
 	@Override
 	public final HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
+		// 根据请求的request 获取对应的handler
 		Object handler = getHandlerInternal(request);
 		if (handler == null) {
+			// 如果没有对应的request Handler ，则使用默认的 handler
 			handler = getDefaultHandler();
 		}
 		if (handler == null) {
 			return null;
 		}
 		// Bean name or resolved handler?
+		// 如果也没有提供默认扔handler 则无法继续处理返回null
 		if (handler instanceof String) {
 			String handlerName = (String) handler;
 			handler = getApplicationContext().getBean(handlerName);
 		}
-
+		// 2.加入拦截器到执行链
+		// getHandlerExecutionChain 函数中最主要的目的就是将配置中的对应的拦截器加入到执行链中，以保证这些拦截器可以有效的作用目标
+		// 对象
 		HandlerExecutionChain executionChain = getHandlerExecutionChain(handler, request);
 		if (CorsUtils.isCorsRequest(request)) {
 			CorsConfiguration globalConfig = this.corsConfigSource.getCorsConfiguration(request);

@@ -1191,16 +1191,40 @@ public class DispatcherServlet extends FrameworkServlet {
 
 			try {
 				// 检查是否是文件上传请求 ，如果是MultipartContent 类型的request 则转换成 MultipartHttpServletRequest类型的request
+				// | MultipartContent 类型的处理request处理
+				// 对于请求的处理，Spring 首先考虑的是对Multipart的处理，如果MultipartContent 类型是request ，则转换request
+				// 为MultipartHttpServletRequest 类型的request
 				processedRequest = checkMultipart(request);
+
 				multipartRequestParsed = (processedRequest != request);
 				// Determine handler for the current request.
 				// 2.取得处理当前请求的Controller，这里也称为Handler ，即处理器
 				// 第一步的意义就是在这里体现了，这里并不是直接返回Controller
 				// 该对象封装了Handler和Interceptor | 根据request 寻找Handler
+				// | 11.4.2 根据request 信息寻找对应的Handler
+				// 在Spring 中闻简单的映射处理器配置台下：
+				/**
+				 * <bean id="simpleUrlMapping" class="org.Springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+				 * 		<property name="mapping">
+				 * 		 	<props>
+				 * 		 	  	<prop key="/userlist.htm">userController</prop>
+				 * 		 	</props>
+				 * 		 </property>
+				 * </bean>
+				 *
+				 * 在Spring 加载的过程中，Spring 会将类型为SimpleUrlHandlerMapping 的实例加载到this.handlerMapping 中，按照常理推断
+				 * ,根据request 提取对应的Handler ，无非就是提取当前实例中的userController ，但是userController 为了继承自AbstractController
+				 * 类型实例，与HandlerExecutionHandler 并无任何关联，那么这一步是如何封装的呢？
+				 *
+				 */
 				mappedHandler = getHandler(processedRequest);
 				// 如果Handler 为空，则返回404
 				if (mappedHandler == null || mappedHandler.getHandler() == null) {
 					// 如果没有找到对应的handler ，则通过response 反馈错误信息
+					// | 11.4.3 没有找到对应的Handler 的错误处理
+					// 每个请求都应该对应一个Handler，因为每个请求都会在后台有相应的逻辑对应，而逻辑的实现就是在Handler中，所以一旦
+					// 遇到没有找到的Handler的情况，正常的情况下如果没有URL匹配的Handler，开发人员可以设置默认的Handler来处理请求
+					// 但是默认的请求也未设置的时候就出现Handler为空的情况了，就只能通过response向用户返回错误信息
 					noHandlerFound(processedRequest, response);
 					return;
 				}
@@ -1229,6 +1253,34 @@ public class DispatcherServlet extends FrameworkServlet {
 
 				// Actually invoke the handler.
 				// 4.实际处理器处理请求，返回结果视图对象 | 真正的激活Handler 并返回视图
+				// | 在研究Spring 对缓存的处理的功能支持前，我们先了解一下一个概念：Last-Modified缓存机制 ，
+				// (1)在客户端第一次输入URL的时候服务器端返回内容和状态码200,表示请求成功，同时会添加一个 Last-Modified的响应头，表示此文件在
+				// 服务器上的最后更新时间，例如 Last-Modified:Web 14 Mar 2012 10:22:42 GMT 表示最后的更新时间为 2012-03-14 10:20
+				// (2) 客户端第二次请求的URL 时，客户端会向服务器发送请求头，if-Modified-Since 询问服务器该时间之后当前请求的内容是不中有被
+				// 修改过，如 if-MOdified-Since: Web 。14 Mar 2012 10：22：42 GMT ，如果
+				// If-Modified-Since ：Web 14 Mar 2012 10:22:42 GMT 如果服务器端的内容没有就业率，则自动返回HTTP 304 状态码，
+				// 只要响应头为空，这样就节省了网络带宽
+				// Spring 提供了Last-Modified机制的支持，只需要实现LastModified 接口，如下所示
+				// public class HelloWorldLastModifiedCacheController extends AbstractController implements LastModified {
+				// 		private long lastModified ;
+				// 		protected ModelAndView handleRequestInternal(HttpServletRequest req ,HttpServletResponse resp) throw exception {
+				//			//点击后再次请求当前页面
+				//			resp.getWriter().write("<a href=''>this</a>")
+				//			return null;
+				//		}
+				//		public long getLastModified(HttpServletRequest request ){
+				//			if(lastModified == 0L){
+				//				// 第一次或者逻辑有变化的时候，应该重新返回内容最新修改时间戳
+				//				lastModified = System.currentTimeMillis();
+				//			}
+				//		}
+				// }
+				// HelloWorldLastModifiedCacheController 只需要实现LastModified 接口的getLastModified()方法保证当内容发生改变时返回了
+				// 最新的修改时间即可
+				// Spring 判断是否过期，通过判断请求 If-Modified-Since 是否大于等于当前的getLastModified 方法的时间戳，如果是
+				// 则认为没有修改，上面的controller 与普通的controller 并没有太大的差别，声明如下
+				// <bean name="/helloLastModified" class="com.test.controller.HelloWorldLastModifiedCacheController"></bean>
+				// 11.4.6 HandlerInterceptor处理器
 				mv = ha.handle(processedRequest, response, mappedHandler.getHandler());
 
 				if (asyncManager.isConcurrentHandlingStarted()) {
@@ -1280,6 +1332,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Handle the result of handler selection and handler invocation, which is
 	 * either a ModelAndView or an Exception to be resolved to a ModelAndView.
+	 * doDispatch 函数中展示了Spring 请求的处理所涉及的主要逻辑，而我们之前设置的request 中的各种辅助属性也都有被派上了用场，
+	 * 下面回顾一下逻辑处理的全部过程
+	 *
 	 */
 	private void processDispatchResult(HttpServletRequest request, HttpServletResponse response,
 			HandlerExecutionChain mappedHandler, ModelAndView mv, Exception exception) throws Exception {
@@ -1394,6 +1449,16 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * 最后调用RequestMappingHandlerAdapter的Handler()中的核心代码来，由于HandleInternal(request,response，Handler)实现
 	 * 整个处理过程中最核心的步骤就是拼接Controller的URL 和方法的URL,与request的URL 进行匹配，找到匹配的方法
 	 * 根据URL 获取处理请求的方法
+	 *
+	 *
+	 *
+	 *
+	 *
+	 * |
+	 *
+	 *
+	 * 在之前的内容我们提过，在系统启动时，Spring 会将所有的映射类型的bean 注册到this.handlerMapping的变量中，所以此函数的目的就是
+	 * 遍历所有的HandlerMapping ，并调用其getHandler 方法进行封装，以SimpleUrlHandlerMapping 为例，查看getHandler 方法如下
 	 */
 	protected HandlerExecutionChain getHandler(HttpServletRequest request) throws Exception {
 		for (HandlerMapping hm : this.handlerMappings) {
@@ -1434,6 +1499,22 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Return the HandlerAdapter for this handler object.
 	 * @param handler the handler object to find an adapter for
 	 * @throws ServletException if no HandlerAdapter can be found for the handler. This is a fatal error.
+	 * 11.4.4 根据当前Handler寻找对应的HandlerAdapter
+	 * 在WebApplicationContext 的初始化过程中我们讨论了HandlerAdapters 的初始化的，了解了在默认的情况下普通Web请求会交给
+	 * SimpleControllerHandlerAdapter去处理，下面我们以SimpleControllerHandlerAdaptor为例来分析获取适配器的逻辑
+	 *
+	 *
+	 * |
+	 *
+	 * 通过这个函数我们了解到，对于获取适配器的逻辑无非就是遍历所有的适配器来选择合适的适配器并返回它，而某个适配器是否适用于当前的Handler
+	 * 逻辑被封装在具体的适配器中，进一步查看SimpleControllerHandlerAdaptor中的supports
+	 * public boolean supports(Object handler){
+	 *     return (Handler instanceof Controller);
+	 * }
+	 * 分析到这里，一切都已经明了了，SimpleControllerHandlerAdapter 就是用于处理普通的Web请求，而对应于SpringMVC 来说，我们会把
+	 * 逻辑封装至Controller的子类中，例如我们之前引导的示例，UserController 就是继承自AbstractController ，而AbstractController
+	 * 的实现Controller 接口
+	 *
 	 */
 	protected HandlerAdapter getHandlerAdapter(Object handler) throws ServletException {
 		for (HandlerAdapter ha : this.handlerAdapters) {
@@ -1457,6 +1538,10 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param ex the exception that got thrown during handler execution
 	 * @return a corresponding ModelAndView to forward to
 	 * @throws Exception if no error ModelAndView found
+	 * 有时候系统运行过程中出现异常，而我们并不希望就此中断对用户的服务，而是至少告知客户当前系统在处理逻辑的过程上出现的异常，甚至告知他们因为什么
+	 * 原因导致的，Spring 中的异常处理机制会帮我们完成这个工作的，其实，这里Spring 主要的工作就是将逻辑引导到HandlerExceptionResolver
+	 * 类的resolverException方法，而HandlerExceptionResolver的使用，我们在讲解WebApplicationContext 的初始化的时候已经介绍过
+	 *
 	 */
 	protected ModelAndView processHandlerException(HttpServletRequest request, HttpServletResponse response,
 			Object handler, Exception ex) throws Exception {
@@ -1464,6 +1549,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		// Check registered HandlerExceptionResolvers...
 		ModelAndView exMv = null;
 		for (HandlerExceptionResolver handlerExceptionResolver : this.handlerExceptionResolvers) {
+			//
 			exMv = handlerExceptionResolver.resolveException(request, response, handler, ex);
 			if (exMv != null) {
 				break;
@@ -1496,6 +1582,10 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @param response current HTTP servlet response
 	 * @throws ServletException if view is missing or cannot be resolved
 	 * @throws Exception if there's a problem rendering the view
+	 * 11.4.9 根据视图的跳转页面
+	 * 无论是一个系统还是一个站点，最重要的工作就是与用户进行交互，用户操作系统后无论下发命令是不是成功与否，都需要给用户一个反馈
+	 * ，以便于肪进行下一步的判断，所以，在逻辑处理的最后一定涉及一个页面跳转问题
+	 *
 	 */
 	protected void render(ModelAndView mv, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		// Determine locale for request and apply it to the response.
@@ -1559,6 +1649,9 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * @throws Exception if the view cannot be resolved
 	 * (typically in case of problems creating an actual View object)
 	 * @see ViewResolver#resolveViewName
+	 * 解析视图名称
+	 * 在上下文中我们提到了DispatcherServlet 会根据ModelAndView选择合适的视图来进行渲染，而这一功能就是resolverViewName 函数中完成
+	 *
 	 */
 	protected View resolveViewName(String viewName, Map<String, Object> model, Locale locale,
 			HttpServletRequest request) throws Exception {
