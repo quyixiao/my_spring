@@ -67,6 +67,7 @@ public abstract class RemoteInvocationBasedExporter extends RemoteExporter {
 	 * @throws IllegalAccessException if the method could not be accessed
 	 * @throws InvocationTargetException if the method invocation resulted in an exception
 	 * @see RemoteInvocationExecutor#invoke
+	 *
 	 */
 	protected Object invoke(RemoteInvocation invocation, Object targetObject)
 			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {

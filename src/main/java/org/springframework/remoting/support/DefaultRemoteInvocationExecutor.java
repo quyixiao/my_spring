@@ -35,7 +35,9 @@ public class DefaultRemoteInvocationExecutor implements RemoteInvocationExecutor
 			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException{
 
 		Assert.notNull(invocation, "RemoteInvocation must not be null");
+
 		Assert.notNull(targetObject, "Target object must not be null");
+		// 通过反射激活方法
 		return invocation.invoke(targetObject);
 	}
 

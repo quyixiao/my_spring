@@ -66,11 +66,17 @@ class RmiInvocationWrapper implements RmiInvocationHandler {
 	/**
 	 * Delegates the actual invocation handling to the RMI exporter.
 	 * @see RmiBasedExporter#invoke(org.springframework.remoting.support.RemoteInvocation, Object)
+	 * RMI服务激活调用
+	 * 之前反复提到过，由于之前bean初始化的时候做了服务名绑定，this.registry.bind(this.serviceName,this.exportedObject)，其中
+	 * exportedObject其实是被RMIInvocationWrapper进行封装的，也就是说当其他的服务调用serviceName的RMI服务时，Java会为我们封装其
+	 * 内部操作，而直接会将代码转向RMIInvocationWrapper的invoke方法中
+	 *
 	 */
 	@Override
 	public Object invoke(RemoteInvocation invocation)
 		throws RemoteException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-
+		// 而此时的this.rmiExporter为之前初始化RMIServiceExporter，invocation为包含着需要激活的方法参数，而wrapperObject则是
+		// 为之前封装代理类
 		return this.rmiExporter.invoke(invocation, this.wrappedObject);
 	}
 

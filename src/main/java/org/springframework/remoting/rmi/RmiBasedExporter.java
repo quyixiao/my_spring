@@ -45,9 +45,13 @@ public abstract class RmiBasedExporter extends RemoteInvocationBasedExporter {
 	 * @return the RMI object to export
 	 * @see #setService
 	 * @see #setServiceInterface
+	 * 2.初始化要导出的实例对象
+	 * 之前提到过，当请求的某个RMI服务的时候，RMI会根据注册的服务名称，将请求引导至远程对象处理类中，这个处理类便是使用getObjectToExport()进行创建
+	 *
 	 */
 	protected Remote getObjectToExport() {
 		// determine remote object
+		// 如果配置的service属性对应的的类实现了Remote接口且没有配置serviceInterface属性
 		if (getService() instanceof Remote &&
 				(getServiceInterface() == null || Remote.class.isAssignableFrom(getServiceInterface()))) {
 			// conventional RMI service
@@ -58,6 +62,7 @@ public abstract class RmiBasedExporter extends RemoteInvocationBasedExporter {
 			if (logger.isDebugEnabled()) {
 				logger.debug("RMI service [" + getService() + "] is an RMI invoker");
 			}
+			// 对service进行封装
 			return new RmiInvocationWrapper(getProxyForService(), this);
 		}
 	}
