@@ -94,6 +94,71 @@ public abstract class RemoteInvocationSerializingExporter extends RemoteInvocati
 	}
 
 
+	/***
+	 * HttpInvoker
+	 * Spring 开发小组意识到在RMI服务和基于HTTP服务如 Hessian 和Burlap 之间的空白，一方面，RMI使用Java标准的对象序列化，但是很难
+	 * 穿越防火墙，但是使用自己私有的一套对象序列化机制
+	 * 就这样，Spring 的HttpInvoker 就去而生，httpInvoker是一个新的远程调用模型，作为Spring 框架的一部分，来执行基于http 的远程调用
+	 * 并使用java 序列化机制 ，这是让程序员高兴的事情
+	 * 我们首先来看看HttpInvoker 的使用示例，httpInvoker 是基于Http的远程调用，同时也是使用Spring中提供的web服务作为基础的，所以我们测试需要
+	 * 首先搭建web工程
+	 * 12.2.1 使用示例
+	 * （1）创建对外接口
+	 * public interface HttpInvokeTestI{
+	 *     public String getTestPo(String desp);
+	 * }
+	 *
+	 * (2)创建接口的类
+	 * public class HttpInvoketestImpl implements HttpInvokerTestI{
+	 * @Override
+	 * 	public String getTestPo(String resp){
+	 * 	    return "getTestPo" + desp;
+	 * 	}
+	 * }
+	 * (3)创建服务端配置文件 applicationContext-server.xml
+	 * <?xml version="1.0" encoding="UTF-8"?>
+	 * <beans xmlns="http://www.springframework.org/schema/beans"
+	 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	 *        <bean name="httpinvoketest" class="test.HttpInvokertestImpl"></bean>
+	 *
+	 * </beans>
+	 * (4)在WEB-INF 下创建remote-servlet.xml
+	 * <beans xmlns="http://www.springframework.org/schema/beans"
+	 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	 *        <bean name="/hit" class="org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter">
+	 *        		<property name="service" ref="httpinvoketest"></property>
+	 *        		<property name="serviceInterface" value="test.HttpInvoketest1"></property>
+	 *        </bean>
+	 *   </beans>
+	 *  至此，服务端httpInvoker服务已经搭建完成，启动web 工程后就可以使用我们搭建的HttpInvoker服务了，以上的代码实现将远程传入的字符串参数处理加入
+	 *  "getTestPo"前缀的功能，服务端搭建完基于Web服务的HttpInvoker后，客户端不需要使用一定的配置才能进行远程调用
+	 *  (5) 创建测试端配置client.xml
+	 * <beans xmlns="http://www.springframework.org/schema/beans"
+	 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+	 *        <bean id ="remoteService" class="org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean">
+	 *            <property name="serviceUrl"  value="http://localhost:8080/httpinvoketest/remoting/hit"></property>
+	 *            <property name="serviceInterface" value="test.HttpInvokerTestI"></property>
+	 *        </bean>
+	 *  </beans>
+	 *  (6)创建测试类
+	 *  public class Test{
+	 *      public static void main(String [] args){
+	 *          ApplicationContext context = new ClassPathXmlApplicationContext("classpath:client.xml");
+	 *          HttpInvokeTest1 httpInvokeTestI = (HttpInvokerTestI) context.getBean("remoteService");
+	 *          System.out.println(httpInvokeTestI.getTestPo("dddd"));
+	 *      }
+	 *  }
+	 * 运行测试类，你会看到打印出的结果
+	 * getTestPo ddd
+	 * dddd 是我们传入的参数，而getTestPo 则是在服务端添加的字符串，当然，上面的服务搭建与测试的过程中都是在一台机器上运行的，
+	 * 如果需要在不同的机器上运行，如果需要在不同的机器上进行测试，还需要读者对服务端的相关接口打成Jar包并加入到客户端的服务器上
+	 * Spring 会确保这个bean 在初始化的时候调用其afterPropertiesSet方法，而对于HttpRequestHandler接口，因为我们在配置中
+	 * 已经将此接口配置成web服务，那么当有相应的请求的时候，Spring的Web服务就会在程序引导至HttpRequestHandler的handlerRequest方法中
+	 * 首先，我们从afterPropertiesSet方法开始分析，看看Bean在初始化的过程中做了哪些逻辑
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		prepare();

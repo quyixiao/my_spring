@@ -63,16 +63,31 @@ public class RmiProxyFactoryBean extends RmiClientInterceptor implements Factory
 	private Object serviceProxy;
 
 
+	/***
+	 * 根据层次关系以及之前的分析，我们提取出该类实现的比较重要的接口，InitializingBean ，BeanClassLoaderAware 以及MethodInterceptor
+	 * 其中实现了 InitializingBean ，则Spring会确保此初始化的bean时调用afterPropertiesSet进行逻辑初始化
+	 *
+	 * |
+	 *
+	 * 这样，我们似乎已经形成了一个大致的轮廓，当获取该bean时，首先通过afterPropertiesSet 创建代理类，并使用当前类作为增强方法，而在调用
+	 * 该bean时其实返回的是代理类，既然调用的是代理类，那么又会使用当前的bean作为增强器进行增强，也就是说会调用RMIProxyFactoryBean
+	 * 的父类RMIClientInterceptor的invoke方法
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
 		if (getServiceInterface() == null) {
 			throw new IllegalArgumentException("Property 'serviceInterface' is required");
 		}
+		// 根据设置的接口创建代理，并使用当前类this作为增强器
 		this.serviceProxy = new ProxyFactory(getServiceInterface(), this).getProxy(getBeanClassLoader());
 	}
 
 
+	/***
+	 * 同时，RMIProxyFactoryBean又实现了FactoryBean接口，那么当获取Bean时并不是直接获取Bean,而是获取该bean的getObject方法
+	 *
+	 */
 	@Override
 	public Object getObject() {
 		return this.serviceProxy;

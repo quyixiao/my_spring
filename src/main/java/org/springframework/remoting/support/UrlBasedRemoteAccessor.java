@@ -45,7 +45,8 @@ public abstract class UrlBasedRemoteAccessor extends RemoteAccessor implements I
 		return this.serviceUrl;
 	}
 
-
+	// 继续追踪代码，发现父类的父类，也就是UrlBaseRemoteAccessor中的afterPropertiesSet方法只完成了对serviceUrl属性的验证
+	// 所以推断所有的客户端都应该在prepare方法中实现，继续查看prepare()
 	@Override
 	public void afterPropertiesSet() {
 		if (getServiceUrl() == null) {

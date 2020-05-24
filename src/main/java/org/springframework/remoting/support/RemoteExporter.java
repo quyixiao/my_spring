@@ -159,6 +159,17 @@ public abstract class RemoteExporter extends RemotingSupport {
 	 * 日志，会使得代码看起来，而且耦合度很高，使用代理的方式就会解决这样的问题，而且会有很高的可扩展性
 	 *
 	 *
+	 * |
+	 * 通过上面的3个方法串联，可以看到，初始化的过程实现的逻辑的主要是创建一个代理，代理中封装了对于特定的请求处理方法以及接口等信息，
+	 * 而这个代理的最关键的目的就是加入了RemoteInvocationTraceInterceptor增强器，当然 创建代理还有个好处，比如代码优雅，方便扩展，
+	 * RemoteInvocationTraceInterceptor中增强的主要是对增强的目标方法进行一些相关的信息日志打印，并没有在此基础上进行任何的功能性的
+	 * 增强，那么这个代理究竟是在什么时候使用呢？暂时留下悬念，我们接下来分析当前有Web请求时，HttpRequestHandler的HandleRequest的处理方法
+	 * 2.处理来自客户端的request
+	 * 当有Web请求时，根据配置中的规则会把路径匹配的访问直接引入到对应的HttpRequestHandler中，本例中Web请求与普通的Web请求是有区别的，
+	 * 因此此处的请求包含着HttpInvoke的处理过程
+	 *
+	 *
+	 *
 	 */
 	protected Object getProxyForService() {
 		// 验证service
