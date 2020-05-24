@@ -217,18 +217,27 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 	 * @see #executeHttpPost
 	 * @see #validateResponse
 	 * @see #getResponseBody
+	 * 在doExecuteRequest 方法中真正实现了对远程方法的构造也通信，与远程方法的连接功能实现中，Spring 引入了第三方Jar，HttpClient,
+	 * HttpClient是Apache Jakarta Common下的子项目，可以用来提供高效的，最新的，功能丰富的支持HTTP协义的客户端编程工具包，并且它支持
+	 * HTTP协义最新的版本和建义，对HttpClient的具体的使用方法有兴趣的读者可以参考更多的资料和文档
+	 *
 	 */
 	@Override
 	protected RemoteInvocationResult doExecuteRequest(
 			HttpInvokerClientConfiguration config, ByteArrayOutputStream baos)
 			throws IOException, ClassNotFoundException {
-
+		// 创建HttpPost
 		HttpPost postMethod = createHttpPost(config);
+		// 设置含有方法的输出流到post中
 		setRequestBody(config, postMethod, baos);
 		try {
+			// 执行方法并等待结果响应
 			HttpResponse response = executeHttpPost(config, getHttpClient(), postMethod);
+			// 验证
 			validateResponse(config, response);
+			// 提取返回的输入流
 			InputStream responseBody = getResponseBody(config, response);
+			// 从输入流中提取结果
 			return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
 		}
 		finally {

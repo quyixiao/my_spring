@@ -179,9 +179,10 @@ public class HttpInvokerServiceExporter extends RemoteInvocationSerializingExpor
 	protected void writeRemoteInvocationResult(
 			HttpServletRequest request, HttpServletResponse response, RemoteInvocationResult result, OutputStream os)
 			throws IOException {
-
+		// 获取输入流
 		ObjectOutputStream oos = createObjectOutputStream(decorateOutputStream(request, response, os));
 		try {
+			// 将序列化对象写入输入流
 			doWriteRemoteInvocationResult(result, oos);
 		}
 		finally {
