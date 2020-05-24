@@ -86,6 +86,31 @@ import org.springframework.util.ReflectionUtils;
  * @see #setMessageConverter
  * @see javax.jms.MessageProducer
  * @see javax.jms.MessageConsumer
+ * Java 消息服务，应用程序接口是一个Java平台相关于面向消息中间件（MOM）的API,用于在两个应用程序之间或者分布式系统中发送消息
+ * 进行异步通信，Java 消息服务是一个与具体平台无关的API,绝大多数MOM提供商都对JMS提供支持。
+ * 	java消息服务的规范包括两种消息模式，点对点和发布者/订阅者，许多提供商支持这一通用框架，因此，程序员可以在他们分布式软件
+ * 	中实现面向消息的操作，这些操作将具体有不同的面向消息中间件产品的可移植性
+ * 	java 消息服务支持同步和异步消息处理，在某些场景下，异步消息是必要的，而且比同步消息操作更加便利
+ * 	Java 消息服务支持面向事件的方法接收消息，事件驱动程序设计现在被广泛的认为是一种富有成效程序设计范例，程序员们都相当的熟悉
+ * 	在应用系统开发时，java 消息服务可以推迟选择面对消息中间件产品，也可以在不同的页面消息中间件切换
+ * 	本章以Java消息服务的开源实现产品，ActivieMQ 为例来进行Spring整合消息服务功能的实现分析
+ *	JMS的独立使用
+ *尽管大多数的java消息服务都使用Spring 相结合，但是工们还非常有有必要了解消息的独立使用方法，这对我们了解消息实现原理以及后续的
+ * 与Spring整合实现分析都非常的重要，当然消息服务的使用前，需要我们先开户消息服务器，如果是windows系统下可以直接双击ActiveMQ
+ * 安装目录下的bin目录下的activemq.bat 文件来启动消息服务器
+ * 消息服务的使用除了要开户消息服务器外，还需要构建消息的发送端与接收端，发送端主要用来将包含业务逻辑的消息发送至消息服务器
+ * ，而消息接收端则用于将服务器中的消息提取并进行相应的处理
+ * （1） 发送端实现
+ * 发送端主要用于发送消息到消息服务器，以下为发送消息测试，尝试发送三条消息到消息服务器，消息的内容是 大家好帮忙测试一下
+ * public class Sender{
+ *     public static void main(String [] args){
+ *         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
+ *         Connection connection = connectionFactory.createConnection();
+ *         Session session = connection.createConnection(
+ *     }
+ * }
+ *
+ *
  */
 public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations {
 
