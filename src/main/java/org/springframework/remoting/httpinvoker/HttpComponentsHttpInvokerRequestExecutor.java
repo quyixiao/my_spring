@@ -233,11 +233,13 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 		try {
 			// 执行方法并等待结果响应
 			HttpResponse response = executeHttpPost(config, getHttpClient(), postMethod);
-			// 验证
+			// 验证 |
+			// 对于HTTP调用的响应码处理，大于300则是非正常的调用的响应码
 			validateResponse(config, response);
-			// 提取返回的输入流
+			// 提取返回的输入流 | 提取响应信息，从服务器返回的输入流可能是经过压缩的，不同的方式采用不同的方法进行提前
 			InputStream responseBody = getResponseBody(config, response);
-			// 从输入流中提取结果
+			// 从输入流中提取结果 | 提取返回的结果
+			// 提取结果的流程主要是从输入流中提取响应的序列化信息
 			return readRemoteInvocationResult(responseBody, config.getCodebaseUrl());
 		}
 		finally {
@@ -322,6 +324,10 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 	 * @param baos the ByteArrayOutputStream that contains the serialized
 	 * RemoteInvocation object
 	 * @throws IOException if thrown by I/O methods
+	 * 设置RequestBody
+	 * 构建好的PostMethod实例后便可以将存储在RemoteInvocation实例的序列化对象的输出流设置进去，当然 ，这里需要注意的是传入的是
+	 * ContentType类型，一定要传入application/x-java-serialized-object以保证服务端解析时会按照序列化对象的解析方法进行解析
+	 *
 	 */
 	protected void setRequestBody(
 			HttpInvokerClientConfiguration config, HttpPost httpPost, ByteArrayOutputStream baos)
@@ -339,6 +345,8 @@ public class HttpComponentsHttpInvokerRequestExecutor extends AbstractHttpInvoke
 	 * @param httpPost the HttpPost to execute
 	 * @return the resulting HttpResponse
 	 * @throws IOException if thrown by I/O methods
+	 * 通过httpClient 所提供的方法来直接执行远程方法调用
+	 *
 	 */
 	protected HttpResponse executeHttpPost(
 			HttpInvokerClientConfiguration config, HttpClient httpClient, HttpPost httpPost)
