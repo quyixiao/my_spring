@@ -106,9 +106,97 @@ import org.springframework.util.ReflectionUtils;
  *     public static void main(String [] args){
  *         ConnectionFactory connectionFactory = new ActiveMQConnectionFactory();
  *         Connection connection = connectionFactory.createConnection();
- *         Session session = connection.createConnection(
+ *         Session session = connection.createConnection(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
+ *         Destination destination = session.createQueue("my-queue");
+ *         MessageProducer producer = session.createProducer(destination);
+ *         for(int i = 0;i < 3 ;i ++){
+ *				TextMessage message = session.createTextMessage("大家这是个测试");
+ *				Thread.sleep(1000);
+ *				// 通过消息生产发生消息
+ *				producer.send(message);
+ *         }
+ *         session.commit();
+ *         session.close();
+ *         connection.close();
  *     }
  * }
+ * 上面的函数实现很容易让我们联想数据库实现，在函数开始时需要一系列的冗余但又必不可少的的用于连接的代码，而其中真正用于发送消息的代码其实是很简单的
+ * (2) 接收端实现
+ *  接收端主要用于连接消息服务器并接收服务器上的消息
+ *  public class Receiver{
+ *      ConnectionFactory connectionFactory = new AcviveMQConnectionFactory();
+ *      Connection connection = connectionFactory.createConnection();
+ *      connection.start();
+ *      final Session session = connection.createSession(Boolean.TRUE,Session.AUTO_ACKNOWLEDGE);
+ *      Destination destination = session.createQueue("my-queue");
+ *      MessageConsumer consumer = session.createConsumer(destination);
+ *      int i =0;
+ *      while(i < 3 ){
+ *          i ++;
+ *          TextMessage message = (TextMessage)consumer.receive();
+ *          session.commit();
+ *          System.out.println("收到消息" + message.getText())
+ *      }
+ *      session.close();
+ *      connection.close();
+ *  }
+ *  程序测试的顺序是首先开启发送端，然后向服务器发送消息，接送再开启接收端，不出意外，就会接收到发送端发出的消息。
+ *  13.2 Spring 整合ActiveMQ
+ *  整个消息的发送与接收过程非常的简单，但是其中却参杂着大量的冗余代码，比如Connection是创建与关闭，Session的创建与关闭等，为了消除这一
+ *  冗余工作量，Spring 进行了进一步的封装，Spring 下的ActiveMQ 使用方式如下
+ *  (1)Spring配置文件
+ *  配置文件是Spring 的核心，Spring整合消息使用也是从配置文件中配置开始的，类似于数据库操作， Spring 将ActiveMQ 中的操作统一封装至
+ *  JmsTemplate中，以方便我们统一使用，所以在Spring的核心配置文件中，首先注册的JmsTemplate的bean ,当然，ActiveMQ ConectionFactory
+ *  用于连接消息服务器，是消息服务的基础，也要注册，ActiveMQQueue则用于指定消息的目的地
+ *  <beans>
+ *      <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+ *      	<property name="brockerURL">
+ *      	 	<value>tcp://localhost:61616</value>
+ *      	 </property>
+ *      </bean>
+ *      <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+ *      	<property name="connectionFactory">
+ *      	    <ref bean="connectionFactory"></ref>
+ *      	</property>
+ *      </bean>
+ *      <bean id="destination" class="org.apache.activemq.command.ActiveMQQueue">
+ *          <constructor-arg index="0">
+ *          	<value>HelloWorldQueue</value>
+ *          </constructor-arg>
+ *      </bean>
+ *  </beans>
+ *  (2)发送端
+ *  有了以上的配置，Spring 就可以根据配置信息简化我们的工作量，Spring中使用发送消息到消息服务器，省去了冗余的Connection以及Session等
+ *  创建与销毁的过程，简化了工作量
+ *  (3)接收端
+ *  同样，在Spring中接收消息也非常方便，Spring中连接服务器接收消息的示例如下：
+ *  public class HelloWorldReciver {
+ *      public static void main(String [] args) throws Exception {
+ *          ApplicationContext context = new ClassPathXmlApplicationContext(new String [] {"test/activeMQ/Spring/applicationContext.xml"});
+ *          JmsTemplate jmsTemplate = (JmsTemplate) context.getBean("jmsTemplate");
+ *          JmsTemplate jmsTemplate = (JmsTemplate) context.getBean("destination");
+ *          TextMessage msg = (TextMessage)jmsTemplate.receive(destination);
+ *          System.out.println("reviced destination");
+ *      }
+ *  }
+ *	到这里我们己经完成了Spring消息的发送与接收操作，但是如HelloWorldReciver中的所有的示例代码，使用了jmsTemplate.receive(destination);
+ * 方法只能接收一次消息，如果款接收到消息，则会一直等待，当然，用户可以通过设置timeout属性来控制等待时间，但是一旦接收到消息本次接收任务就会
+ * 结束，虽然用户可以通过while(true)的方式来实现循环监听消息服务器上的消息，还有一种更加好的解决办法，创建消息监听器，消息监听器的使用方式如下：
+ * （1）创建消息监听器
+ * 用于监听消息 ，一旦有新的消息Spring会将消息引导至消息监听器以方便用户进行相应的逻辑处理
+ * public class MyMessageListener implements MessageListener {
+ * @Override
+ * 	public void onMessage (Message arg0){
+ * 	    TextMessage msg = (TextMessage) arg0;
+ * 	    try{
+ *			System.out.println(msg.getText());
+ * 	    }catch(JMSException e ){
+ * 	        e.printStackTrace();
+ * 	    }
+ * 	}
+ *
+ * }
+ *
  *
  *
  */
