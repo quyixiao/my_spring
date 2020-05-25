@@ -636,6 +636,14 @@ public abstract class AbstractMessageListenerContainer extends AbstractJmsListen
 	 * @see #commitIfNecessary
 	 * @see #rollbackOnExceptionIfNecessary
 	 * @see #convertJmsAccessException
+	 * 激活监听器
+	 *
+	 * 通过层层调用，最终提取监听器并使用listener.onMessage(message)激活了监听器，也就是激活了用户自定义的监听器逻辑，这里还有一句
+	 * 重要的代码很容易被忽略掉，commitIfNessare(session,message) ，完成的功能是session.commit() ，完成消息服务的事务提交，
+	 * 涉及两个事务，我们常说的DefaultMessageListenerContainer增加了对事务的支持，是能用的事务，也就是说我们在消息接收过程中如果产生
+	 * 其他的操作，比如向数据库中插入数据，一旦出现异常就需要全部回滚插入的数据，但是，除了我们常说的事务之外，对于消息服务器本地己经
+	 * 正常接收消息，消息服务器接收到本地的事务提交后便可以将此消息删除，否则，当前消息会被其他的接收者重新接收。
+	 *
 	 */
 	protected void doExecuteListener(Session session, Message message) throws JMSException {
 		if (!isAcceptMessagesWhileStopping() && !isRunning()) {
@@ -654,6 +662,8 @@ public abstract class AbstractMessageListenerContainer extends AbstractJmsListen
 			rollbackOnExceptionIfNecessary(session, ex);
 			throw ex;
 		}
+
+
 		catch (RuntimeException ex) {
 			rollbackOnExceptionIfNecessary(session, ex);
 			throw ex;

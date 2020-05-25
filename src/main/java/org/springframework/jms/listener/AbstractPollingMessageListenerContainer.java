@@ -221,6 +221,8 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 	 * @return whether a message has been received
 	 * @throws JMSException if thrown by JMS methods
 	 * @see #doReceiveAndExecute
+	 * doReceiveAndExecute包含了整个消息接收处理过程，由于参杂着事务，所以并没有复用模板中的方法
+	 *
 	 */
 	protected boolean receiveAndExecute(Object invoker, Session session, MessageConsumer consumer)
 			throws JMSException {
@@ -263,6 +265,8 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 	 * @return whether a message has been received
 	 * @throws JMSException if thrown by JMS methods
 	 * @see #doExecuteListener(javax.jms.Session, javax.jms.Message)
+	 * 这个函数代码看似繁杂，但是真正的逻辑并不多，大多数是固定的套路，而我们最关心的就是监听器的激活处理了
+	 *
 	 */
 	protected boolean doReceiveAndExecute(
 			Object invoker, Session session, MessageConsumer consumer, TransactionStatus status)
@@ -297,6 +301,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 				consumerToUse = createListenerConsumer(sessionToUse);
 				consumerToClose = consumerToUse;
 			}
+			// 接收消息
 			Message message = receiveMessage(consumerToUse);
 			if (message != null) {
 				if (logger.isDebugEnabled()) {
@@ -304,6 +309,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 							consumerToUse + "] of " + (transactional ? "transactional " : "") + "session [" +
 							sessionToUse + "]");
 				}
+				// 模板方法，当消息接收且在未处理前给子类机会做相应的处理，当期空实现
 				messageReceived(invoker, sessionToUse);
 				boolean exposeResource = (!transactional && isExposeListenerSession() &&
 						!TransactionSynchronizationManager.hasResource(getConnectionFactory()));
@@ -341,6 +347,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 					logger.trace("Consumer [" + consumerToUse + "] of " + (transactional ? "transactional " : "") +
 							"session [" + sessionToUse + "] did not receive a message");
 				}
+				// 接收到空消息处理
 				noMessageReceived(invoker, sessionToUse);
 				// Nevertheless call commit, in order to reset the transaction timeout (if any).
 				// However, don't do this on Tibco since this may lead to a deadlock there.

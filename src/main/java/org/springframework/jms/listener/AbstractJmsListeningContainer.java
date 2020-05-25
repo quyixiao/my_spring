@@ -153,11 +153,26 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 
 	/**
 	 * Delegates to {@link #validateConfiguration()} and {@link #initialize()}.
+	 * 13.3.2 监听器容器
+	 * 消息监听器容器是一个用于查看JMS目标等待消息到达特殊的bean ，一旦消息到达它就可以获取消息，并通过调用onMessage()方法将消息传递给
+	 * 一个MessageListener实现，Spring中消息监听器容器的类型如下：
+	 * SimpleMessageListenerContainer： 最简单的消息监听器容器，只能处理固定数量的JMS会话，且不支持事务
+	 * DefaultMessageListenerContainer:这个消息监听器容器建立在SimpleMessageListenerContainer容器之上，添加了对事务的支持
+	 * serversession.ServerSessionMessage.ListenerContainer：这是功能最强大的消息监听器，与DefaultMessageListenerContainer 相同
+	 * 它支持事务，但是它还允许动态地管理JMS会话。
+	 * 下面以DefaultMessageListenerContainer为例进行分析，看看消息监听器容器的实现，在之前的消息监听器的使用示例中，我们了解到了在使用
+	 * 消息监听器容器时，一定要将自定义消息监听器置入到容器中，这样才可以在收到信息时，容器把消息转向监听器处理，查看DefaultMessageListenerContainer
+	 * 层次结构图，如图 13-2 所示
+	 * 同样，我们看此类实现InitializingBean接口，按照以往的风格，我们还是首先查看接口方法afterPropertiesSet()中的逻辑，其方法的实现在其
+	 * 父类AbstractJmsListeningContainer中
+	 *
 	 */
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
+		// 验证配置文件
 		validateConfiguration();
+		// 初始化
 		initialize();
 	}
 
@@ -188,9 +203,19 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	 * (if {@link #setAutoStartup(boolean) "autoStartup"} hasn't been turned off),
 	 * and calls {@link #doInitialize()}.
 	 * @throws org.springframework.jms.JmsException if startup failed
+	 * 监听器容器的初始化只包含了三句代码，其中前两句只用于属性的验证，比如connectionFactory或者destination等属性是否为空等
+	 * 而真正的用于初始化的操作委托在initialize()中执行
+	 * 这里用到了concurrentConsumers属性，网络中对此属性用法说明如下：
+	 * 消息监听器允许创建多个Session和MessageConsumer来接收消息，具体的个数由concurrentConsumers属性指定，需要注意的是，应该只是
+	 * 在Destination为Queue的时候才使用多个MessageConsumer（Queue中的一个消息只能被一个Consumer接收），虽然使用了多个MessageConsumer
+	 * 会提高消息处理的性能，但是消息处理的顺序却得不到保证，消息被接收的顺序仍然是消息发送时的有顺序，但是由于消息可能会被并发处理，因此，
+	 * 消息处理的顺序可能和消息发送的顺序不同，此外，不应该在Destination为Topic的时候使用多个MessageConsumer因为多个MessageConsumer
+	 * 会接收到同样的消息
+	 *
 	 */
 	public void initialize() throws JmsException {
 		try {
+			// lifecycleMonitor用于控制生命周期的同步处理
 			synchronized (this.lifecycleMonitor) {
 				this.active = true;
 				this.lifecycleMonitor.notifyAll();
@@ -516,6 +541,12 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	protected final boolean rescheduleTaskIfNecessary(Object task) {
 		if (this.running) {
 			try {
+				// 分析源码得知，根据concurrentConsumers数据建立了对应的数量的线程，即使读者不了解线程池的使用，至少根据以上的代码
+				// 可以推断出doRescheduleTask函数其实是在开启一个线程执行Runnable，我们反追踪这个传入的参数，可以看到这个参数其实是
+				// AsyncMessageListenerInvoker 类型的实例，因此我们可以推断，Spring根据concurrentConsumers数量建立了对应的数量的线程，
+				// 而每个线程都作为一个独立的接收者在循环接收消息
+				// 于是我们把所有的焦点转向AsyncMessageListenerInvoker这个类的实现，由于它是作为一个Runnable角色去执行的。所以
+				// 对以这个类的分析从run方法开始
 				doRescheduleTask(task);
 			}
 			catch (RuntimeException ex) {
@@ -527,6 +558,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 		else if (this.active) {
 			this.pausedTasks.add(task);
 			return true;
+
 		}
 		else {
 			return false;

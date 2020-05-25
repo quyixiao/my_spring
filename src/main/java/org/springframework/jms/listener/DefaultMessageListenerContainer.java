@@ -1029,17 +1029,35 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 
 		@Override
 		public void run() {
+			// 并发控制
 			synchronized (lifecycleMonitor) {
 				activeInvokerCount++;
 				lifecycleMonitor.notifyAll();
 			}
 			boolean messageReceived = false;
 			try {
+				// 根据每个任务设置的最大处理消息数量而作不同的处理
+				// 小于0默认是无限制的，一直接收消息
 				if (maxMessagesPerTask < 0) {
+					// 以上的函数主要是根据变量maxMessagesPerTask的值来分为不同的情况处理，当然，函数中还使用了大量的代码处理异常
+					// 机制的数据维护，但是我们相信大家跟我一样，更加关注程序的正常流程是如何处理的
+					// 其实核心就是处理调用invokeListener来接收消息并激活监听器，但是之所以两种情况分开处理，正在考虑的是在无限
+					// 循环接收消息的情况下，用户可以通过设置标志位running来控制消息的关心的暂停与恢复，并维护当前消息监听器的数量
 					messageReceived = executeOngoingLoop();
 				}
 				else {
 					int messageCount = 0;
+					// 消息数量控制，一旦超出数量则停止循环
+					// 如果按照正常的流程其实是不会进入while循环中的，而是直接进入函数invokeListener()来接收消息并激活监听器，
+					// 但是我们不可能让循环一直持续下去，我们要考虑到暂停线程或者恢复线程的情况，这时，isRunning()函数就派上用场了
+					// isRunning()用来检测标志位this.running() 状态进而判断是否需要进入while循环，由于要维护当前线程激活数量，
+					// 所以引入了wasWaitin变量，用来判断线程是否处理等待状态，如果线程首次进入等待状态，而需要减少线程激活数量计算器
+					// 当然，还有一个地方需要提一下，就是线程等待是不是一味的采用while循环来控制的，因为如果单纯的采用while循环会浪费
+					// CPU的始终周期，给资源造成巨大的浪费，这里Spring采用的是使用全局变量lifeCycleMonitor的wait()方法来暂停线程
+					// 所以如果终止线程需要再次恢复的话，除了要更加this.Running标志位外，还需要暂停线程，所以，如果终止线程需要再次
+					// 恢复的话，除了更加this.running标志位外，还需要调用lifecycleMonitor.notify或者lifecycle.Monitor.notifyAll
+					// 来使得线程恢复
+					//
 					while (isRunning() && messageCount < maxMessagesPerTask) {
 						messageReceived = (invokeListener() || messageReceived);
 						messageCount++;
@@ -1047,6 +1065,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 				}
 			}
 			catch (Throwable ex) {
+				// 清理操作，包括关闭session等
 				clearResources();
 				if (!this.lastMessageSucceeded) {
 					// We failed more than once in a row or on startup - sleep before
@@ -1109,6 +1128,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		private boolean executeOngoingLoop() throws JMSException {
 			boolean messageReceived = false;
 			boolean active = true;
+			// 如果当前任务己经处理激活状态但是却给了暂时终止的命令
 			while (active) {
 				synchronized (lifecycleMonitor) {
 					boolean interrupted = false;
@@ -1119,10 +1139,13 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 									"a restart of the listener container, but container is still stopped");
 						}
 						if (!wasWaiting) {
+							// 如果并非处于等待状态则说明是第一次执行，需要将激活的任务数量减少
 							decreaseActiveInvokerCount();
 						}
+						// 开始进入等待状态，等待任务的恢复命令
 						wasWaiting = true;
 						try {
+							// 通过wait等待，也就是等notify或者notifyAll
 							lifecycleMonitor.wait();
 						}
 						catch (InterruptedException ex) {
@@ -1138,6 +1161,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 						active = false;
 					}
 				}
+				// 正常的处理流程
 				if (active) {
 					messageReceived = (invokeListener() || messageReceived);
 				}
@@ -1146,8 +1170,11 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		}
 
 		private boolean invokeListener() throws JMSException {
+			// 接下来就是消息处理了
+			// 初始化资源包括首次创建的时候创建session 与consumer
 			initResourcesIfNecessary();
 			boolean messageReceived = receiveAndExecute(this, this.session, this.consumer);
+			// 改变标志位，信息成功处理
 			this.lastMessageSucceeded = true;
 			return messageReceived;
 		}

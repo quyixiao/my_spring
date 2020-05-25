@@ -147,6 +147,19 @@ public abstract class JmsAccessor implements InitializingBean {
 		return this.sessionAcknowledgeMode;
 	}
 
+
+	/***
+	 * 首先还是一贯的套路，提取我们感兴趣的接口，InitializingBean，接口方法实现是在JMSAccessor类中，如下：
+	 * 发现函数中只是一个验证的功能，并没有逻辑实现，丢掉这个线索，我们转向实例代码的分析，首先以发送为例
+	 * ，在Spring中发送消息可以通过JmsTemplate中提供的方法来实现
+	 * 使用方式如下：
+	 * jmstemplate.send(destination,new MessageCreator(){
+	 *    public Message createMessage(Session session) throw JMSException{
+	 *        return session.createTextMessage("大家好，这是一个测试");
+	 *    }
+	 * });
+	 *
+	 */
 	@Override
 	public void afterPropertiesSet() {
 		if (getConnectionFactory() == null) {

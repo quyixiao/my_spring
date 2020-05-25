@@ -196,7 +196,39 @@ import org.springframework.util.ReflectionUtils;
  * 	}
  *
  * }
+ *（2）修改配置文件
+ * 为了使用消息监听器，需要在配置文件中注册消息容器，并将消息监听器注入到容器中
+ *  <beans>
+ *      <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+ *     		<property name="brokerURL">
+ *     		 	<value>tcp://localhsot:61616</value>
+ *     		 </property>
+ *      </bean>
+ *      <bean id="jmsTemplate" class="org.springframewok.jms.core.JmsTemplate">
+ *      	<property name="connectionFactory">
+ *      	 	<ref>connectionFactory</ref>
+ *      	 </property>
+ *      </bean>
+ *      <bean id="destination" class="org.apache.activemq.command.ActiveMQQueue">
+ *       	<constructor-arg index="0">
+ *       		<value>HelloWorldQueue</value>
+ *       	</constructor-arg>
+ *       </bean>
+ *       <bean id="myTextListener" class="test.activeMQ.spring.MyMessageListener">
+ *       </bean>
+ *       <bean id="javaConsumer" class="org.springframework.jms.listener.DefaultMessageListnerContainer">
+ *       	<property name="connectionFactory" ref="connectionFactory"></property>
+ *       	<property name="destination" ref="destination"></property>
+ *       	<property name="messageListener" ref="myTextListener"></property>
+ *       </bean>
+ *  </beans>
+ * 通过以上的修改便可以进行消息的监听的功能了，一旦有消息传入至消息服务器，则会被消息映射器监听到，并由Spring将消息内容引导到消息监听器
+ * 的处理函数中等等待用户的进一步逻辑处理
  *
+ *
+ * 13.3.1 JmsTemplate
+ *  在代码与Spring整合实例中，我们看到Spring采用了与JDBC等一贯的套路，为我们提供了JmsTemplate来封装常用的操作，查看JmsTemplate的类型
+ *  层级结构图，如下图所示
  *
  *
  */
@@ -585,6 +617,17 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @throws JmsException if there is any problem
 	 * @see #execute(SessionCallback)
 	 * @see #receive
+	 * 1.通用的代码抽取
+	 * 根据之前的分析jdbcTemplate的经验，我们推断，在execute中一定封装了Connection以及session的创建操作 |
+	 * 在展示单独使用activeMQ时，我们知道为了发送一条消息需要做很多的工作，需要很多的辅助代码，而这些代码又是千篇一律的，没有任何
+	 * 的差异，所以execute方法的目地就是帮且我们抽离这些冗余的代码，使我们更加的惊于业务逻辑的实现，从函数中来看，这些冗余的代码包括
+	 * 创建Connection，创建session,当然也包括关闭Session和关闭Connection,而准备工作结束后，调用回调函数将程序引入用户自定义的实现
+	 * 的个性化的处理，至于如何创建Session与Connection，有兴趣的读者可以进一步的研究Mybatis源码
+	 * 2.发送消息的实现
+	 * 有了基类辅助实现，使Spring更加专注于个性化的处理，也就是说Spring使用execute方法中封装了冗余代码，而将个性化实现放加了回调函数中
+	 * doInJms函数中，在发送消息的功能中回调函数通过局部类实现
+	 *
+	 *
 	 */
 	public <T> T execute(SessionCallback<T> action, boolean startConnection) throws JmsException {
 		Assert.notNull(action, "Callback object must not be null");
@@ -594,8 +637,11 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 			Session sessionToUse = ConnectionFactoryUtils.doGetTransactionalSession(
 					getConnectionFactory(), this.transactionalResourceFactory, startConnection);
 			if (sessionToUse == null) {
+				// 创建connection
 				conToClose = createConnection();
+				// 根据connection创建session
 				sessionToClose = createSession(conToClose);
+				// 是否开户向服务器推送连接信息，只接收信息时需要，发送时不需要
 				if (startConnection) {
 					conToClose.start();
 				}
@@ -604,13 +650,16 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 			if (logger.isDebugEnabled()) {
 				logger.debug("Executing callback on JMS Session: " + sessionToUse);
 			}
+			// 调用回调函数
 			return action.doInJms(sessionToUse);
 		}
 		catch (JMSException ex) {
 			throw convertJmsAccessException(ex);
 		}
 		finally {
+			// 关闭session
 			JmsUtils.closeSession(sessionToClose);
+			// 释放连接
 			ConnectionFactoryUtils.releaseConnection(conToClose, getConnectionFactory(), startConnection);
 		}
 	}
@@ -677,6 +726,12 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 		}
 	}
 
+	/***
+	 * 现在的风格不得不让我们回想起JdbcTemplate的类的实现风格，极为相似，都是提取一个公共的方法作为最底层的实现，最通用的功能实现，
+	 * 然后又通过回调函数的不同来区分个性化的功能
+	 * 我们首先来查看通过代码抽取实现
+	 *
+	 */
 	@Override
 	public void send(final Destination destination, final MessageCreator messageCreator) throws JmsException {
 		execute(new SessionCallback<Object>() {
@@ -706,6 +761,10 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 	 * @param destination the JMS Destination to send to
 	 * @param messageCreator callback to create a JMS Message
 	 * @throws JMSException if thrown by JMS API methods
+	 * 此时的发送逻辑己经完全被转向了doSend方法，被这样使得整个功能实现变得更加清晰
+	 * 在演示独立使用消息的功能的时候，我们大体了解消息发送的基本套路，虽然这些步骤己经被Spring拆得支离破碎，但是我们还是能捕捉到一些影子
+	 * ，在发送消息还是遵循着消息发送的规则，比如根据Destination创建MessageProducer，创建Message,并使用MessageProducer实例来发送消息
+	 *
 	 */
 	protected void doSend(Session session, Destination destination, MessageCreator messageCreator)
 			throws JMSException {
@@ -841,6 +900,14 @@ public class JmsTemplate extends JmsDestinationAccessor implements JmsOperations
 		}
 	}
 
+
+	/***
+	 * 我们通常使用jmsTemplate.receive(destination)来接收简单的消息，那么这个功能Spring是如何封装的呢？
+	 *
+	 * 实现的套路与发送的差不多，同样还是使用了execute函数来封装冗余的公共操作，而最终目标还是通过consumer.receive()来接收消息的
+	 * 其中的过程就是对于MessageConsumer的创建以及一些辅助操作
+	 *
+	 */
 	@Override
 	public Message receive(Destination destination) throws JmsException {
 		return receiveSelected(destination, null);
