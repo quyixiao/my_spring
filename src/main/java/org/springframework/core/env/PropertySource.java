@@ -23,28 +23,28 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
 /**
- * Abstract base class representing a source of name/value property pairs. The underlying
- * {@linkplain #getSource() source object} may be of any type {@code T} that encapsulates
+ * Abstract base class representing(代表) a source of name/value property pairs. The underlying（潜在的`）
+ * {@linkplain #getSource() source object} may be of any type {@code T} that encapsulates（封装）
  * properties. Examples include {@link java.util.Properties} objects, {@link java.util.Map}
  * objects, {@code ServletContext} and {@code ServletConfig} objects (for access to init
- * parameters). Explore the {@code PropertySource} type hierarchy to see provided
+ * parameters  用于访问init参数 ). Explore（探索） the {@code PropertySource} type hierarchy（等级制度） to see provided
  * implementations.
  *
- * <p>{@code PropertySource} objects are not typically used in isolation, but rather
- * through a {@link PropertySources} object, which aggregates property sources and in
- * conjunction with a {@link PropertyResolver} implementation that can perform
- * precedence-based searches across the set of {@code PropertySources}.
+ * <p>{@code PropertySource} objects are not typically used in isolation（隔离）, but rather
+ * through a {@link PropertySources} object, which aggregates（聚集） property sources and in
+ * conjunction（结合） with a {@link PropertyResolver} implementation（实现） that can perform（执行）
+ * precedence-based（基于优先级） searches across the set of {@code PropertySources}.
  *
- * <p>{@code PropertySource} identity is determined not based on the content of
- * encapsulated properties, but rather based on the {@link #getName() name} of the
- * {@code PropertySource} alone. This is useful for manipulating {@code PropertySource}
+ * <p>{@code PropertySource} identity（身份） is determined（决定） not based on the content of
+ * encapsulated（封装的） properties, but rather based on the {@link #getName() name} of the
+ * {@code PropertySource} alone（单独）. This is useful for manipulating（控制） {@code PropertySource}
  * objects when in collection contexts. See operations in {@link MutablePropertySources}
  * as well as the {@link #named(String)} and {@link #toString()} methods for details.
  *
  * <p>Note that when working with @{@link
  * org.springframework.context.annotation.Configuration Configuration} classes that
  * the @{@link org.springframework.context.annotation.PropertySource PropertySource}
- * annotation provides a convenient and declarative way of adding property sources to the
+ * annotation provides a convenient(方便的) and declarative(声明的) way of adding property sources to the
  * enclosing {@code Environment}.
  *
  * @author Chris Beams

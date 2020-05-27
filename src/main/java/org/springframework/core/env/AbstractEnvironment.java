@@ -35,12 +35,12 @@ import static java.lang.String.*;
 import static org.springframework.util.StringUtils.*;
 
 /**
- * Abstract base class for {@link Environment} implementations. Supports the notion of
- * reserved default profile names and enables specifying active and default profiles
+ * Abstract base class for {@link Environment} implementations. Supports the notion(概念) of
+ * reserved(保留) default profile names and enables specifying active and default profiles
  * through the {@link #ACTIVE_PROFILES_PROPERTY_NAME} and
  * {@link #DEFAULT_PROFILES_PROPERTY_NAME} properties.
  *
- * <p>Concrete subclasses differ primarily on which {@link PropertySource} objects they
+ * <p>Concrete(具体) subclasses differ primarily on which {@link PropertySource} objects they
  * add by default. {@code AbstractEnvironment} adds none. Subclasses should contribute
  * property sources through the protected {@link #customizePropertySources(MutablePropertySources)}
  * hook, while clients should customize using {@link ConfigurableEnvironment#getPropertySources()}
@@ -57,11 +57,11 @@ import static org.springframework.util.StringUtils.*;
 public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	/**
-	 * System property that instructs Spring to ignore system environment variables,
-	 * i.e. to never attempt to retrieve such a variable via {@link System#getenv()}.
+	 * System property that instructs（告知） Spring to ignore system environment variables,
+	 * i.e. to never attempt to retrieve(检索) such a variable via(通过) {@link System#getenv()}.
 	 * <p>The default is "false", falling back to system environment variable checks if a
-	 * Spring environment property (e.g. a placeholder in a configuration String) isn't
-	 * resolvable otherwise. Consider switching this flag to "true" if you experience
+	 * Spring environment property (e.g. a placeholder(占位符) in a configuration String) isn't
+	 * resolvable（可以解决的） otherwise. Consider(考虑) switching this flag to "true" if you experience（经验）
 	 * log warnings from {@code getenv} calls coming from Spring, e.g. on WebSphere
 	 * with strict SecurityManager settings and AccessControlExceptions warnings.
 	 * @see #suppressGetenvAccess()
@@ -69,7 +69,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	public static final String IGNORE_GETENV_PROPERTY_NAME = "spring.getenv.ignore";
 
 	/**
-	 * Name of property to set to specify active profiles: {@value}. Value may be comma
+	 * Name of property to set to specify active profiles: {@value}. Value may be comma(逗号)
 	 * delimited.
 	 * <p>Note that certain shell environments such as Bash disallow the use of the period
 	 * character in variable names. Assuming that Spring's {@link SystemEnvironmentPropertySource}
@@ -83,7 +83,7 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 * Name of property to set to specify profiles active by default: {@value}. Value may
 	 * be comma delimited.
 	 * <p>Note that certain shell environments such as Bash disallow the use of the period
-	 * character in variable names. Assuming that Spring's {@link SystemEnvironmentPropertySource}
+	 * character in variable names. Assuming(假设) that Spring's {@link SystemEnvironmentPropertySource}
 	 * is in use, this property may be specified as an environment variable as
 	 * {@code SPRING_PROFILES_DEFAULT}.
 	 * @see ConfigurableEnvironment#setDefaultProfiles
@@ -92,8 +92,8 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 	/**
 	 * Name of reserved default profile name: {@value}. If no default profile names are
-	 * explicitly and no active profile names are explicitly set, this profile will
-	 * automatically be activated by default.
+	 * explicitly(明确地) and no active profile names are explicitly set, this profile will
+	 * automatically(自动) be activated by default.
 	 * @see #getReservedDefaultProfiles
 	 * @see ConfigurableEnvironment#setDefaultProfiles
 	 * @see ConfigurableEnvironment#setActiveProfiles
@@ -118,8 +118,8 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	/**
 	 * Create a new {@code Environment} instance, calling back to
 	 * {@link #customizePropertySources(MutablePropertySources)} during construction to
-	 * allow subclasses to contribute or manipulate {@link PropertySource} instances as
-	 * appropriate.
+	 * allow subclasses to contribute or manipulate(操纵) {@link PropertySource} instances(实例) as
+	 * appropriate(适当的).
 	 * @see #customizePropertySources(MutablePropertySources)
 	 */
 	public AbstractEnvironment() {
@@ -132,11 +132,11 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 
 
 	/**
-	 * Customize the set of {@link PropertySource} objects to be searched by this
-	 * {@code Environment} during calls to {@link #getProperty(String)} and related
+	 * Customize(定制) the set of {@link PropertySource} objects to be searched by this
+	 * {@code Environment} during calls to {@link #getProperty(String)} and related(相关的)
 	 * methods.
 	 *
-	 * <p>Subclasses that override this method are encouraged to add property
+	 * <p>Subclasses that override this method are encouraged(鼓励) to add property
 	 * sources using {@link MutablePropertySources#addLast(PropertySource)} such that
 	 * further subclasses may call {@code super.customizePropertySources()} with
 	 * predictable results. For example:
@@ -176,14 +176,14 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 * </pre>
 	 * The search order is now C, D, A, B as desired.
 	 *
-	 * <p>Beyond these recommendations, subclasses may use any of the {@code add&#42;},
-	 * {@code remove}, or {@code replace} methods exposed by {@link MutablePropertySources}
-	 * in order to create the exact arrangement of property sources desired.
+	 * <p>Beyond these recommendations(建义), subclasses may use any of the {@code add&#42;},
+	 * {@code remove}, or {@code replace} methods exposed(暴露的) by {@link MutablePropertySources}
+	 * in order to create the exact arrangement(约定) of property sources desired(渴望的).
 	 *
 	 * <p>The base implementation registers no property sources.
 	 *
 	 * <p>Note that clients of any {@link ConfigurableEnvironment} may further customize
-	 * property sources via the {@link #getPropertySources()} accessor, typically within
+	 * property sources via(通过) the {@link #getPropertySources()} accessor, typically within
 	 * an {@link org.springframework.context.ApplicationContextInitializer
 	 * ApplicationContextInitializer}. For example:
 	 * <pre class="code">
@@ -191,14 +191,14 @@ public abstract class AbstractEnvironment implements ConfigurableEnvironment {
 	 * env.getPropertySources().addLast(new PropertySourceX(...));
 	 * </pre>
 	 *
-	 * <h2>A warning about instance variable access</h2>
+	 * <h2>A warning about instance variable access(接近)</h2>
 	 * Instance variables declared in subclasses and having default initial values should
 	 * <em>not</em> be accessed from within this method. Due to Java object creation
 	 * lifecycle constraints, any initial value will not yet be assigned when this
 	 * callback is invoked by the {@link #AbstractEnvironment()} constructor, which may
 	 * lead to a {@code NullPointerException} or other problems. If you need to access
 	 * default values of instance variables, leave this method as a no-op and perform
-	 * property source manipulation and instance variable access directly within the
+	 * property source manipulation(操纵) and instance variable access directly within the
 	 * subclass constructor. Note that <em>assigning</em> values to instance variables is
 	 * not problematic; it is only attempting to read default values that must be avoided.
 	 *
