@@ -1026,11 +1026,11 @@ public class BeanDefinitionParserDelegate {
      *                         通过上面的方法解析，生成对应的数据对象，比如ManagedList,ManagedArray,ManagedSet,等,这些managed类是
      *                         Spring对象的BeanDefinition的数据封装，对集合数据类型的具体解析由各种解析方法实现，解析方法的命名也非常的
      *                         一目了然
-     * 经过对SpringBean配置信息转换文档对象中的元素层层解析，Spring Ioc现在已经将XML 形式定义的Bean配置信息转换为Spring IOc所识别的数据
-     * 结构，-BeanDefinition,它是Bean配置信息中的POJO对象在Spring IOC容器中的映射，我们通过AbstractBeanDefinition作为入口，
+     * 经过对Spring Bean配置信息转换文档对象中的元素层层解析，Spring Ioc现在已经将XML 形式定义的Bean配置信息转换为Spring Ioc所识别的数据
+     * 结构，BeanDefinition,它是Bean配置信息中的POJO对象在Spring IOC容器中的映射，我们通过AbstractBeanDefinition作为入口，
      *                         看如何在Spring Ioc容器进行索引，查询，和其他的操作
      *                         通过Spring Ioc容器对Bean 的配置信息的解析，    Spring IOc 容器大致完成了Bean 对象的唯一的准备工作
-     *                         ，即初始化过程，但是最的重要的依赖注入还没有发生，在Spring IOc容器中BeanDefinition在存储的还是一些静态的
+     *                         ，即初始化过程，但是最的重要的依赖注入还没有发生，在Spring Ioc容器中BeanDefinition在存储的还是一些静态的
      *                         信息，接下来，需要向容器注册Bean定义信息，才能真正的完成IOC容器的初始化工作
      *
      *
@@ -1206,6 +1206,7 @@ public class BeanDefinitionParserDelegate {
         target.setSource(extractSource(collectionEle));
         //设置集合目标的数据类型
         target.setElementTypeName(defaultElementType);
+
         target.setMergeEnabled(parseMergeAttribute(collectionEle));
         //具体的<list>元素的解析
         parseCollectionElements(nl, target, bd, defaultElementType);
@@ -1426,9 +1427,8 @@ public class BeanDefinitionParserDelegate {
         return parseCustomElement(ele, null);
     }
 
-    // containingBd 为父类的 bean ，对顶层元素的解析应该设置为 null
+    //  containingBd 为父类的 BeanDefinition ，对顶层元素的解析应该设置为 null
     //  其实思路非常的简单，无非是根据对应的Bean获取对应的命名空间，根据命名空间解析对应的处理器，然后根据用户自定义的处理器进行解析，
-    //
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
         // 获取对应的命名空间
         String namespaceUri = getNamespaceURI(ele);
@@ -1445,12 +1445,11 @@ public class BeanDefinitionParserDelegate {
             error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
             return null;
         }
-        // 调用自定义的 NamesapceHandler  进行解析
+        // 调用自定义的 NamespaceHandler  进行解析
         // 得到了解析器以及要分析的元素后，Spring 就可以将解析工作委托给自定义的解析器去解析，在 Spring 中的代码为
         //  return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
         // 以前提到的示例进行分析，此时的 Handler 已经被实例化成为我们自定义的 MyNameSpaceHandler 了，而 MyNamespaceHandler
         // 已经完成了初始化的工作，但是我们实现自定义的命名空间处理器并没有实现 parse 方法，所以推断，这个方法是父类中实现的
-        //
         return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
     }
 

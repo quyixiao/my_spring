@@ -72,10 +72,16 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 			builder.getRawBeanDefinition().setParentName(parentName);
 		}
 		// 获取自定义标签中的 class,此时会调用自定义解析器如： UserBeanDefinitionParser中的 getBeanClass 方法
+		// 		 	//Elment 对应的类
+		//						 	protected Class getBeanClass(Elment element){
+		//							return User.class;
+		//						 	}
+		// 获取User.class 对象
 		Class<?> beanClass = getBeanClass(element);
 		if (beanClass != null) {
 			builder.getRawBeanDefinition().setBeanClass(beanClass);
 		}
+
 		else {
 			// 如果子类没有重写 getBeanClass 方法，则尝试检查子类 是否重写了 getBeanClassName 方法
 			String beanClassName = getBeanClassName(element);

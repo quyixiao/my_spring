@@ -41,7 +41,7 @@ public final class ParserContext {
 	private final XmlReaderContext readerContext;
 
 	private final BeanDefinitionParserDelegate delegate;
-
+	// containingBd 为父类的 BeanDefinition ，对顶层元素的解析应该设置为 null
 	private BeanDefinition containingBeanDefinition;
 
 	private final Stack<ComponentDefinition> containingComponents = new Stack<ComponentDefinition>();

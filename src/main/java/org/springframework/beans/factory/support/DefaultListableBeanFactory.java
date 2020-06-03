@@ -164,7 +164,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/** List of bean definition names, in registration order */
 	private final List<String> beanDefinitionNames = new ArrayList<String>(64);
 
-	/** List of names of manually registered singletons, in registration order */
+	/** List of names of manually(手动) registered singletons, in registration order */
 	private final Set<String> manualSingletonNames = new LinkedHashSet<String>(16);
 
 	/** Whether bean definition metadata may be cached for all beans */
@@ -837,7 +837,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	//---------------------------------------------------------------------
 	// Implementation of BeanDefinitionRegistry interface
 	//---------------------------------------------------------------------
-	// 向Spring IoC容器中注册解析的BeanDefintion
+	// 向Spring IoC容器中注册解析的BeanDefinition
 	// 至此，Bean配置信息中配置了Bean解析后，已经注册到了Spring Ioc容器中，被容器管理起来，真正的完成了Spring IoC容器的初始化工作
 	// 现在Spring IoC 容器中已经建立起了所有的Bean的配置信息，Bean定义信息已经可以使用了，并且可以被检索，Spring IoC容器的作用就是对这
 	// 些注册的已经可以使用了，并且可以被检索，Spring IoC容器的作用就是对这些注册的bean定义的信息进行处理和维护，注册的Bean定义的信息
@@ -845,7 +845,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// Spring IoC容器对于类级别的注解和类内部的注解处理策略如下
 	// 类级别的注解，如@Component,@Repository,@Controller,@Service,以及JavaEE 6的@ManageBean @Named，都是添加在类上的类级别的注解
 	//Spring IoC容器根据注解的过滤规则，扫描读取注解的Bean的定义类，并将其注册到Spring IoC容器中
-	// 2.类内部的注解，如@Autoweire,@Value,@Resource,以及EJB和WebSerivce相关的注解等，都是添加在类内部的字段或者方式上的类部注解
+	// 2.类内部的注解，如@Autoweire,@Value,@Resource,以及EJB和WebService相关的注解等，都是添加在类内部的字段或者方式上的类部注解
 	// Spring IoC容器通过Bean后置注解处理解析Bean内部的注解
 	// 下面将分析Spring 处理注解相关的源码
 
@@ -925,9 +925,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		this.beanDefinitionMap.put(beanName, beanDefinition);
 
 		LogUtils.info("registerBeanDefinition beanDefinition ：" + beanDefinition.getClass().getName() + " \n " + beanDefinition);
-		// 检查是否已经注册过同名的BeanDefintion
+		// 检查是否已经注册过同名的BeanDefinition
 		if (oldBeanDefinition != null || containsSingleton(beanName)) {
-			// 重置所有已经注册过的BeanDefintion中的缓存
+			// 重置所有已经注册过的BeanDefinition中的缓存
 			resetBeanDefinition(beanName);
 		}
 	}

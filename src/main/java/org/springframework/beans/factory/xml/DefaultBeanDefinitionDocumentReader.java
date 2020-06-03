@@ -89,7 +89,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
 		//获取XML描述符
 		this.readerContext = readerContext;
-		logger.debug("Loading bean definitions");
+		LogUtils.info("Loading bean definitions");
 		// 获取Document的根元素
 		Element root = doc.getDocumentElement();
 		NamedNodeMap attributes = root.getAttributes();
@@ -219,6 +219,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						 *	在上面的 XSD 文件中描述了一个新的 targetNamespace ，并在这个空间中定义了一个 name
 						 * 为 user的 element，user 有三个属性 id,userName,和 email ,其中 email 的类型为 string，这3个类主要验证
 						 * Spring 配置文件中的自定义格式，xsd 文件是 XML DTD 的替代者，使用 XML Schema 语言进行编写，这里对 XSD
+						 *
+						 *
 						 * Schema 不做太多的解析，有兴趣的读者可以参考相关资料
 						 * 创建一个文件 ：实现 BeanDefinitionParser 接口，用来解析 XSD 文件中的定义和组件定义
 						 *
@@ -472,9 +474,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Process the given bean element, parsing the bean definition
 	 * and registering it with the registry.
 	 * 解析Bean资源文档对象的普通元素
-	 * 通过上述的Spring 容器对载入的Bean定义文档解析可以看出,Spring配置文件中可以使用<inport>元素来导入IoC容器所需要的其他资源，
-	 * SpringIoc容器在解析时首先将指定的资源加载到容器中，使用<alias>别名时，Spring Ioc容器首先将别名元素所定义的别名注册到容器中，
-	 * 对于既不是<import>元素又不是<alias>的元素，即Spring配置文件中普通的<bean>元素，由BeanDefinitionParserDeletegate类的
+	 * 通过上述的Spring 容器对载入的Bean定义文档解析可以看出,Spring配置文件中可以使用<import>元素来导入IoC容器所需要的其他资源，
+	 * Spring Ioc容器在解析时首先将指定的资源加载到容器中，使用<alias>别名时，Spring Ioc容器首先将别名元素所定义的别名注册到容器中，
+	 * 对于既不是<import>元素又不是<alias>的元素，即Spring配置文件中普通的<bean>元素，由BeanDefinitionParserDelegate类的
 	 * ParseBeanDefinitionElement()方法实现解析，这个解析过程非常的复杂
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
