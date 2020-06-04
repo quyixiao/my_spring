@@ -87,7 +87,52 @@ public class SimpleAliasRegistry implements AliasRegistry {
 							name + "': It is already registered for name '" + registeredName + "'.");
 				}
 			}
-			// 当 A-> B 存在时，若再次出现 A->C->B 时候，则抛出异常
+			// 当 B -> C ,C -> A  存在时，若再次出现 A -> B 时候，则抛出异常
+			/**
+			 *
+			 public class Test1 {
+				 public final static Map<String, String> aliasMap = new ConcurrentHashMap<String, String>(16);
+
+				 public static void main(String[] args) {
+					 aliasMap.put("D","C");
+					 aliasMap.put("C","B");
+					 aliasMap.put("B","A");
+					 boolean hasAlias = hasAlias("A","D");
+					 if(hasAlias){
+						throw new IllegalStateException(" already");
+					 }
+				 }
+
+				 public static boolean hasAlias(String name, String alias) {
+					System.out.println("00000000000       name = "  + name + ",alias="+alias);
+					for (Map.Entry<String, String> entry : aliasMap.entrySet()) {
+						String registeredName = entry.getValue();
+						System.out.println("11111111111       registeredName = "  + registeredName + ",name="+name);
+						if (registeredName.equals(name)) {
+							String registeredAlias = entry.getKey();
+							System.out.println("222222222222        registeredAlias = " + registeredAlias + ",alias="+alias );
+							return (registeredAlias.equals(alias) || hasAlias(registeredAlias, alias));
+						}
+					}
+					return false;
+				 }
+			 }
+			 result :
+				 00000000000       name = A,alias=D
+				 11111111111       registeredName = A,name=A
+				 222222222222        registeredAlias = B,alias=D
+				 00000000000       name = B,alias=D
+				 11111111111       registeredName = A,name=B
+				 11111111111       registeredName = B,name=B
+				 222222222222        registeredAlias = C,alias=D
+				 00000000000       name = C,alias=D
+				 11111111111       registeredName = A,name=C
+				 11111111111       registeredName = B,name=C
+				 11111111111       registeredName = C,name=C
+				 222222222222        registeredAlias = D,alias=D
+				 Exception in thread "main" java.lang.IllegalStateException:  already
+				 at com.test.alias.Test1.main(Test1.java:21)
+			 */
 			checkForAliasCircle(name, alias);
 			this.aliasMap.put(alias, name);
 		}

@@ -170,7 +170,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	/** Security context used when running with a SecurityManager */
 	private SecurityContextProvider securityContextProvider;
 
-	/** Map from bean name to merged RootBeanDefinition */
+	/** Map from bean name to merged RootBeanDefinition
+	 * 由于BeanDefinition有各种实现类，且实现类能指定'父子'依赖信息的关系(不是继承关系，
+	 * 仅仅是指定数据的父子关系)。如果元数据依赖不合并的话，则这个beanDefinition的元数据信息将不完整。
+	 *
+	 * applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);，
+	 * 应用合并BeanDefinition的后置处理器此方法主要缓存一些带了注解的属性字段例如@Autowired、@Common等元数据注入信息*/
 	private final Map<String, RootBeanDefinition> mergedBeanDefinitions =
 			new ConcurrentHashMap<String, RootBeanDefinition>(64);
 
