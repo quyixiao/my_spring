@@ -592,9 +592,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
             log.info("end obtainFreshBeanFactory");
 
+
             log.info("start prepareBeanFactory");
             // Prepare the bean factory for use in this context.
-            // 3.为BeanFactory配置容器我，例如类加载器，事件处理器 | 为 BeanFactory 进行各种功能进行填充
+            // 3.为BeanFactory配置容器，例如类加载器，事件处理器 | 为 BeanFactory 进行各种功能进行填充
             prepareBeanFactory(beanFactory);
             log.info("end prepareBeanFactory");
 
@@ -853,12 +854,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         //      System.out.println(userManager);
         // }
         // 如果直接使用，则程序会报错，类型转换不成功，因为在 UserManager 中 dateValue 属性是 Date类型的，但是在 Xml 配置中
-        //  却是 Spring  类型的，所以当然会报异常
+        //  却是 String  类型的，所以当然会报异常
         // Spring  针对经问题提供了两咱解决办法
         // 1. 使用自定义属性编辑器，通过继承 PropertyEditorSupport，重写 setAsText方法，具体的步骤如下：
         //  (1)编写自定义的属性编辑器
         // public class DatePropertyEditor extends PropertyEditorSupport{
-        // private String formate = "yyyy-MM-dd";
+        // private String formate = "";
         // public void setFormat(String format){
         //      this.formate = formate ;
         // }
@@ -876,7 +877,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // (2).将自定义属性编辑器注册到 Spring 中
         // <!--自定义属性编辑器-->
         // <bean class="org.Springframework.beans.factory.config.CustomEditorConfigurer">
-        //      <property name="customeEditors">
+        //      <property name="customEditors">
         //          <map>
         //              <entry key = "java.util.Date">
         //                  <bean class="com.test.DatePropertyEditor">
@@ -898,7 +899,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         //      registry.registerCustomEditor(Date.class,new CustomDateEditor(new SimpleDateFormate("yyyy-MM-dd"),true));
         // }
         // (2) 注册到 Spring 中
-        // <!--注册到 Spring 自带的编辑器-->
+        // <!--注册到 Spring 自带的编辑器 	private PropertyEditorRegistrar[] propertyEditorRegistrars; -->
         // <bean class="org.Springframework.beans.factory.config.CustomEditorConfigurer">
         //      <property name="propertyEditorRegistrars">
         //          <list>
@@ -910,9 +911,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // 的 propertyEditorRegistrars 属性中，可以具有与方法同样的效果
         // 我们了解了自定义属性编辑器的使用，但是，似乎与本节围绕的核心代码 beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this,getEnvironment()))
         // 并无联系，因为在注册自定义属性编辑器的时候使用的是 PropertyEditorRegistry 的 registerCustomEditor 方法，而这里使用的是
-        // ConfigurableListableBeanFactory 的 addPropertyEditorRegistrar方法，我们妨深入探索一下 ResourceEditorRegistrar 的内部实现
-        // 在 ResourceEditorRegistrar 中，我们最关心的方法就是 registerCustomEditors
-
+        // ConfigurableListableBeanFactory 的 addPropertyEditorRegistrar 方法，我们妨深入探索一下 ResourceEditorRegistrar 的内部实现
+        // 在 ResourceEditorRegistrar 中，我们最关心的方法就是  registerCustomEditors
         beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
         // Configure the bean factory with context callbacks.

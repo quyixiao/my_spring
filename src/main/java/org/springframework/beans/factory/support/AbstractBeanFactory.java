@@ -849,12 +849,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		} catch (NoSuchBeanDefinitionException e) {		}
 		LogUtils.info("containsLocalBean  isFactoryBean :" +isFactoryBean);
 
-
 		//singletonObjects或者beanDefinitionMap中已注册beanName则进入条件
 		//说明该beanName有对应的bean definition，或者单例bean
 		return ((containsSingleton(beanName) || containsBeanDefinition(beanName)) &&
 				//name开头不为&返回true，如果带了&但是是FactoryBean也返回true
-				//要注意下FactoryBean和BeanFactory的区别，可以看下文参考链接
+				//要注意下FactoryBean和BeanFactory的区别，可以看下文参考链接 , 名字不能包含&
 				(!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(beanName)));
 	}
 

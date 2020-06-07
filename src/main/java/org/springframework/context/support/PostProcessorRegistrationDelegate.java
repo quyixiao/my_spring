@@ -54,6 +54,7 @@ class PostProcessorRegistrationDelegate {
      * 进行后置处理，BeanFactoryPostProcessor 不会对定义在另一个容器上的 bean 进行后置处理，即使这两个容器都是在同一层次上，在 Spring
      * 中存在对 BeanFactoryPostProcessor 的典型应用，比如 PropertyPlaceHolderConfigurer
      * 1.BeanFactoryPostProcessor的典型应用 ：PropertyPlaceholderConfigurer
+     *
      *   有个时候，阅读 Spring 的 Bean 描述文件时，你也许会遇到类似的如下的一些配置
      *   <bean id ="message" class="distconfig.HelloMessage">
      *      <property name="msg">
@@ -64,7 +65,7 @@ class PostProcessorRegistrationDelegate {
      *   bean.message=Hi.can you find me?
      *   当访问名为 message 的 bean 时，mes 的属性会被设置为字符串"Hi can you find me ?" 但是 Spring 框架是怎样知道这样的配置文件的呢？
      *   这就要靠 PropertyPlaceholderConfigurer 这个类的 bean :
-     *   <bean id="msgHandler" class="org.Springframework.beans.factory.config.Property.PlaceholerConfigure">
+     *   <bean id="msgHandler" class="org.Springframework.beans.factory.config.Property.PlaceholderConfigurer">
      *      <property name="locations">
      *          <list>
      *              <value>config/bean.properties</value>
@@ -74,11 +75,11 @@ class PostProcessorRegistrationDelegate {
      *   在这个 bean 中指定的配置文件为 config/bean.properties，到这里似乎找到问题的答案了,但是其实还有问题，这个"mesHandler" 只不过
      *   是 Spring 框架管理的一个 bean ,并没有被识别 bean 或者对象引用，Spring 的 beanFactory 是怎样知道要从这个 bean 获取配置信息
      *   的呢？
-     *      查看层级结构可以看出 PropertyPlaceHolderConfigere 这个类间接的继承了 BeanFactoryPostProcessor接口，这是一个很特别的接口
-     *  当 Spring 加载任何实现了这个接口的 bean 的配置时，都会在 bean 工厂加载所有的 bean 的配置之后执行PostProcessoBeanFactory
+     *      查看层级结构可以看出 PropertyPlaceHolderConfigure 这个类间接的继承了 BeanFactoryPostProcessor接口，这是一个很特别的接口
+     *  当 Spring 加载任何实现了这个接口的 bean 的配置时，都会在 bean 工厂加载所有的 bean 的配置之后执行PostProcessorBeanFactory
      *  方法，在 PropertyResourceConfigurer 类中实现了，postProcessBeanFactory 方法，在方法中先后调用了 mergeProperties，
-     *  convertProperties，processProperties 这3个方法，分别得到配置，将得到的配置转换为合适的类型，最后将配置内容告知 BeanFacotry
-     *      正是通过实现 BeanFactoryPostProcessor 接口，beasnFactory会在实例化任何的 bean 之前获得配置信息，从而能够
+     *  convertProperties，processProperties 这3个方法，分别得到配置，将得到的配置转换为合适的类型，最后将配置内容告知 BeanFactory
+     *      正是通过实现 BeanFactoryPostProcessor 接口，beanFactory会在实例化任何的 bean 之前获得配置信息，从而能够
      *       正确的解析 bean 描述文件中的变量引用
      *  2.使用自定义的 BeanFactoryPostProcessor
      *      我们以实现一个 BeanFactoryPostProcessor ，去除潜在的流氓属性值的功能来展示自定义BeanFactoryPostProcessor 的创建及使用
@@ -177,7 +178,7 @@ class PostProcessorRegistrationDelegate {
      *   方法
      *   5.普通的 beanFactory 处理
      *   BeanDefinitionRegistryPostProcessor 只对 BeanDefinitionRegistry 类型 ConfigurableListableBeanFactory 有效，
-     *   所以，   如果判断所示的 beanFactory 并不是 BeanDefinitionRegistry ，那么便可以忽略了BeanDefinitionRegistryPostProcesssowr
+     *   所以，   如果判断所示的 beanFactory 并不是 BeanDefinitionRegistry ，那么便可以忽略了BeanDefinitionRegistryPostProcesssor
      *   而直接处理 BeanFactoryPostProcessor ，当然获取的方式与上面的获取的方式类似
      *
      *   这里需要提到的是，对于硬编码方式手动添加的手处理是不需要做任何排序的，但是在配置文件中读取的处理器，Spring 并不能保证读取的顺序
@@ -185,8 +186,8 @@ class PostProcessorRegistrationDelegate {
      * 6.6.2 注册 BeanPostProcessor
      *  在这个里面我们提到了 BeanFactoryPostProcessors 的调用，现在我们来探索下 BeanPostProcessor ，但是在这里并不是调用，而是注册
      *  真正的调用其实是在 bean 的实例化阶段进行的，这是一个很重要的步骤，也是很多功能 BeanFactory 不支持的重要原因，Spring 中大部分
-     *  功能都是通过后处理器的方式野德扩展的，这是spring 框架的一个特性，但是在 BeanFactory 中其实并没有实现后处理自动注册，所以在
-     *  调用的时候如果没有进行手动注册其实是不能使用的，但是在 Applicationcontext 中去添加自动注册的功能，如自定义一样后处理器
+     *  功能都是通过后处理器的方式进行扩展的，这是spring 框架的一个特性，但是在 BeanFactory 中其实并没有实现后处理自动注册，所以在
+     *  调用的时候如果没有进行手动注册其实是不能使用的，但是在 ApplicationContext 中去添加自动注册的功能，如自定义一样后处理器
      *  public class MyInstantiationAwareBeanPostProcessor implements InstantiationAwareBeanPostProcessor{
      *      public Object postProcessBeforeInitialization(Object bean,String beanName){
      *          sout.printlen("================");
@@ -214,7 +215,7 @@ class PostProcessorRegistrationDelegate {
             BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
 			// 用于存放普通的BeanFactoryPostProcessor
             List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<BeanFactoryPostProcessor>();
-			// 用于存放BeanDefinitionRegistryPostProcessorinvokeBeanFactoryPostProcessors
+			// 用于存放BeanDefinitionRegistryPostProcessor.invokeBeanFactoryPostProcessors
             List<BeanDefinitionRegistryPostProcessor> registryPostProcessors = new LinkedList<BeanDefinitionRegistryPostProcessor>();
 			// 遍历所有的beanFactoryPostProcessors, 将BeanDefinitionRegistryPostProcessor和普通BeanFactoryPostProcessor区分开
             for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {

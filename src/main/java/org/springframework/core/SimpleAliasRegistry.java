@@ -62,7 +62,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 *  下面的代码中可以得到注册的 alias 步骤如下：
 	 *  1.alias 与 beanName 相同的情况处理，若 alias 与 BeanName并名称相同则不需要处理并删除掉原有的 alias
 	 *  2.alias 覆盖处理，若 aliasName 已经使用并已经指向了另一个 BeanName，则需要用户的设置进行处理
-	 *  3.alias 循环检查，当 A->B 存在时，若再次出现 A->C->B  时候则会抛出异常
+	 *  3.alias 循环检查，当 B -> C ,C -> A  存在时，若再次出现 A -> B 时候，则抛出异常
 	 *  注册 alias
 	 */
 	@Override
@@ -74,7 +74,6 @@ public class SimpleAliasRegistry implements AliasRegistry {
 			this.aliasMap.remove(alias);
 		}
 		else {
-
 			String registeredName = this.aliasMap.get(alias);
 			if (registeredName != null) {
 				if (registeredName.equals(name)) {
