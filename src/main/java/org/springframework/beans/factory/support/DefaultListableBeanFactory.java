@@ -445,6 +445,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			if (!isAlias(beanName)) {
 				try {
 					LogUtils.info("doGetBeanNamesForType not alias beanName = " +beanName);
+					// 如果没有别名
 					RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 					LogUtils.info("doGetBeanNamesForType RootBeanDefinition mbd name = " +mbd.getClass().getName());
 					// Only check bean definition if it is complete.

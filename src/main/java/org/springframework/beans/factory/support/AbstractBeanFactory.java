@@ -1414,6 +1414,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		for(Map.Entry<String, RootBeanDefinition> map: this.mergedBeanDefinitions.entrySet()){
 			LogUtils.info("getMergedBeanDefinition key " + map.getKey() + " , value = " + map.getValue());
 		}
+
 		synchronized (this.mergedBeanDefinitions) {
 			RootBeanDefinition mbd = null;
 
