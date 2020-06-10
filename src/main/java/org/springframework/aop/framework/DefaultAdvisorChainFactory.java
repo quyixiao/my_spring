@@ -120,6 +120,8 @@ public class DefaultAdvisorChainFactory implements AdvisorChainFactory, Serializ
 			Advisor advisor = config.getAdvisors()[i];
 			if (advisor instanceof IntroductionAdvisor) {
 				IntroductionAdvisor ia = (IntroductionAdvisor) advisor;
+				//ClassFilter与MethodMatcher分别用于在不同的级别上限定Joinpoint的匹配范围，满足不同粒度的匹配，
+				// ClassFilter限定在类级别上，MethodMatcher限定在方法级别上；但是SpringAop主要支持在方法级别上的匹配，所以对类级别的匹配支持相对简单一些；
 				if (ia.getClassFilter().matches(actualClass)) {
 					return true;
 				}

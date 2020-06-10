@@ -19,6 +19,7 @@ package org.springframework.context.annotation;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.test.LogUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -256,6 +257,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * 类路径Bean定义扫描给定的包及其子包
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
+		LogUtils.all("doScan");
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		//创建bean定义的holder对象用于保存扫描后生成的bean定义对象
 		// 创建一个集合，存入扫描到的Bean 定义的封装类
@@ -291,6 +293,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				//把我们解析出来的组件bean定义注册到Spring IoC容器中，根据Bean名称检查指定的Bean是否需要在容器注册，或者是否是容器中
 				// 有冲突。
 				if (checkCandidate(beanName, candidate)) {
+					LogUtils.info(" scan bean Name :" + beanName);
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					// 根据注解中的配置的作用域，为Bean的应用的代理模式
 					definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);

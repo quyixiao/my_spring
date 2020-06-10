@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -277,15 +278,17 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 		//创建存储扫描的类的集合
 		Set<BeanDefinition> candidates = new LinkedHashSet<BeanDefinition>();
 		try {
+
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + "/" + this.resourcePattern;
+
 			Resource[] resources = this.resourcePatternResolver.getResources(packageSearchPath);
+
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
+
 			for (Resource resource : resources) {
-				if (traceEnabled) {
-					logger.trace("Scanning " + resource);
-				}
+				LogUtils.info("findCandidateComponents Scanning " + resource);
 				if (resource.isReadable()) {
 					try {
 						// 为指定资源获取元数据读取器，元数据读取器通过汇编（ASM） 读取资源的元信息

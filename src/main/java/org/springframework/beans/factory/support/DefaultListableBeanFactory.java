@@ -333,6 +333,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Assert.notNull(requiredType, "Required type must not be null");
 		String[] beanNames = getBeanNamesForType(requiredType);
 		LogUtils.info("getBean  beanNames " + Arrays.toString(beanNames) ,3);
+
 		if (beanNames.length > 1) {
 			ArrayList<String> autowireCandidates = new ArrayList<String>();
 			for (String beanName : beanNames) {
@@ -341,10 +342,12 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					autowireCandidates.add(beanName);
 				}
 			}
+
 			if (autowireCandidates.size() > 0) {
 				LogUtils.info(" autowireCandidates beanNames :" + Arrays.toString(beanNames));
 				beanNames = autowireCandidates.toArray(new String[autowireCandidates.size()]);
 			}
+
 		}
 		if (beanNames.length == 1) {
 			LogUtils.info("getBean  beanNames size is 1 " + Arrays.toString(beanNames) );
@@ -850,7 +853,6 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// Spring IoC容器通过Bean后置注解处理解析Bean内部的注解
 	// 下面将分析Spring 处理注解相关的源码
 
-	//
 	// 对于 beanDefinition注册，或许很多的人认为的方式就是将 beanDefinition 直接放入到 map中就好了，使用 BeanName 作为key ，确实
 	// Spring 就是这样做的，只不过除此之外，它还做了一些其他的事情
 	// 1.对于 abstractBeanDefinition 的校验，在解析 XML文件的时候，我们提过校验，但是些校验非彼校验，之前的校验时针对XML 格式的校验，而
@@ -925,7 +927,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// 注册 beanDefinition
 		this.beanDefinitionMap.put(beanName, beanDefinition);
 
-		LogUtils.info("registerBeanDefinition beanDefinition ：" + beanDefinition.getClass().getName() + " \n " + beanDefinition);
+		LogUtils.info("beanName="+beanName+"， registerBeanDefinition beanDefinition ：" + beanDefinition.getClass().getName() + " \n " + beanDefinition);
 		// 检查是否已经注册过同名的BeanDefinition
 		if (oldBeanDefinition != null || containsSingleton(beanName)) {
 			// 重置所有已经注册过的BeanDefinition中的缓存

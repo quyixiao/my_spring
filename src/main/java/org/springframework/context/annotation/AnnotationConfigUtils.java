@@ -89,7 +89,6 @@ public class AnnotationConfigUtils {
 	 */
 	public static final String REQUIRED_ANNOTATION_PROCESSOR_BEAN_NAME =
 			"org.springframework.context.annotation.internalRequiredAnnotationProcessor";
-
 	/**
 	 * The bean name of the internally managed JSR-250 annotation processor.
 	 */

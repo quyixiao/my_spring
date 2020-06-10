@@ -1258,7 +1258,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @return BeanWrapper for the new instance
 	 * 使用了默认的无参构造方法实例化Bean对象
 	 * 从这个方法可以看出，使用工厂方法和自动装配特性的Bean,调用相应的工厂方法或者参数匹配的构造方法即可完成实例化对象的工作，但是最
-	 * 常使用的默认无参的构造方法需要使用相应的初始化策略（JDK的反射机制或者CGLib）来进行初始化，在getInstiationStrategy().instantiate()
+	 * 常使用的默认无参的构造方法需要使用相应的初始化策略（JDK的反射机制或者CGLib）来进行初始化，getInstantiationStrategy().instantiate()
 	 * 方法中实现了实例化
 	 */
 	protected BeanWrapper instantiateBean(final String beanName, final RootBeanDefinition mbd) {
@@ -1267,7 +1267,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			final BeanFactory parent = this;
 			//获取系统的安全管理接口，JDK标准的安全管理API
 			if (System.getSecurityManager() != null) {
-				// p这是一个内部类，根据实例化策略创建实例对象
+				// 这是一个内部类，根据实例化策略创建实例对象
 				beanInstance = AccessController.doPrivileged(new PrivilegedAction<Object>() {
 					@Override
 					public Object run() {

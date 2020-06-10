@@ -259,12 +259,11 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
         for (String beanName : candidateNames) {
 			//通过Bean的名称来获取Bean的定义对象
             BeanDefinition beanDef = registry.getBeanDefinition(beanName);
+            LogUtils.info(" beanName= "+beanName+",beanDef name :" + beanDef.getClass().getName());
 			//判断是否有没有解析过
             if (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||
                     ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Bean definition has already been processed as a configuration class: " + beanDef);
-                }
+                LogUtils.info("Bean definition has already been processed as a configuration class: " + beanDef);
 				//判断是否是配置类
             } else if (ConfigurationClassUtils.checkConfigurationClassCandidate(beanDef, this.metadataReaderFactory)) {
 				//添加到候选的配置类集合中

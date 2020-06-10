@@ -287,8 +287,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 *   ,parentBeanFactory !=null ,parentBeanFactory  如果为空，则其他的一切都是浮云，但是!containsBeanDefinition(beanName) 就比较
 	 *   重要了，它是在检测如果当前加载的 xml 配置文件中不包含 beanName 所对应的配置，就只能到 parentBeanFactory 去尝试一下，然后再去
 	 *   递归的调用 getBean 方法
-	 *  6.将存储的 xml 配置文件中的 GernericBeanDefinition 转换成 RootBeanDefinition 中的，但是所有的 Bean后续处理都是针对
-	 *  RootBeanDefintion的，所以这里需要转换，转换的同时如果父类 bean 不为空的话，则会一并合并父类的属性
+	 *  6.将存储的 xml 配置文件中的 GenericBeanDefinition 转换成 RootBeanDefinition 中的，但是所有的 Bean后续处理都是针对
+	 *  RootBeanDefinition的，所以这里需要转换，转换的同时如果父类 bean 不为空的话，则会一并合并父类的属性
 	 *
 	 *  7.寻找依赖，因为 bean 初始化的过程很可能是会用到某些属性的，而某些属性很可能是动态配置的，并且配置成依赖于其他的 bean , 那么
 	 *  这个时候就有必要加载依赖的bean ，那么这个时候就有必要先加载依赖的 bean ，所以，在 Spring 的加载顺序中，在初始化某一个 bean 的时候
@@ -328,6 +328,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// 先从缓存 中读取是否已经有被创建过的单例模式的bean
 		// 对于单例模式的Bean,整个Ioc容器只创建一次，不需要重复的创建
 		if (sharedInstance != null && args == null) {
+			//
 			if (isSingletonCurrentlyInCreation(beanName)) {
 				//如果在容器中已经有指定名称的单例模式的Bean,被创建，直接返回已经创建好的Bean
 				LogUtils.info("doGetBean Returning eagerly cached instance of singleton bean '" + beanName +
@@ -1477,6 +1478,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// Let's correct this on the fly here, since this might be the result of
 				// parent-child merging for the outer bean, in which case the original inner bean
 				// definition will not have inherited the merged outer bean's singleton status.
+				// 如果父类不为空，子类是单例，父类不是单例，需要用父类的scope 属性
 				if (containingBd != null && !containingBd.isSingleton() && mbd.isSingleton()) {
 					LogUtils.info("getMergedBeanDefinition containingBd  !=null  && containingBd is not single && mbd is singleon  " );
 					mbd.setScope(containingBd.getScope());
@@ -1484,6 +1486,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Only cache the merged bean definition if we're already about to create an
 				// instance of the bean, or at least have already created an instance before.
+				// 如果父类为空，那么mergedBeanDefinitions 直接put beanName
 				if (containingBd == null && isCacheBeanMetadata()) {
 					LogUtils.info("getMergedBeanDefinition containingBd == null && isCacheBeanMetadata " );
 					this.mergedBeanDefinitions.put(beanName, mbd);
@@ -1829,7 +1832,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			// Caches object obtained from FactoryBean if it is a singleton.
 			// containsBeanDefinition检测 beanDefinitionMap 中也就是所有的已经加载的类中检测是否定义了 beanName
 			if (mbd == null && containsBeanDefinition(beanName)) {
-				// 从容器中获取指定名称的Bean的定义，如果继承了基类，则合并基类的相关的属性 |  将存储在 XML 配置文件中的 GernericBeanDefinition
+				// 从容器中获取指定名称的Bean的定义，如果继承了基类，则合并基类的相关的属性 |  将存储在 XML 配置文件中的 GenericBeanDefinition
 				// 转换成 RootBeanDefinition，如果指定的是 beanName 是子的 bean 的话，同时会合并父类的相关的属性
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
