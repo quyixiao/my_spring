@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
+import com.test.LogUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -252,6 +253,7 @@ class ConfigurationClassParser {
 	 * @return the superclass, or {@code null} if none found or previously processed
 	 */
 	protected final SourceClass doProcessConfigurationClass(ConfigurationClass configClass, SourceClass sourceClass) throws IOException {
+		LogUtils.all("doProcessConfigurationClass run ");
 		// Recursively process any member (nested) classes first
 		processMemberClasses(configClass, sourceClass);
 		//处理我们的@PropertySources注解的
@@ -262,7 +264,7 @@ class ConfigurationClassParser {
 				processPropertySource(propertySource);
 			}
 			else {
-				logger.warn("Ignoring @PropertySource annotation on [" + sourceClass.getMetadata().getClassName() +
+				LogUtils.info("Ignoring @PropertySource annotation on [" + sourceClass.getMetadata().getClassName() +
 						"]. Reason: Environment must implement ConfigurableEnvironment");
 			}
 		}

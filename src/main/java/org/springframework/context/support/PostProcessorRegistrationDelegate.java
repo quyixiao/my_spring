@@ -216,6 +216,7 @@ class PostProcessorRegistrationDelegate {
 			// 用于存放普通的BeanFactoryPostProcessor
             List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<BeanFactoryPostProcessor>();
 			// 用于存放BeanDefinitionRegistryPostProcessor.invokeBeanFactoryPostProcessors
+
             List<BeanDefinitionRegistryPostProcessor> registryPostProcessors = new LinkedList<BeanDefinitionRegistryPostProcessor>();
 			// 遍历所有的beanFactoryPostProcessors, 将BeanDefinitionRegistryPostProcessor和普通BeanFactoryPostProcessor区分开
             for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
@@ -232,6 +233,7 @@ class PostProcessorRegistrationDelegate {
                     regularPostProcessors.add(postProcessor);
                 }
             }
+
             // Do not initialize FactoryBeans here: We need to leave all regular beans
             // uninitialized to let the bean factory post-processors apply to them!
             // Separate between BeanDefinitionRegistryPostProcessors that implement

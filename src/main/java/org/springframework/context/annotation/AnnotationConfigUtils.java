@@ -63,6 +63,7 @@ public class AnnotationConfigUtils {
 
 	/**
 	 * The bean name of the internally managed Configuration annotation processor.
+	 * ConfigurationClassPostProcessor
 	 */
 	public static final String CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME =
 			"org.springframework.context.annotation.internalConfigurationAnnotationProcessor";
