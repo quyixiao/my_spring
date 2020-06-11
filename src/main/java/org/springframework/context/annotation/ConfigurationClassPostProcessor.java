@@ -204,11 +204,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
     @Override
     public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
     	LogUtils.all("postProcessBeanDefinitionRegistry");
+
         RootBeanDefinition iabpp = new RootBeanDefinition(ImportAwareBeanPostProcessor.class);
         iabpp.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         registry.registerBeanDefinition(IMPORT_AWARE_PROCESSOR_BEAN_NAME, iabpp);
-
         RootBeanDefinition ecbpp = new RootBeanDefinition(EnhancedConfigurationBeanPostProcessor.class);
+
         ecbpp.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
         registry.registerBeanDefinition(ENHANCED_CONFIGURATION_PROCESSOR_BEAN_NAME, ecbpp);
 

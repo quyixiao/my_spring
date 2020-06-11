@@ -117,6 +117,13 @@ class ApplicationContextAwareProcessor implements BeanPostProcessor {
 			if (bean instanceof MessageSourceAware) {
 				((MessageSourceAware) bean).setMessageSource(this.applicationContext);
 			}
+			/**
+			 * @Component
+			 * public class SpringContextUtils implements ApplicationContextAware {
+			 *     public static ApplicationContext applicationContext;
+			 *     从而从代码中获得applicationContext
+			 *
+			 */
 			if (bean instanceof ApplicationContextAware) {
 				((ApplicationContextAware) bean).setApplicationContext(this.applicationContext);
 			}

@@ -412,7 +412,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 *  BeanPostProcessor 相信大家都不陌生，这里是 Spring 开放式架构中一个必不可少的亮点，给用户充足的权限去更改或者扩展 Spring ,
 	 *  而除了 BeanPostProcessor 外还在很多的其他的 PostProcessor ，当然大部分都是以此为基础的，继承 BeanPostProcessor，
 	 *  BeanPostProcessor 的使用位置就在这里了，在调用客户自己定义的初始化方法前以及调用自定义初始化方法后分别会调用
-	 *  BeanPostProcessor 的 PostProcessBeforInittalization和 PostProcessAfterInitalization 方法，
+	 *  BeanPostProcessor 的 PostProcessBeforeInitialization和 PostProcessAfterInitalization 方法，
 	 *  使用可能根据自己的业务需要进行响应处理
 	 *
 	 */
@@ -662,7 +662,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		try {
 			// 将Bean实例对象封装，并且将Bean定义占的配置属性值赋给实例对象,对bean属性进行依赖注入
 			// Bean实例对象的依赖注入完成后，开始对Bean实例对象进行初始化，为Bean实例对象应用BeanPostProcessor后置处理器
-			// 对 bean 进行填充，将和个属性值注入，其中可能存在依赖于其他的 bean 的属性，则会递归的初始依赖 bean
+			// 对 bean 进行填充，将各个属性值注入，其中可能存在依赖于其他的 bean 的属性，则会递归的初始依赖 bean
 			populateBean(beanName, mbd, instanceWrapper);
 			if (exposedObject != null) {
 				// 初始化Bean对象
@@ -1173,6 +1173,31 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 确认Bean是可实例化的，| 解析 class
 		Class<?> beanClass = resolveBeanClass(mbd, beanName);
 		// 使用工厂方法对Bean进行实例化,
+		//  getModifiers  得到的就是 前面的 的修饰符 ，这个方法 字段和方法 都有。这个方法的值是 修饰符 相加的到的值。
+		/**
+		 * public class Test1 {
+		 *
+		 *     String c;
+		 *     public String a;
+		 *     private String b;
+		 *     protected String d;
+		 *     static String e;
+		 *     final String f="f";
+		 *
+		 * }
+		 *
+		 *  Field[] fields = Test1.class.getDeclaredFields();
+		 *         for( Field field: fields) {
+		 *             System.out.println( field.getName() +":" + field.getModifiers() );
+		 *         }
+		 * c:0
+		 * a:1
+		 * b:2
+		 * d:4
+		 * e:8
+		 * f:16
+		 */
+		// 所以：什么都不加 是0 ， public  是1 ，private 是 2 ，protected 是 4，static 是 8 ，final 是 16。
 		if (beanClass != null && !Modifier.isPublic(beanClass.getModifiers()) && !mbd.isNonPublicAccessAllowed()) {
 			throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 					"Bean class isn't public, and non-public access not allowed: " + beanClass.getName());

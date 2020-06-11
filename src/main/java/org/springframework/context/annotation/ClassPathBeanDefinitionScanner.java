@@ -257,7 +257,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * 类路径Bean定义扫描给定的包及其子包
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
-		LogUtils.all("doScan");
+		LogUtils.all("doScan " + basePackages);
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		//创建bean定义的holder对象用于保存扫描后生成的bean定义对象
 		// 创建一个集合，存入扫描到的Bean 定义的封装类
@@ -265,10 +265,10 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 		//循环我们的包路径集合
 		// 遍历扫描所给定的包
 		for (String basePackage : basePackages) {
-			//找到候选的@Component
-			// 调用父类的ClassPathScanningCandidateComponentProvider 的findCandidateComponents方法
+			// 找到候选的 @Component
+			// 调用父类的 ClassPathScanningCandidateComponentProvider 的 findCandidateComponents 方法
 			// 扫描给定类路径的，获取符合条件的Bean的定义
-			// 类路径的Bean定义扫描ClassPathBeanDefinitionScanner主要通过findCandidateComponents()方法调用其父类ClassPathScanningCadidateComponentProvider
+			// 类路径的Bean定义扫描 ClassPathBeanDefinitionScanner 主要通过 findCandidateComponents() 方法调用其父类 ClassPathScanningCandidateComponentProvider
 			// 来扫描获取给定包及其子包的类
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			// 遍历扫描得到的Bean
