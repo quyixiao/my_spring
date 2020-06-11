@@ -176,7 +176,7 @@ public class AnnotatedBeanDefinitionReader {
 		}
 		// 创建指定的Bean名称的Bean的定义对象，封装注解Bean定义数据
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
-		// 根据注解Bean定义类配置的作用哉，创建相应的代理对象
+		// 根据注解Bean定义类配置的作用域，创建相应的代理对象
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 		// 向Ioc容器注册注解Bean类定义对象
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
