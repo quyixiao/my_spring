@@ -589,6 +589,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             // 的功能上基础上添加了大量的扩展应用，那么 obtainFreshBeanFactory 正是实现 BeanFactory 的地方，也就是经过这个函数之后
             // ApplicationContext 就已经拥有 BeanFactory 的全部功能
             log.info("start obtainFreshBeanFactory");
+            // | 这里是在子类中启动refreshBeanFactory()的地方
             ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
             log.info("end obtainFreshBeanFactory");
 
@@ -596,12 +597,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             log.info("start prepareBeanFactory");
             // Prepare the bean factory for use in this context.
             // 3.为BeanFactory配置容器，例如类加载器，事件处理器 | 为 BeanFactory 进行各种功能进行填充
+            // |
             prepareBeanFactory(beanFactory);
             log.info("end prepareBeanFactory");
 
             try {
                 // Allows post-processing of the bean factory in context subclasses.
-                // 4.为容器的某些子类指定特殊的Post事件处理器 |  子类覆盖方法做额外的处理
+                // 4.为容器的某些子类指定特殊的Post事件处理器 |  子类覆盖方法做额外的处理 | 
                 log.info("start postProcessBeanFactory");
                 postProcessBeanFactory(beanFactory);
                 log.info("end prepareBeanFactory");
