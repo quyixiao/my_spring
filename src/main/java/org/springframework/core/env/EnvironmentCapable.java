@@ -37,6 +37,8 @@ package org.springframework.core.env;
  * @see Environment
  * @see ConfigurableEnvironment
  * @see org.springframework.context.ConfigurableApplicationContext#getEnvironment()
+ * 定义从资源文件中加载到转换为Document的功能
+ *
  */
 public interface EnvironmentCapable {
 

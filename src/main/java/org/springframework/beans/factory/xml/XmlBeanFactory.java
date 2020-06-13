@@ -49,6 +49,10 @@ import org.springframework.core.io.Resource;
  * @see XmlBeanDefinitionReader
  * @deprecated as of Spring 3.1 in favor of {@link DefaultListableBeanFactory} and
  * {@link XmlBeanDefinitionReader}
+ * XmlBeanFactory 对DefaultListableBeanFactory类进行了扩展，主要是从XML文档中读取BeanDefinition，对于注册获取Bean都是使用父类
+ * DefaultListableBeanFactory 继承的方法去实现，而唯独与父类不同的修改化实现就是增加了XmlBeanDefinitionReader类型的reader属性，
+ * 在XmlBeanFactory的主要使用reader 属性对资源文件进行读取和注册
+ *
  */
 @Deprecated
 @SuppressWarnings({"serial", "all"})
@@ -64,6 +68,7 @@ public class XmlBeanFactory extends DefaultListableBeanFactory {
 	 * @throws BeansException in case of loading or parsing errors
 	 */
 	public XmlBeanFactory(Resource resource) throws BeansException {
+		// 调用 XmlBeanFactory(Resource , BeanFactory )构造方法
 		this(resource, null);
 	}
 
@@ -73,9 +78,12 @@ public class XmlBeanFactory extends DefaultListableBeanFactory {
 	 * @param resource XML resource to load bean definitions from
 	 * @param parentBeanFactory parent bean factory
 	 * @throws BeansException in case of loading or parsing errors
+	 * parentBeanFactory 为父类的BeanFactory用于Factory合并，可以为空
 	 */
 	public XmlBeanFactory(Resource resource, BeanFactory parentBeanFactory) throws BeansException {
 		super(parentBeanFactory);
+		// 这都是资源加载真正的实现，也是我们分析的重点之一，我们可以看到时序图中接到的XmlBeanDefinitionReader加载数据就是在这里完成，
+		// 但是XmlBeanDefinitionReader加载数据之前还有一个调用父类的构造函数
 		this.reader.loadBeanDefinitions(resource);
 	}
 

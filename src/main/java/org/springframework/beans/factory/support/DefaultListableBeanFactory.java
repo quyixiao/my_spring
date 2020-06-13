@@ -99,6 +99,11 @@ import org.springframework.util.StringUtils;
  * @see StaticListableBeanFactory
  * @see PropertiesBeanDefinitionReader
  * @see org.springframework.beans.factory.xml.XmlBeanDefinitionReader
+ * 对SingletonBeanRegistry各种函数的实现
+ *
+ * |
+ * 综合上面所有的功能，主要是对bean注册后处理
+ *
  */
 @SuppressWarnings("serial")
 @Slf4j
@@ -848,7 +853,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	// 是Spring IoC容器的控制反转的基础，也正是有了这些信息，容器才进行依赖注入的
 	// Spring IoC容器对于类级别的注解和类内部的注解处理策略如下
 	// 类级别的注解，如@Component,@Repository,@Controller,@Service,以及JavaEE 6的@ManageBean @Named，都是添加在类上的类级别的注解
-	//Spring IoC容器根据注解的过滤规则，扫描读取注解的Bean的定义类，并将其注册到Spring IoC容器中
+	// Spring IoC容器根据注解的过滤规则，扫描读取注解的Bean的定义类，并将其注册到Spring IoC容器中
 	// 2.类内部的注解，如@Autoweire,@Value,@Resource,以及EJB和WebService相关的注解等，都是添加在类内部的字段或者方式上的类部注解
 	// Spring IoC容器通过Bean后置注解处理解析Bean内部的注解
 	// 下面将分析Spring 处理注解相关的源码

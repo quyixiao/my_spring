@@ -43,6 +43,7 @@ import java.net.URL;
  * @see ByteArrayResource
  * @see InputStreamResource
  * @see PathResource
+ * 在Java中，将不同的
  */
 public interface Resource extends InputStreamSource {
 

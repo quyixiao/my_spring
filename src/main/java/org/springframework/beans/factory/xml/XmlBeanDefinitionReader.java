@@ -65,6 +65,13 @@ import java.util.Set;
  * @see org.springframework.beans.factory.support.DefaultListableBeanFactory
  * @see org.springframework.context.support.GenericApplicationContext
  * @since 26.11.2003
+ * Xml 配置文件的读取是Spring中重要的功能，因为Spring的大部分功能都是以配置作为切入点的，那么我们可以从XmlBeanDefinitionReader中
+ * 梳理一下资源文件的读取，解析及注册的大致脉络，首先我们看看和个类的功能
+ *
+ * |
+ *
+ * 通过继承自AbstractBeanDefinitionReader中的方法，来使用ResourceLoader将资源文件路径转换为对应的Resource文件
+ *
  */
 @Slf4j
 public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
@@ -324,6 +331,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * @return the number of bean definitions found
      * @throws BeanDefinitionStoreException in case of loading or parsing errors
      *                                      这里载入的XML形式Bean配置信息方法
+     *   | 我们再次来整理一下数据准备阶段的逻辑，首先对传入的resource参数做封装，目的就是考虑到Resource可能存在编码要求的情况，其次
+     *   SAX读取XML文件的方式来准备InputSource对象，最后将准备的数据通过参数传入真正的核心处理部分，doLoadBeanDefinition(inputResource,encodedResource.getResource())
      */
     public int loadBeanDefinitions(EncodedResource encodedResource) throws BeanDefinitionStoreException {
         log.info("loadBeanDefinitions ");
@@ -331,6 +340,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
         if (logger.isInfoEnabled()) {
             log.info("Loading XML bean definitions from " + encodedResource.getResource());
         }
+        // 通过属性来记录己经加载的资源
         Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
         if (currentResources == null) {
             currentResources = new HashSet<EncodedResource>(4);
@@ -347,10 +357,12 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
             log.info(" EncodedResource: " + resource);
         }
         try {
-            // 将资源文件转为InputStream的I/O流
+            // 将资源文件转为InputStream的I/O流 |
+            // 从encodedResource中获取己经封装的Resource 对象并再次从Resource中获取InputStream
             InputStream inputStream = encodedResource.getResource().getInputStream();
             try {
                 // 从InputStream中得到XML的解析源
+                // InputSource这个类并不是来自到Spring,而是来自到org.xml.sax
                 InputSource inputSource = new InputSource(inputStream);
                 if (encodedResource.getEncoding() != null) {
                     inputSource.setEncoding(encodedResource.getEncoding());
@@ -358,6 +370,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
                 // 这里是具体的读取过程
                 return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
             } finally {
+                // 关闭输出流
                 inputStream.close();
             }
         } catch (IOException ex) {
@@ -428,7 +441,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
             LogUtils.info("doLoadBeanDefinitions  ...", 8);
             // 将XML文件转换成DOM对象，解析过程由documentLoader()方法实现
             Document doc = doLoadDocument(inputSource, resource);
-
+            // 根据Document注册Bean信息
             return registerBeanDefinitions(doc, resource);
         } catch (BeanDefinitionStoreException ex) {
             throw ex;
@@ -459,14 +472,23 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * @throws Exception when thrown from the DocumentLoader
      * @see #setDocumentLoader
      * @see DocumentLoader#loadDocument
+     * 在loadDocument方法中有一个参数EntityResolver，何为EntityResolver，官网这样解析的，如果Sax应用程序需要在实现自定义处理外部实体
+     * 则必需实现此接口，并使用setEntityResolver方法向Sax驱动器注册一个实例，也就是说，对于解析一个XML，Sax首先读取该XML文档上声明，根据声明去
+     * 寻找相应的DTD定义，以便对文档进行一个验证，默认的寻找规则，即通过网络（实现上就是声明的DTD的URI地址）来下载相应的DTD声明，
+     * 并进行认证，下载的过程是一个漫长的过程，而且网络中断或者不可用时，这里会报错，就是因为相应的DTD声明没有被找到的原因
+     * EntityResolver的作用的项目本身就是可以提供一个如何寻找DTD声明的方法，即由程序来实现寻找DTD声明的过程，比如我们将DTD文件放到
+     * 项目中某处，在实现时直接将此文档读取并返回给SAX即可，这样就避免了网络来寻找相应的声明
+     *
      */
     protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
         EntityResolver entityResolver = getEntityResolver();
         boolean isNamespaceAware = isNamespaceAware();
         log.info("entityResolver simpleName : " + entityResolver.getClass().getName() + " isNamespaceAware : " + isNamespaceAware);
+        // 加载XML文件，并得到Document
         return this.documentLoader.loadDocument(inputSource,
                 entityResolver,
                 this.errorHandler,
+                // 获取XML文件的验证模式
                 getValidationModeForResource(resource), //返回是是DTD 文档还是XSD文档
                 isNamespaceAware
         );
@@ -479,15 +501,35 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * {@link #detectValidationMode detected}.
      * <p>Override this method if you would like full control over the validation
      * mode, even when something other than {@link #VALIDATION_AUTO} was set.
+     * DTD和XSD区别
+     * DTD（Document Type Definition）即文档类型定义，是一种XML约束模式语言，是XML文件的验证机制，属于XML文件组成的一部分，DTD是一种
+     * 保证XML文档格式正确的有效方法，可以通过比较XML文档和DTD文档的包含，元素的定义规则，元素之间关系的定义规则，元素可使用的属性，可合理运用和实体
+     * 或符号规则
+     * 要使用DTD难模式的时候需要在XML文件的头部声明，以下是在Spring中使用DTD声明方式的代码
+     * XML Schema语言就是XSD(XML Schemas Definition)，XML Schema描述了XML文档的结构，可以用一个指定的XML Schema来验证某个XML文档
+     * 以检查该XML文档是否符合其要求，文档设计都可以通过XML Schemar指定XML Schema本身的XML文档，它符合XML语法结构，可以通过XML解析器解析它
+     * 在使用XML Schema 文档对XML 实例文档进行检验，除了要声明空间外（xmls=http:www.Springframework.og/schema/beans） 还必需指定该名称空间
+     * 所对应的Xml Schema文档存储的位置，通过schemaLocation属性来指定名称空间所对应的XML Schema 文档存储位置，它包含两个部分，一部分是名称空间
+     * 的URL ，另一部分是该名称空间所标识的XML Schema文件位置或者URL地址（xsi:schemaLocation="http://www.springframework.org/schema/bean
+     * http://www.Springframework.org/schema/beans/Spring-beans.xsd"）
+     *
+     *
+     * |
+     *
+     * 方法的实现其实还是很简单，无非是如果设定了验证模式则使用设定的验证模式（可以通过对调用XmlBeanDefinitionReader中的setValidationMode方法进行设定）
+     * 否则使用自动检测的试方式，而自动检测难模式的功能是在函数的detectValidationMode方法中实现的，在detectValidationMode函数中又将自动检测难模式的工作委托给
+     * 专门的处理类XmlValidationModeDetector,调用XmlValidationModeDetector方法，具体代码如下：
+     *
+     *
      */
     protected int getValidationModeForResource(Resource resource) {
         int validationModeToUse = getValidationMode();
-        log.info("validationModeToUse : {} ,VALIDATION_AUTO :{}", validationModeToUse, VALIDATION_AUTO);
+        // 如果手动指定了验证模式则使用指定的验证模式
         if (validationModeToUse != VALIDATION_AUTO) {
             log.info(" getValidationModeForResource validationModeToUse != VALIDATION_AUTO ");
             return validationModeToUse;
         }
-
+        // 如果未指定则使用自动检测
         int detectedMode = detectValidationMode(resource);
         log.info(" getValidationModeForResource detectedMode : {},VALIDATION_AUTO :{} ", detectedMode, VALIDATION_AUTO);
         if (detectedMode != VALIDATION_AUTO) {

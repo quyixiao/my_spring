@@ -116,6 +116,9 @@ import org.springframework.util.StringUtils;
  * @see BeanDefinitionRegistry
  * AbstractAutowireCapableBeanFactory实现了ObjectFactory接口，创建容器指定的Bean实例对象，同时还对创建的Bean实例对象进行初始化，创建Bean
  * 实例对象方法的源码如下：
+ *
+ * 综合AbstractBeanFactory 并对接口AutowireCaptableBeanFactory进行实现
+ *
  */
 @Slf4j
 public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory
@@ -163,6 +166,11 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	public AbstractAutowireCapableBeanFactory() {
 		super();
 		log.info("and ignoreDependencyInterface  BeanNameAware  BeanFactoryAware BeanClassLoaderAware ");
+		// 这里有必要提及一下ignoreDependencyInterface方法，ignoreDependencyInterface的主要功能是忽略给定的接口的自动装配功能，
+		// 那么这样做的目的是什么呢？会产生什么样的后果呢？
+		// 举个例子来说，当A中有属性B,那么当Spring在获取A的Bean的时候，如果其他的属性B还没有初始化，那么Spring会自动的初始化B，这也就是Spring
+		//提供了一个重要的特性，但是在某些情况下，B是不会被初始化的，其中一种情况就是B实现了BeanNameAware接口，Spring中是这样介绍的，
+		// 自动装配时忽略给定的依赖接口，典型应用就是通过其他的方式解析Application上下文进行注入或者ApplicationContext通过ApplicationContextAware进行注入
 		ignoreDependencyInterface(BeanNameAware.class);
 		ignoreDependencyInterface(BeanFactoryAware.class);
 		ignoreDependencyInterface(BeanClassLoaderAware.class);

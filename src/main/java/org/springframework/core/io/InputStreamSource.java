@@ -37,6 +37,15 @@ import java.io.InputStream;
  * @see Resource
  * @see InputStreamResource
  * @see ByteArrayResource
+ *
+ * InputStreamSource封装任何能返回的InputStream的类，比如File,ClassPath下的资源和Byte Array 等，它只有一个方法的定义，getInputStream()
+ * 该方法返回一个新的InputStream 对象
+ * Resource接口抽象了所有的Spring内部使用到底层的资源，File,Url,ClassPath等，首先它定义了3个判断当前资源状态的方法
+ * 存在性（exists）,可读性（isReadable），是否处理打开状态(isOpen)，另外，Resource接口还提供了不同的资源的URL，URI，File类型的转换，
+ * 以及获取lastModified属性，文件名（不带路径的信息文件名，getFileName()）方法，为了便于操作，Resource还提供了基于当前资源创建一个相对资源
+ * 方法，为了便于操作，Resource还提供了基于当前资源创建的一个相对资源的方法：createRelative()在错误的处理中需要详细的打印出资源文件，因而
+ * Resource还提供了getDescription()方法用来在错误处理中打印信息
+ *
  */
 public interface InputStreamSource {
 

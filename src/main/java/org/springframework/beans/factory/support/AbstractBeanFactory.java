@@ -119,6 +119,13 @@ import org.springframework.util.StringValueResolver;
  * 在BeanFactory中我们可以看到getBean(String ..)方法，但是具体的实现在AbstractBeanFactory中
  * SimpleAliasRegistry<--DefaultSingletonBeanRegistry<--FactoryBeanRegistrySupport<--AbstracBeanFactory<--AbstractAutowireCapableBeanFactory
  * <--DefaultListableBeanFactory
+ *
+ *
+ *
+ * |
+ * 综合了FactoryBeanRegistrySupport和ConfigurableBeanFactory的功能
+ *
+ *
  */
 
 public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
@@ -318,7 +325,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object bean;
 		// Eagerly check singleton cache for manually registered singletons.
 		// 检查缓存中或者实例工厂中是否有对应的实例
-		//  为什么首先会使用这段代码呢？
+		// 为什么首先会使用这段代码呢？
 		// 因为在创建单例 bean 的时候会存在依赖注入的情况，而在创建依赖的时候，为了避免循环依赖
 		// Spring 创建 bean 的原则是不等 bean 的创建完成就会将创建的 bean  的 ObjectFactory 提早曝光
 		// 也就是将 ObjectBeanFactory  加入到缓存中，一旦下个 bean 创建的时候需要依赖上个 bean 则直接使用 ObjectFactory

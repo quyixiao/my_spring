@@ -128,6 +128,10 @@ public class EncodedResource implements InputStreamSource {
 	 * @throws IOException if opening the Reader failed
 	 * @see #requiresReader()
 	 * @see #getInputStream()
+	 *
+	 * 我们大致推断这个类主要的是用于对资源文件的编码进行处理，其中主要的逻辑体现在getReader()方法中，当设置了编码属性的时候,Spring
+	 * 会使用相应的编码作为输入流编码
+	 *
 	 */
 	public Reader getReader() throws IOException {
 		if (this.charset != null) {

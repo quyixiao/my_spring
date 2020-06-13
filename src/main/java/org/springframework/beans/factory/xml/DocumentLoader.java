@@ -27,6 +27,9 @@ import org.xml.sax.InputSource;
  * @author Rob Harrop
  * @since 2.0
  * @see DefaultDocumentLoader
+ *
+ * 通过对DocumentLoader对Resource文件进行转换，将Resource文件转换成Document文件
+ *
  */
 public interface DocumentLoader {
 

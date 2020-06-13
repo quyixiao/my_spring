@@ -49,6 +49,7 @@ import java.util.*;
  * @see ParserContext
  * @see DefaultBeanDefinitionDocumentReader
  * @since 2.0
+ * 定义解析Element的各种方法
  */
 public class BeanDefinitionParserDelegate {
 

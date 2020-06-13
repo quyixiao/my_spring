@@ -45,6 +45,7 @@ import java.util.Set;
  * @author Chris Beams
  * @see BeanDefinitionReaderUtils
  * @since 11.12.2003
+ * 对EnvironmentCapable，BeanDefinitionReader类定义的功能进行实现
  */
 @Slf4j
 public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable, BeanDefinitionReader {

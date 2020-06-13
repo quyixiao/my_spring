@@ -585,7 +585,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             // Bean定义资源的载入，注册过程，finishBeanFactoryInitialization() 方法是对注册后的Bean定义中的预实例化(lazy-init=false)
             // Spring 默认进行预实例化，即为true的Bean 进行处理的地方
             // 初始化 bean ，并野德 xml 文件的读取
-            // obtainFreshBeanFactory 方法从字面的理解是获取BeanFactory ，之前有说过，ApplicationContext 是对 BeanFactory
+            // obtainFreshBeanFactory 方法从字面的理解是获取 BeanFactory ，之前有说过，ApplicationContext 是对 BeanFactory
             // 的功能上基础上添加了大量的扩展应用，那么 obtainFreshBeanFactory 正是实现 BeanFactory 的地方，也就是经过这个函数之后
             // ApplicationContext 就已经拥有 BeanFactory 的全部功能
             log.info("start obtainFreshBeanFactory");
@@ -597,7 +597,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             log.info("start prepareBeanFactory");
             // Prepare the bean factory for use in this context.
             // 3.为BeanFactory配置容器，例如类加载器，事件处理器 | 为 BeanFactory 进行各种功能进行填充
-            // |
             prepareBeanFactory(beanFactory);
             log.info("end prepareBeanFactory");
 

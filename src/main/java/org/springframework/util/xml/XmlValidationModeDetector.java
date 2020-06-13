@@ -87,6 +87,8 @@ public class XmlValidationModeDetector {
 	 * @throws IOException in case of I/O failure
 	 * @see #VALIDATION_DTD
 	 * @see #VALIDATION_XSD
+	 * 只要我们理解了XSD与DTD的使用方法，理解上面的代码应该不会太难，Spring检测验证模式的办法就是判断是否包含了DOCTYPE，如果包含了就是DTD
+	 * 否则就是XSD
 	 */
 	public int detectValidationMode(InputStream inputStream) throws IOException {
 		// Peek into the file to look for DOCTYPE.
@@ -97,10 +99,11 @@ public class XmlValidationModeDetector {
 			while ((content = reader.readLine()) != null) {
 				log.info("detectValidationMode  line : " + content);
 				content = consumeCommentTokens(content);
+				// 如果读取的行是空或者注释则略过
 				if (this.inComment || !StringUtils.hasText(content)) {
 					continue;
 				}
-
+				// 读取到<开始符号，验证模式一定会在开始符号之前
 				if (hasDoctype(content)) {
 					log.info(" detectValidationMode 含有 DOCTYPE  content : {} " + content);
 					isDtdValidated = true;

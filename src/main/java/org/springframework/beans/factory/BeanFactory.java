@@ -116,6 +116,9 @@ import org.springframework.core.ResolvableType;
  * 中通过如下的代码定义来该转义字符
  * String FACTORY_BEAN_PREFIX="&"
  *
+ *
+ *
+ * | 获取bean 及bean的各种属性
  */
 public interface BeanFactory {
 

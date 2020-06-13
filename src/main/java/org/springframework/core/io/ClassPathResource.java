@@ -39,6 +39,19 @@ import org.springframework.util.StringUtils;
  * @since 28.12.2003
  * @see ClassLoader#getResourceAsStream(String)
  * @see Class#getResourceAsStream(String)
+ * 在java中，将不同来源的资源抽象成URL,通过注册不同的handler(URLStreamHandler)来处理不同的资源的读取逻辑，一般handler类型使用不同的
+ * 前缀，协义（Protocol）来识别，如"file:","http:","jar:",等，然而URL没有默认的定义相对Classpath或ServletContext等资源的handler,
+ * 虽然可以注册自己的URLStreamHandler来解析特定的URL前缀（协义），比如"classpath:"然而这需要了解URL的实现机制，而且URL也没有提供基本
+ * 方法，如检查当前资源是否存在，检查当前资源是否可读等
+ *
+ *
+ * 在日常开发中，资源文件的加载也是经常用到的，可以直接使用Spring提供的类，比如希望加载文件时可以使用以下的代码
+ * Resource resource = new ClassPathResource("beanFactory.xml");
+ * InputStream inputStream = resource.getInputStream();
+ * 得到inputStream后，我们就可以按照以前的开发方式进行实现了，并且我们可以利用Resource及其子类为我们提供诸多的特性
+ *
+ *
+ *
  */
 public class ClassPathResource extends AbstractFileResolvingResource {
 
@@ -155,6 +168,10 @@ public class ClassPathResource extends AbstractFileResolvingResource {
 	 * This implementation opens an InputStream for the given class path resource.
 	 * @see ClassLoader#getResourceAsStream(String)
 	 * @see Class#getResourceAsStream(String)
+	 * ClassPathResource中的实现方式便是通过class或者classLoader提供的底层方法进行调用，而对于FileSystemResource的实现其实更加
+	 * 简单，直接使用FileInputStream对文件进行实例化
+	 * 当通过Resource相关的类完成对配置文件的封装后，配置文件的读取工作就全权交给XmlBeanDefinitionReader来处理了
+	 *
 	 */
 	@Override
 	public InputStream getInputStream() throws IOException {
