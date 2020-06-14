@@ -478,7 +478,6 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
      * 并进行认证，下载的过程是一个漫长的过程，而且网络中断或者不可用时，这里会报错，就是因为相应的DTD声明没有被找到的原因
      * EntityResolver的作用的项目本身就是可以提供一个如何寻找DTD声明的方法，即由程序来实现寻找DTD声明的过程，比如我们将DTD文件放到
      * 项目中某处，在实现时直接将此文档读取并返回给SAX即可，这样就避免了网络来寻找相应的声明
-     *
      */
     protected Document doLoadDocument(InputSource inputSource, Resource resource) throws Exception {
         EntityResolver entityResolver = getEntityResolver();
@@ -595,6 +594,15 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * 首先，通过调用XML解析器将Bean配置信息转换为文档对象，但是这些文档对象并没有按照Spring的Bean规则进行解析，这一步是载入过程
 	 * 其次，在完成通过XML解析之后，按照Spring Bean的定义规则对文档对象进行解析，其解析过程在接口BeanDefinitionDocumentReader的实现类
 	 * 实现
+     *
+     *
+     * |
+     *
+     * 其中的参数doc是通过上一节的loadDocument加载转换出来的，在这个方法中很好的应用了面向对象中的单一职责原则，将逻辑处理委托给单一
+     * 的类进行处理，而这个逻辑处理类就是BeanDefinitionDocumentReader，BeanDefinitionDocumentReader是一个接口，而实例化的工作就是在
+     * createBeanDefinitionDocumentReader()中完成的，而通过此方法，BeanDefinitionDocumentReader 真正的类型就是DefaultBeanDefinitionDocumentReader
+     * 了，发现这个方法的重要目的就是提取root ,以便于再次将root作为参数继续BeanDefinition的注册
+     *
      */
     public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
     	// 得到BeanDefinitionDocumentReader来对XML格式的BeanDefinition进行解析
@@ -602,7 +610,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
         // 获取容器中的注册的Bean的数量
         int countBefore = getRegistry().getBeanDefinitionCount();
         // 解析过程的入口，这里使用了委派模式，BeanDefinitionDocumentReader只是一个接口
-		// 具体的解析过程实现类DefaultBeanDefinitionDocumentReader来完成
+		// 具体的解析过程实现类DefaultBeanDefinitionDocumentReader来完成 | 加载并注册bean
         documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
         // 统计解析的Bean的数量
         return getRegistry().getBeanDefinitionCount() - countBefore;

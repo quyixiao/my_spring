@@ -81,13 +81,25 @@ public class DelegatingEntityResolver implements EntityResolver {
 	}
 
 
+	/**
+	 *
+	 * @param publicId
+	 * @param systemId
+	 * @return
+	 * 之前己经提到过，验证文件默认的加载方式是通过URL进行网络下载获取，这样会千万延迟，用户体验也不好，一般做法都是将验证文件放置在自己的工程里
+	 * ，那么怎样做才能将这个URL转换为自己的工程里对应的地址文件呢？我们以加载DTD文件为例来看看Spring是如何实现的，根据之前的Spring中通过
+	 * getEntityResolver()方法对EntityResolver的获取，我们知道，Spring中使用DelegatingEntityResolver类为EntityResolver的实现类
+	 * resolveEntity实现方式如下
+	 */
 	@Override
 	public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
 		if (systemId != null) {
 			if (systemId.endsWith(DTD_SUFFIX)) {
+				// 如果是dtd从这里解析
 				return this.dtdResolver.resolveEntity(publicId, systemId);
 			}
 			else if (systemId.endsWith(XSD_SUFFIX)) {
+				// 通过调用META-INF/spring.schemas解析
 				return this.schemaResolver.resolveEntity(publicId, systemId);
 			}
 		}

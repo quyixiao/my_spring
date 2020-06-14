@@ -140,6 +140,34 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		//
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 		if (this.delegate.isDefaultNamespace(root)) {
+			// 处理profile属性
+			// 我们注意到在注册Bean的最开妈的是对PROFILE_ATTRIBUTE属性的解析，可能对于我们来说，profile属性并不是很常用，让我们先了解
+			// 一下这个属性
+			// 分析profile前我们先了解下profile的用法，官方示例代码片段如下
+			/**
+			 * <?xml version="1.0" encoding="UTF-8"?>
+			 * <beans xmlns="http://www.springframework.org/schema/beans"
+			 *        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 *        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd"
+			 *	>
+			 *	<beans profile="dev">
+			 *	   ...
+			 *	   <bean profile="production">
+			 *	   	...
+			 *	   </bean>
+			 *  </beans>
+			 *  集成到Web环境中时，在web.xml中加入以下代码
+			 *  <context-param>
+			 *      <param-name>Spring.profiles.active</param-name>
+			 *      <param-value>dev</param-value>
+			 *  </context-param>
+			 *  有了这个†拨，我们就可以同时在配置文件中上部署两套配置来适用于生产环境和开发环境，这样可以方便的切换开发，部署环境
+			 *  最常用的就是更换不同的数据库
+			 *  了解了profile的使用再来分析代码清晰多了，首先程序会获取beans的节点是否定义了profile属性，如果定义了，则会需要到环境变量中
+			 *  去寻找，所以这里首先断言environment不可能为空。因为profile是可以同时指定多个的，需要程序对其拆分，并解析每个profile都是
+			 *  符合环境变量中所定义的，不定义则不会浪费性能去解析
+			 *
+			 */
 			String profileSpec = root.getAttribute(PROFILE_ATTRIBUTE);
 			if (StringUtils.hasText(profileSpec)) {
 				String[] specifiedProfiles = StringUtils.tokenizeToStringArray(
@@ -149,11 +177,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 				}
 			}
 		}
-		// 在解析Bean定义之前，进行自定义解析，增强解析过程的扩展性
+		// 在解析Bean定义之前，进行自定义解析，增强解析过程的扩展性 | 留给子类实现
 		preProcessXml(root);
 		// 从文档的根元素开始进行bean定义的文档对象来解析
 		parseBeanDefinitions(root, this.delegate);
-		// 在解析Bean定义之后进行自定义解析，增加解析过程的可扩展性
+		// 在解析Bean定义之后进行自定义解析，增加解析过程的可扩展性 | 留给子类实现
 		postProcessXml(root);
 
 		this.delegate = parent;
@@ -187,6 +215,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					Element ele = (Element) node;
 					if (delegate.isDefaultNamespace(ele)) {
 						// 使用Spring的Bean规则解析元素节点 | 开始默认标签解析
+						// | 如 这个代码看起来逻辑还是蛮清晰的，因为在Spring 的XML配置里面有两大类Bean声明，一个是默认的，如
+						// <bean id="test" class="test.TestBean">
 						parseDefaultElement(ele, delegate);
 					}
 					else {
@@ -291,6 +321,15 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						 * 上面的例子中，我们实现了通过自定义标签实现了通过属性的方式将 user 类别 的 bean 赋值，在 spring 中自定义的
 						 * 标签非常的有用，例如我们熟悉的事务标签，tx(<tx:annotation-driven>)
 						 *
+						 *
+						 * |
+						 * <tx:annotation-driven/>
+						 * 而两种方式的就读取差别是非常大的，如果采用的是Spring默认的配置，Spring当然知道该怎样做，但是如果是自定义的，
+						 * 那么就需要用户实现一些接口及配置了，对于根节点或者子节点如果是默认的命名空间的话，采用parseDefaultElment方法
+						 * 进行解析，否则使用delegate.parseCustomElment方法对自定义的命名空间进行解析，而判断是否是默认的命名空间还是
+						 * 自定义的命名空间的还是自定义的命名空间，并与Spring中固定的命名空间http://www.springframework.org/schema/beans
+						 * 进行比对，如果一致是默认，否则就认为是自定义的，而对于默认的标签解析我们将会在下一章中进行讨论
+						 *
 						 */
 						delegate.parseCustomElement(ele);
 					}
@@ -310,7 +349,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		if (delegate.nodeNameEquals(ele, IMPORT_ELEMENT)) {
 			importBeanDefinitionResource(ele);
 		}
-		// 如果节点是<alaas>别名元素，进行别名解析
+		// 如果节点是<alas>别名元素，进行别名解析
 		else if (delegate.nodeNameEquals(ele, ALIAS_ELEMENT)) {
 			processAliasRegistration(ele);
 		}
@@ -482,6 +521,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 * Spring Ioc容器在解析时首先将指定的资源加载到容器中，使用<alias>别名时，Spring Ioc容器首先将别名元素所定义的别名注册到容器中，
 	 * 对于既不是<import>元素又不是<alias>的元素，即Spring配置文件中普通的<bean>元素，由BeanDefinitionParserDelegate类的
 	 * ParseBeanDefinitionElement()方法实现解析，这个解析过程非常的复杂
+	 * |
+	 * 1.首先委托BeanDefinitionDelegate类的parseBeanDefinitionElement方法进行元素解析，返回BeanDefinitionHolder类型的bdHolder
+	 *   ,经过这个方法后bdHolder实例己经包含我们配置文件中配置的各个属性了，例如class,name,id,alias之类的属性
+	 * 2.当返回的bdHolder不为空的情况下若存在默认标签的子节点下再有自定义属性，还需要再次对自定义的属性进行标签解析
+	 * 3.解析完成后，需要对解析后的bdHolder进行注册，更新，注册操作委托给了BeanDefinitionReaderUtils的registerBeanDefinition方法
+	 * 4.最后发出响应事件，通知相关的监听器，这个bean己经加载好了
+	 *
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
 		//

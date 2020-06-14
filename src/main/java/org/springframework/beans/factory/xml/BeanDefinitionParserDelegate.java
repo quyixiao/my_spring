@@ -414,7 +414,7 @@ public class BeanDefinitionParserDelegate {
         // 获取<bean>元素的name属性值
         String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
         LogUtils.info("parseBeanDefinitionElement id " + id + " nameAttr " + nameAttr);
-        // 获取bean元素的alias属性值
+        // 获取bean元素的alias属性值 | 分割name属性
         List<String> aliases = new ArrayList<String>();
         // 将<bean>元素的中的所有alias属性值放入到别名中
         if (StringUtils.hasLength(nameAttr)) {
