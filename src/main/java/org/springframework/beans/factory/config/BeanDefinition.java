@@ -35,6 +35,19 @@ import org.springframework.core.AttributeAccessor;
  * @see ConfigurableListableBeanFactory#getBeanDefinition
  * @see org.springframework.beans.factory.support.RootBeanDefinition
  * @see org.springframework.beans.factory.support.ChildBeanDefinition
+ *
+ * BeanDefinition是一个接口，在Spring中存在三种实现，RootBeanDefinition,ChildBeanDefinition及GenericBeanDefinition
+ * 三种实现均继承了AbstractBeanDefinition ，其中BeanDefinition是配置文件<bean>元素标签容器中的内部表示形式，<bean>元素标签拥有
+ * class,scope,lazy-init等配置属性，BeanDefinition则提供了相应的beanClass,scope ,lazyInit属性，BeanDefinition和<bean>
+ *     中的属性是一一对应的，其中RootBeanDefinition是最常用的实现类，它对应一般性的<bean>元素标签，GenericBeanDefinition是自2.5
+ *     以后加入的bean文件配置属性的定义，是一站式服务类
+ *
+ * 在配置文件中可以定义父类的<bean>和子类的<bean>,父类的bean用RootBeanDefinition表示，而子类的bean用ChildBeanDefinition表示，而没有
+ * 父类的<bean>的<bean>就使用RootBeanDefinition表示，AbstractBeanDefinition对两者的共同类信息进行抽象
+ *
+ * BeanDefinitionRegistry中，Spring容器的BeanDefinitionRegistry就像是Spring配置信息的内存数据库，主要以map的形式保存，后续操作直接
+ * 从BeanDefinitionRegistry中读取配置信息，它们之间的关系如下图所示
+ *
  */
 public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
