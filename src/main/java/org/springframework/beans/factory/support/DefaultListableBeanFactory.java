@@ -878,7 +878,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			try {
 				LogUtils.info(" beanDefinition class Name :" + beanDefinition.getClass().getName());
 				//注册前的最后一次校验，这里检验不同于之前的 XML 文件的校验，主要是对于 AbstractBeanDefinition 属性中的 methodOverrides 校验
-				// 校验的 methodsOverides 是否是工厂方法并存或者 methodOverrides 对应的方法根本不存在
+				// 校验的 methodsOverrides 是否是工厂方法并存或者 methodOverrides 对应的方法根本不存在
 				((AbstractBeanDefinition) beanDefinition).validate();
 			}
 			catch (BeanDefinitionValidationException ex) {
@@ -891,6 +891,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// beanDefinitionMap 是一个全局的变量，这里定会存在并发访问的情况
 		oldBeanDefinition = this.beanDefinitionMap.get(beanName);
 		LogUtils.info("registerBeanDefinition oldBeanDefinition :" + oldBeanDefinition ,3);
+		// 处理注册己经注册的beanName的情况
 		if (oldBeanDefinition != null) {
 			// 如果对应的了 BeanName 已经注册且配置了 Bean 不允许被覆盖，则抛出异常
 			if (!isAllowBeanDefinitionOverriding()) {

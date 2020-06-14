@@ -278,7 +278,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 *   取指定的 alias 所表示的最终的 beanName ,例如别名 A 指向别名 B的 bean 则返回 B ;若别名 A 指向别名 B,别名 B 又指向别名 C的Bean
 	 *   则直接返回 C
 	 *   单例的在 Spring 的同一个容器内只会被创建一次，后续再获取 Bean ,就直接从单例缓存中获取了，当然，这里也只是尝试加载，首先会尝试
-	 *   从缓存中加载，如果加载不成功，则尝试从 singletonFactorys 中加载，因为为创建单例 bean 的时候会存在依赖注入的情况，而在创建依赖的时候
+	 *   从缓存中加载，如果加载不成功，则尝试从 singletonFactroy 中加载，因为为创建单例 bean 的时候会存在依赖注入的情况，而在创建依赖的时候
 	 *   为了避免循环依赖，在 Spring 中创建 Bean 的原则是不等 bean 创建完成就会将创建的 bean 的 ObjectBeanFactory 提前曝光加入到缓存中的
 	 *   一旦下一个 bean 创建的时候需要依赖上一个 bean 则直接使用BeanFactory
 	 * 3. bean 的实例化
@@ -288,9 +288,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 *  4.原型模式的依赖检查
 	*  只有在单例的情况下，才会尝试解决的循环依赖，如果存在 A中有 B 的属性，B 中有 A 的属性，那么当依赖注入的时候，就会产生 A 还未创建
 	 *   完成的时候，因为对于 B 的创建再次返回创建 A ,造成循环依赖，也就是情况,isPrototypeCurrentlyInCreation(beanName) 判断 true
-	 *   检测 parentBeanFatory
+	 *   检测 parentBeanFactory
 	 *   从代码的上来看，如果缓存 没有数据的话，直接转到父类的工厂上去加载了，这是为什么呢？
-	 *   可能读者会忽略一个很重要的判断条件，parentBeanFactory !=null && !containsBeanDefinition(beanName) ,parentBeanFactory !=null
+	 *   可能读者会忽略一个很重要的判断条件，parentBeanFactory !=null && !containsBeanDefinition(beanName)
 	 *   ,parentBeanFactory !=null ,parentBeanFactory  如果为空，则其他的一切都是浮云，但是!containsBeanDefinition(beanName) 就比较
 	 *   重要了，它是在检测如果当前加载的 xml 配置文件中不包含 beanName 所对应的配置，就只能到 parentBeanFactory 去尝试一下，然后再去
 	 *   递归的调用 getBean 方法
@@ -298,15 +298,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 *  RootBeanDefinition的，所以这里需要转换，转换的同时如果父类 bean 不为空的话，则会一并合并父类的属性
 	 *
 	 *  7.寻找依赖，因为 bean 初始化的过程很可能是会用到某些属性的，而某些属性很可能是动态配置的，并且配置成依赖于其他的 bean , 那么
-	 *  这个时候就有必要加载依赖的bean ，那么这个时候就有必要先加载依赖的 bean ，所以，在 Spring 的加载顺序中，在初始化某一个 bean 的时候
-	 *  首先会初始化这个 bean 所对应的依赖
+	 *  这个时候就有必要加载依赖的bean ，所以，在 Spring 的加载顺序中，在初始化某一个 bean 的时候,首先会初始化这个 bean 所对应的依赖
 	 *  8.针对不同的 scope 进行 bean 的创建
 	 *  我们都知道，在 Spring 中存在着不同的 scope ，其中默认的是 singleton ，但是还有一些其他的配置，诸如 prototype ，request 之类的
 	 *  在这个步骤中，Spring会根据不同的配置进行不同的初始化策略
 	 *
 	 *  9. 程序到这里返回 bean后已经基本的结果了，通常对该方法的调用参数 requiredType 是为空的，但是可能会存在这样的一种情况，返回的 bean
 	 *  其实是 String 类型的，但是 requiredType 传入的是 Integer类型，那么这个时候本步骤会直到了作用，它的功能是将返回bean 转换成
-	 *  requiredtype 所指定的类型，当然，String  转换为 Integer 是最简单的一种转换，在 Spring 提供了各种各样的转换器，用户也可以自己定义
+	 *  requiredType 所指定的类型，当然，String  转换为 Integer 是最简单的一种转换，在 Spring 提供了各种各样的转换器，用户也可以自己定义
 	 *  自己的转换器来满足需求
 	 *  经过上面的步骤后bean 的加载已经结束了，这个时候就可以返回我们需要的 bean 了，直观的反映整个过程，其中最重要的步骤就是8，针对不同的
 	 *  scope 进行 bean 的创建，你会看到各种常用的 Spring中提供了各种各样的转换器，用户也可以自己扩展转换器来满足需求
@@ -395,7 +394,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 			try {
 				//根据指定的Bean的名称获取其父级别的Bean的定义
-				// 主要解决Bean继承子类和父类公共属性的问题，将存在 XML 配置文件的 GernericBeanDefinition 转换为 RootBeanDefinition
+				// 主要解决Bean继承子类和父类公共属性的问题，将存在 XML 配置文件的 GenericBeanDefinition 转换为 RootBeanDefinition
 				// 如果指定 BeanName 是子的 Bean 的话同时合并父类的相关属性
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
 				checkMergedBeanDefinition(mbd, beanName, args);
@@ -1792,6 +1791,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * 	 2.对非 FactoryBean 不做任何处理
 	 * 	 3.对 bean 进行转换
 	 * 	 4.将从 Factory 上解析 bean 的工作委托给 getObjectFromFactoryBean
+	 *
+	 * 5.3 从bean实例中获取对象
+	 * 在getBean方法中，getObjectForBeanInstance是个高频率的使用的方法，无论是从缓存中获得bean还是根据不同的scope策略加载bean
+	 * 总之，我们得到bean的实例后要做的第一步就是调用这个方法来检测一下正确性，其实就是用于检测当前bean是否是FactoryBean类型的bean
+	 * ，如果是，那么需要调用该bean对应的FactoryBean实例中的getObject()作为返回值
+	 *
+	 * 无论是从缓存中获取的bean还是通过不同的scope策略加载的bean都只是最原始的bean状态,并不是最终想要 的bean，举个例子来说，例如我们
+	 * 需要对工厂bean进行处理，那么这里得到的其实就是工厂的bean的初始化状态，但是我们 真正需要的工厂bean中定义的factory-method方法中返回的
+	 * bean，而getObjectForBeanInstance方法就是完成这个工作的
+	 *
 	 *
 	 */
 	protected Object getObjectForBeanInstance(

@@ -1664,6 +1664,7 @@ public class BeanDefinitionParserDelegate {
 
     //  containingBd 为父类的 BeanDefinition ，对顶层元素的解析应该设置为 null
     //  其实思路非常的简单，无非是根据对应的Bean获取对应的命名空间，根据命名空间解析对应的处理器，然后根据用户自定义的处理器进行解析，
+    // 可是有些事情说起来简单做起来难，我们先看看如何获取命名空间吧。
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
         // 获取对应的命名空间
         String namespaceUri = getNamespaceURI(ele);
@@ -1689,10 +1690,14 @@ public class BeanDefinitionParserDelegate {
     }
 
     public BeanDefinitionHolder decorateBeanDefinitionIfRequired(Element ele, BeanDefinitionHolder definitionHolder) {
+        // 这里将函数中的第三个设置为空，那么第三个参数是做什么用的呢？什么情况下不为空呢？其实这第三个参数是父类的bean,当对某个嵌套
+        // 配置进行分析时，这里需要传递父类beanDefinition，分析源码得知这里传递的参数其实是为了使用父类的scope属性，以备子类若没有设置
+        // scope时默认使用父类的属性，这里分析的是顶层配置，所以传递null,将第三个参数设置为空后进一步跟踪函数：
         return decorateBeanDefinitionIfRequired(ele, definitionHolder, null);
     }
     // 我们总结一下 decorateBeanDefinitionIfRequired 方法的作用，在 decorateBeanDefinitionIfRequired 中，我们可以看到程序的
     // 默认的标签的处理其实是直接略过的，因此，默认的标签到这里已经被处理完成，这里对自定义的标签或者说对 bean 的我自定义属性感兴趣
+    // 在方法中实现了寻找自定义标签并根据自定义标签寻找命名空间处理器，并进行进一步的解析
     public BeanDefinitionHolder decorateBeanDefinitionIfRequired(
             Element ele, BeanDefinitionHolder definitionHolder, BeanDefinition containingBd) {
         BeanDefinitionHolder finalDefinition = definitionHolder;
@@ -1723,6 +1728,11 @@ public class BeanDefinitionParserDelegate {
         return finalDefinition;
     }
 
+    /***
+     * 程序直到这里，条理其实己经非常的清楚了，首先获取属性或者元素的命名空间，以此来判断该元素或者属性是否适用于自定义标签的解析条件，
+     * 找出自定义类型所对应的NamespaceHandler并进行进一步的解析，在自定义标签解析的章节我们会重点讲解，这里暂先略过
+     *
+     */
     public BeanDefinitionHolder decorateIfRequired(
             Node node, BeanDefinitionHolder originalDef, BeanDefinition containingBd) {
         // 获取自己定义标签的命名空间

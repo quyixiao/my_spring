@@ -147,8 +147,8 @@ public class BeanDefinitionReaderUtils {
 	 * @throws BeanDefinitionStoreException if registration failed
 	 * 将解析的BeanDefinitionHold注册到Spring IoC容器中
 	 * 当调用BeanDefintionReaderUtils向Spring IoC容器中注册解析的BeanDefintion时，真正完成注册功能是DefaultListableBeanFactory
-	 * 从这个代码中，我们可以看出，BeanDefinitionRegistry 类型的实例中，而对于 beanDefintion 的注册分成两个部分，通过 beanName 的注册
-	 * 以及通过别名来注册
+	 * 从这个代码中，我们可以看出,解析的beanDefinition被注册到BeanDefinitionRegistry 类型的实例registry中，而对于 beanDefintion 的注册分成两个部分，
+	 * 通过 beanName 的注册,以及通过别名来注册
 	 *
 	 */
 	public static void registerBeanDefinition(

@@ -64,7 +64,7 @@ public class SimpleAliasRegistry implements AliasRegistry {
 	 *  1.alias 与 beanName 相同的情况处理，若 alias 与 BeanName并名称相同则不需要处理并删除掉原有的 alias
 	 *  2.alias 覆盖处理，若 aliasName 已经使用并已经指向了另一个 BeanName，则需要用户的设置进行处理
 	 *  3.alias 循环检查，当 B -> C ,C -> A  存在时，若再次出现 A -> B 时候，则抛出异常
-	 *  注册 alias
+	 *  4.注册 alias
 	 */
 	@Override
 	public void registerAlias(String name, String alias) {

@@ -108,9 +108,10 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	 * from the configured mappings.
 	 * @param namespaceUri the relevant namespace URI
 	 * @return the located {@link NamespaceHandler}, or {@code null} if none found
-	 * 函数清晰的阐述了解析自定义NamespaceHandler 的过程，通过之前的示例程序，我们了解到如果要使用自定义的标签，那么其中一项不可少的
-	 * 操作就是 Spring.handlers 文件中配置命名空间处理的映射关系，只有这样，Spring 才能中所映射关系找到匹配的处理器，而寻找处理器就是
-	 * 在这个函数中实现，当获取自定义的 NamespaceHandler 之后就可以进行处理器初始化并解析了，我们不妨再回忆一下示例对命名空间的处理器的
+	 *
+	 * 上面的函数清晰的单阐述解析自定义NamespaceHandler的过程，通过之前的示例程序，，我们了解到中如果要使用自定义的标签，那么其中一个必不可少的
+	 * 操作就是Spring.handlers文件中配置命名空间与命名空间处理映射关系，只有这样，Spring才能根据映射关系找到匹配的处理器，而寻找匹配的处理器就是在上面的函数
+	 * 中实现了，当获取到自定义的NamespaceHandler之后就可以进行处理器初始化并解析了，我们不妨再次回忆一下示例中对于命名空间处理器的内容:
 	 * 内容
 	 * public class MyNamespaceHandler extends NamespaceHandlerSupport {
 	 *     public void init(){
@@ -167,6 +168,8 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 
 	/**
 	 * Load the specified NamespaceHandler mappings lazily.
+	 * 同我们想象中的一样，借助于工具类PropertiesLoaderUtils对属性handlerMappingsLocation进行了配置文件的读取，handlerMappingsLocation
+	 * 被默认初始化为"META-INF/Spring.handlers"
 	 */
 	private Map<String, Object> getHandlerMappings() {
 		// 如果没有被缓存则，开始缓存

@@ -210,20 +210,20 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 * 介绍过 FactoryBean 的用法后，我们就可以了解 bean 的加载过程了，前面已经提到过，单例在 Spring 的同一个容器内只会被创建一次
-	 * ，后续再获取 bean 直接从单例缓存中获取，当然这里中介尝试加载，首先尝试从缓存中加载，然后再次尝试从 singletonFactories 中加载
+	 * ，后续再获取 bean 直接从单例缓存中获取，当然这里也只是尝试加载，首先尝试从缓存中加载，然后再次尝试从 singletonFactories 中加载
 	 * 因为在创建单例 bean 的时候会存在依赖注入的情况，而在创建依赖的时候为了避免循环依赖，Spring 在创建 bean 的原则是不等 bean获取
 	 * 创建完成就会将创建bean的 ObjectFactory 提早曝光加入到缓存中，一旦下一个 bean 创建的时候需要依赖上一个 bean，则直接使用 ObjectFactory
 	 *
 	 * 这个方法因为涉及循环依赖的检测，以及涉及很多的变量的记录存取，所以让很多的读者摸不着头脑，这个方法首先尝试从 singletonObjects 里面
-	 * 获取实例，如果获取不到，再从 earlySingletonObjects 里来获取，如果还是获取歪，再尝试从 singletonFactories 里面获取BeanName 对应的
-	 * 对应的 ObjectFactory ，然后调用这个 ObjectFacotry 里的 getObject 来创建 bean ,并放到，并放到 earlySingletonObject 里面去
+	 * 获取实例，如果获取不到，再从 earlySingletonObjects 里来获取，如果还是获取不到，再尝试从 singletonFactories 里面获取BeanName 对应的
+	 * 对应的 ObjectFactory ，然后调用这个 ObjectFactory 里的 getObject 来创建 bean ,并放到，并放到 earlySingletonObject 里面去
 	 * 并且从 singletonFactories 里面 remove掉这个 ObjectFactory ，而对后续的所有的内存操作都只为了循环依赖检测的时候用，也就是在
 	 * allowEarlyReference 为true 的情况下才会使用
 	 *
 	 * 这里可能会涉及到不同存储 bean 的不同的 map ,可能让读者感到崩溃，简单的解释如下
 	 * singletonObjects : 用于保存 BeanName 和创建 bean实例之间的关系，bean name -> bean instance
 	 * singletonFactories : 用于保存 beanName 和创建 bean 工厂之间的关系，bean name --> object Factory
-	 * earlySingletonObjects : 也是保存 BeanName 和创建 bean 实例之间的关系，与 singleonObjects 的不同之处在于，当一个单例 bean
+	 * earlySingletonObjects : 也是保存 BeanName 和创建 bean 实例之间的关系，与 singlonObjects 的不同之处在于，当一个单例 bean
 	 *  被放置在里面的时候，那么当 bean 还在创建过程中，就可以通过 getBean 方法获取到了，其上的是用来检测循环引用，
 	 *  registerdSingletons :  用来保存当前已经注册的 bean
 	 *

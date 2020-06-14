@@ -221,7 +221,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 					}
 					else {
 						// 如果没有使用Spring默认的xml命名空间，则使用用户自定义的解析规则解析元素的节点 |  开始自定义标签两种格式的区分
-						// Spring 拿到一个元素时首先要做的是根据命名空间进行解析，如果是默认的命名空间，则使用 parseDefaultElment方法
+						// Spring 拿到一个元素时首先要做的是根据命名空间进行解析，如果是默认的命名空间，则使用 parseDefaultElement方法
 						// 进行元素解析，否则使用 parseCustomElment 元素进行解析，在分析自定义标签的解析过程前，我们先了解一下使用过程
 						// 在很多的情况下，我们需要为系统提供可配置的支持，简单的做法可以直接基于 Spring 的标准来配置，但是配置较为复杂
 						// 的时候，解析工作是一个不得不考虑的负担，Spring 提供了可扩展的 Schema 的支持，这是一个不错的折中方案，扩展
@@ -263,7 +263,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						 * import org.springframework.util.StringUtils;
 						 * import org.w3c.dom.Element;
 						 * public class UserBeanDefinitionParser extends AbstractSingleBeanDefinitionParser{
-						 * 	//Elment 对应的类
+						 * 	//Element 对应的类
 						 * 	protected Class getBeanClass(Elment element){
 						 * 		return User.class;
 						 * 	}
@@ -393,12 +393,22 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 *  <beans>
 	 *
 	 *  </beans>
+	 *
+	 *  |
+	 *  这个代码不难，相信配置注释会很好的理解，我们总结一下大致的流程便于读者更好的梳理，在解析<import标签时，Spring进行解析的步骤大致如下
+	 *  1.获取resource属性所表示的路径
+	 *  2.解析路径中的系统属性，格式如"${user.dir}"
+	 *  3.判断location是绝对路径还是相对路径
+	 *  4.如果是绝对路径则递归调用bean的解析过程，进行另一次的解析
+	 *  5.如果是相对路径则计算出绝对路径并返回
+	 *  6.通知监听器，解析完成
+	 *
 	 */
 	protected void importBeanDefinitionResource(Element ele) {
 		// 获取给定的导入元素的location属性 | 获取 resource 属性
 		String location = ele.getAttribute(RESOURCE_ATTRIBUTE);
 		LogUtils.info(" importBeanDefinitionResource location  :" + location);
-		//如果导入元素的location属性值为空，则没有导入任何资源，直接返回
+		//如果导入元素的location属性值为空，则没有导入任何资源，直接返回 | 如果不存在resource属性则不做任何处理
 		if (!StringUtils.hasText(location)) {
 			getReaderContext().error("Resource location must not be empty", ele);
 			return;
@@ -480,12 +490,34 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	/**
 	 * Process the given alias element, registering the alias with the registry.
 	 *  解析<alias>别名元素，为Bean向Spring IoC容器注册别名
+	 *  3.2 alias 标签解析
+	 *  通过上面较长的篇幅我们终于分析完了默认标签中的bean标签的处理，那么我们之前提到过，对配置文件的解析包括对import标签，alias标签
+	 *  ,bean标签，beans标签的处理，现在我们己经完成了最重要的也就是最核心的功能，其他的解析步骤也都是围绕第3个解析而进行的，在分析了
+	 *  第三个解析步骤后，再回头来看看对alias标签的解析。
+	 *  对bean进行定义时，除了使用id属性来指定名称之外，为了提供多个名称，可以使用alias标签来指定，而所有的这些名称都指向了同一个bean
+	 *  ，在某些情况下，提供别名非常有用，比如为了让应用的的每个组件都更加容易的对公共的组件进行引用。
+	 *  然而，在定义bean时就指定了所有的别名并不是总是恰当的，有时， 我们期望能在当前位置为那些别处定义的bean的引入别名，在XML配置文件中
+	 *  ，可用单独的<alias/>元素来完成bean的别名的定义，如配置文件中定义了一个javaBean :
+	 *  <bean id="testBean" class="com.test"></bean>
+	 *  要给这个JavaBean增加别名，以方便不同的对象来调用，我们就可以直接使用bean标签中的name属性：
+	 *  <bean id="testBean" class="com.test"></bean>
+	 *  <bean name="testBean1,testBean2"></bean>
+	 *  考虑一个是加具体的例子，组件 A 在XML配置文件中定义一个名为componentA的DataSource类型的bean，但是组件B却想在其XML文件中以componentB命名来引用
+	 *  bean,而且在主程序MyApp的XML配置文件中，希望以myApp的名字来引用此bean，最后容器加载3个XML文件来生成最终的ApplicationContext
+	 *  ，在此情形下，可通过在配置文件中添加下列的alias元素来实现。
+	 *  <alias name="componentA" alias="componentB"></alias>
+	 *  <alias name="componentB" alias="myApp"></alias>
+	 *  这样一来，每个组件及主程序都可以通过唯一的名字来引用一个数据源而互不干扰。
+	 *  在之前的章节己经讲过对于bean中的name元素解析，那么我们现在再来深入分析对于alias标签的解析过程。
+	 *  |
+	 *  可以发现，跟之前的讲过的bean中的alias解析大同小异，都是将别名与beanName组成一对注册至registry中，这里不再哆嗦
+	 *
 	 *
 	 */
 	protected void processAliasRegistration(Element ele) {
-		//获取<alias>别名元素中的name的属性值
+		//获取<alias>别名元素中的name的属性值 | 获取beanName
 		String name = ele.getAttribute(NAME_ATTRIBUTE);
-		//获取<alias>别名元素中的alias的属性值
+		//获取<alias>别名元素中的alias的属性值 | 获取alias
 		String alias = ele.getAttribute(ALIAS_ATTRIBUTE);
 		boolean valid = true;
 		//<alias>别名元素的alias属性值为空
@@ -530,7 +562,6 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	 *
 	 */
 	protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
-		//
 		BeanDefinitionHolder bdHolder = delegate.parseBeanDefinitionElement(ele);
 		// BeanDefinitionHolder是对BeanDefinition的封装，即Bean定义封装类
 		// 对文档中的<Bean>元素解析由BeanDefinitionParserDelegate实现
@@ -562,6 +593,9 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 			// Send registration event.
 			// 在完成向Spring IoC容器注册解析得到的Bean定义之后，发送注册事件
+			// | 通过 getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder)); 来完成此工作，这里实现
+			// 只为扩展，当程序开发人员需要对注册的BeanDefinition事件进行监听时可以通过注册监听器方式将处理的逻辑写入监听器中，目前在Spring
+			// 并没有对此事做任何逻辑处理
 			getReaderContext().fireComponentRegistered(new BeanComponentDefinition(bdHolder));
 		}
 	}
