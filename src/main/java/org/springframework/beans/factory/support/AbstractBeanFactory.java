@@ -425,6 +425,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						public Object getObject() throws BeansException {
 							try {
 								//创建一个指定的Bean的实例对象，如果有父类继承，则合并子类和父类的定义
+								// | ObjectFactory核心的部分其实只调用了createBean的方法，所以我们还需要到createBean方法中追寻真理
 								return createBean(beanName, mbd, args);
 							}
 							catch (BeansException ex) {

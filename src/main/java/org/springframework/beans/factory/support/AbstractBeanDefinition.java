@@ -992,7 +992,7 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 * 通过以上的两个函数的代码你能体会到它所要实现的功能吗？ 之前反复提到过，在 spring 配置中存在 lookup-method 和 replace-method
 	 * 两个配置功能，而这两个配置的加载其实就是将配置统一存在在 beanDefinition 中的 methodOverrides 两个配置功能，而这两个配置加载
 	 * 其实就是将配置统一存放在 BeanDefinition 中的 methodOverrides 属性里，这两个功能实现的原理其实是在 bean 实例化的时候如果检测
-	 * 到存在 methodOverides 属性，会动态的为当前 bean 生成代理并使用对应的拦截器 bean 做增强处理，相关的逻辑实在在 bean 的实例化部分
+	 * 到存在 methodOverrides 属性，会动态的为当前 bean 生成代理并使用对应的拦截器 bean 做增强处理，相关的逻辑实在在 bean 的实例化部分
 	 * 详解介绍
 	 * 但是，这里要提到的是，对于方法的匹配来讲，如果一个类中存在若干个重载的方法，那么函数调用及增强的时候还是需要根据参数类型进行匹配的
 	 * ，来最终确认当前调用的到底是哪个函数，但是，Spring 将一部分匹配工作在这里完成了，如果当前类中方法中有一个，那么就设置重载该方法了

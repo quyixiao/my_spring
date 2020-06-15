@@ -340,7 +340,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+				// 在创建单例前调用
 				beforeSingletonCreation(beanName);
+
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
@@ -371,6 +373,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					// 在单例创建后调用
 					afterSingletonCreation(beanName);
 				}
 
@@ -542,9 +545,6 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 *                          性，自动属性依赖注入也有不足，首先，Bean的依赖关系在配置文件中无法很清楚的看出来，会给维护造成一定的
 	 *                          困难，其实，由于自动属性依赖注入是Spring 容器自动执行的，容器是会智能的判断的，如果配置不当用，将会
 	 *                         带来无法预料的后果，所以在使用自动属性依赖注入的时候需要综合的考虑
-	 *
-	 *
-	 *
 	 */
 	public void registerDependentBean(String beanName, String dependentBeanName) {
 		// A quick check for an existing entry upfront, avoiding synchronization...
