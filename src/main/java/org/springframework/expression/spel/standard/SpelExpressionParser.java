@@ -50,11 +50,12 @@ public class SpelExpressionParser extends TemplateAwareExpressionParser {
 		this.configuration = configuration;
 	}
 
-
+	// 最终都是委托给了Spring的内部使用的类：InternalSpelExpressionParser--> 内部的SpEL表达式解析器~~~
 	public SpelExpression parseRaw(String expressionString) throws ParseException {
 		return doParseExpression(expressionString, null);
 	}
 
+	// 这里需要注意：因为是new的，所以每次都是一个新对象，所以它是线程安全的~
 	@Override
 	protected SpelExpression doParseExpression(String expressionString, ParserContext context) throws ParseException {
 		return new InternalSpelExpressionParser(this.configuration).doParseExpression(expressionString, context);

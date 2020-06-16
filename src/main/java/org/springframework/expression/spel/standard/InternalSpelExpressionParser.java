@@ -82,6 +82,7 @@ import org.springframework.util.StringUtils;
  * @author Phillip Webb
  * @since 3.0
  */
+// 它是Spring内部使用的类
 class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 
 	private static final Pattern VALID_QUALIFIED_ID_PATTERN = Pattern.compile("[\\p{L}\\p{N}_$]+");
@@ -90,12 +91,15 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	private final SpelParserConfiguration configuration;
 
 	// For rules that build nodes, they are stacked here for return
+	// 此处用一个双端队列  来保存表达式的每一个节点，每个节点都是一个SpelNode 该对象记录着位置、子节点、父节点等等
 	private final Stack<SpelNodeImpl> constructedNodes = new Stack<SpelNodeImpl>();
 
 	// The expression being parsed
+	// 带解析的表达式字符串
 	private String expressionString;
 
 	// The token stream constructed from that expression string
+	// Token流：token保存着符号类型（如int(,]+=?>=等等各种符号 非常之多）  然后记录着它startPos和endPos
 	private List<Token> tokenStream;
 
 	// length of a populated token stream
@@ -108,6 +112,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	/**
 	 * Create a parser with some configured behavior.
 	 * @param configuration custom configuration options
+	 *                     唯一的一个构造函数
 	 */
 	public InternalSpelExpressionParser(SpelParserConfiguration configuration) {
 		this.configuration = configuration;
@@ -118,17 +123,22 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	protected SpelExpression doParseExpression(String expressionString, ParserContext context) throws ParseException {
 		try {
 			this.expressionString = expressionString;
+			// Tokenizer就是分词器。把待解析的表达式交给它分词
 			Tokenizer tokenizer = new Tokenizer(expressionString);
+			// process处理，得到tokenStream  并且记录上它的总长度  并且标记当前处理点为0
 			tokenizer.process();
 			this.tokenStream = tokenizer.getTokens();
 			this.tokenStreamLength = this.tokenStream.size();
 			this.tokenStreamPointer = 0;
+			// 显然把当前节点清空
 			this.constructedNodes.clear();
 			SpelNodeImpl ast = eatExpression();
 			if (moreTokens()) {
 				throw new SpelParseException(peekToken().startPos, SpelMessage.MORE_INPUT, toString(nextToken()));
 			}
 			Assert.isTrue(this.constructedNodes.isEmpty());
+			// 最终：每一个SpelNodeImpl  它就是一个SpelExpression表达式，但会出去。\
+			// 此时：只是把我们的字符串解析成为一个SpelExpression，还没有参与赋值、计算哦~~~~
 			return new SpelExpression(expressionString, ast, this.configuration);
 		}
 		catch (InternalParseException ex) {

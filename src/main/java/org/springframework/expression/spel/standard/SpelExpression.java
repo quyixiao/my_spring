@@ -45,35 +45,42 @@ import org.springframework.util.Assert;
 public class SpelExpression implements Expression {
 
 	// Number of times to interpret an expression before compiling it
+	// 在编译表达式之前解释该表达式的次数。
 	private static final int INTERPRETED_COUNT_THRESHOLD = 100;
 
 	// Number of times to try compiling an expression before giving up
+	// 放弃前尝试编译表达式的次数
 	private static final int FAILED_ATTEMPTS_THRESHOLD = 100;
 
 
 	private final String expression;
 
-	private final SpelNodeImpl ast;
+	private final SpelNodeImpl ast;	// AST：抽象语法树~// SpelNodeImpl的实现类非常非常之多
 
 	private final SpelParserConfiguration configuration;
 
 	// The default context is used if no override is supplied by the user
+	// 如果没有指定，就会用默认的上下文 new StandardEvaluationContext()
 	private EvaluationContext evaluationContext;
 
 	// Holds the compiled form of the expression (if it has been compiled)
+	// 如果该表达式已经被编译了，就会放在这里 @since 4.1  Spring内部并没有它的实现类  尴尬~~~编译是要交给我们自己实现？？
 	private CompiledExpression compiledAst;
 
 	// Count of many times as the expression been interpreted - can trigger compilation
 	// when certain limit reached
+	// 表达式被解释的次数-达到某个限制时可以触发编译
 	private volatile int interpretedCount = 0;
 
 	// The number of times compilation was attempted and failed - enables us to eventually
 	// give up trying to compile it when it just doesn't seem to be possible.
+	// 编译尝试和失败的次数——使我们最终放弃了在似乎不可能编译时尝试编译它的尝试。
 	private volatile int failedAttempts = 0;
 
 
 	/**
 	 * Construct an expression, only used by the parser.
+	 * 唯一构造函数
 	 */
 	public SpelExpression(String expression, SpelNodeImpl ast, SpelParserConfiguration configuration) {
 		this.expression = expression;
@@ -93,6 +100,7 @@ public class SpelExpression implements Expression {
 	/**
 	 * Return the default evaluation context that will be used if none is supplied on an evaluation call.
 	 * @return the default evaluation context
+	 * 若没有指定，这里会使用默认的StandardEvaluationContext上下文
 	 */
 	public EvaluationContext getEvaluationContext() {
 		if (this.evaluationContext == null) {
@@ -107,6 +115,7 @@ public class SpelExpression implements Expression {
 	@Override
 	public Object getValue() throws EvaluationException {
 		Object result;
+		// 如果已经被编译过，就直接从编译后的里getValue即可
 		if (this.compiledAst != null) {
 			try {
 				TypedValue contextRoot = evaluationContext == null ? null : evaluationContext.getRootObject();
@@ -125,10 +134,16 @@ public class SpelExpression implements Expression {
 			}
 		}
 		ExpressionState expressionState = new ExpressionState(getEvaluationContext(), this.configuration);
+		// 比如此处SeEl是加法+，所以ast为：OpPlus语法树去处理的
 		result = this.ast.getValue(expressionState);
+		// 检查是否需要编译它
 		checkCompile(expressionState);
 		return result;
 	}
+
+	// 备注：数据转换都是EvaluationContext.getTypeConverter() 来进行转换
+	// 注意：此处的TypeConverter为`org.springframework.expression`的  只有一个实现类：StandardTypeConverter
+	// 它内部都是委托给ConversionService去做的，具体是`DefaultConversionService`去做的
 
 	@Override
 	public Object getValue(Object rootObject) throws EvaluationException {

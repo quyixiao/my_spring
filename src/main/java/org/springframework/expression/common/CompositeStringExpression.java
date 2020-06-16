@@ -69,7 +69,7 @@ public class CompositeStringExpression implements Expression {
 		}
 		return sb.toString();
 	}
-
+	// 它是把每个表达式的值都拼接起来了 因为它只会运用于Template模式
 	@Override
 	public String getValue(Object rootObject) throws EvaluationException {
 		StringBuilder sb = new StringBuilder();
@@ -106,6 +106,7 @@ public class CompositeStringExpression implements Expression {
 		return sb.toString();
 	}
 
+	// 返回值的类型一样的永远是String.class
 	@Override
 	public Class<?> getValueType(EvaluationContext context) {
 		return String.class;

@@ -679,44 +679,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 这里是一个匿名的内部类，为了防止循环引用，尽早的有对象引用
 			// 为了避免后期的循环依赖，可以在 bean 的初始化完成前将创建的实例 BeanFactory 加入到工厂中
 			// 为了避免后期的循环依赖，可以在bean 初始化完成前后将创建的实例 ObjectFactory  加入到工厂中
-			/**
-			 * 2.setter循环依赖
-			 *  表示通过setter注入的方式构成循环依赖，对于setter注入很造成的依赖是通过Spring容器提前暴露刚完成的构造器注入但未完成其他
-			 *  步骤(如setter注入)的bean来完成的，而且只能解析单例作用域的bean循环依赖，通过提前暴露一个单例工厂方法，从而使其他的bean
-			 *  能引用到bean ,如下代码所示：
-			 *	...
-			 * 	具体步骤如下：
-			 * 	1.Spring 容器创建单例，"testA" bean，首先根据无参构造器创建bean ,并暴露一个"ObjectFactory"用于返回一个提前暴露
-			 * 	一个创建中的bean ，并将"TestA"标识符放到当前创建的bean池中，然后进行setter注入"testB"
-			 * 	2.Spring容器创建单例"testB" bean ,首先根据无参创建bean ,并暴露一个"Object"用于返回一个提前暴露一个创建中的bean
-			 * 	，并将"testB"标识符放到"当前创建的bean"池，然后进行setter注入"circle"
-			 * 	3.Spring容器创建单例"testC"bean，首先根据无参构造器创建bean,并暴露了一个"ObjectFactory"用于返回一个提前暴露一个
-			 * 	创建中的bean ,并将"testC"标识符放到"当前创建的bean池",然后进行setter注入，"testA",时由于提前暴露了"ObjectFactory"
-			 * 	工厂，从而使用它返回提前暴露一个创建中的bean
-			 * 	4.最后在依赖注入"testB"和"testA"，完成setter注入
-			 * |
-			 * prototype范围的依赖处理
-			 * 对于"prototype"作用域bean ,Spring容器无法完成依赖注入，因为Spring容器不进行缓存 "prototype"作用域的bean ,因此无法
-			 * 提前暴露一个创建bean ,示例如下：
-			 * 1.创建配置文件
-			 *  <bean id="testA" class="com.bean.CricleA" scope="prototype">
-			 *  	<property name="testB" ref="testB"></property>
-			 *  </bean>
-			 *  <bean id="testB" class="com.bean.CircleB" scope="prototype">
-			 *  	<property name="testC" ref="testC" />
-			 *  </bean>
-			 *  <bean id="testC" class="com.bean.CircleC" scope="prototype">
-			 *  	<property name="testA" ref="testA"></property>
-			 *  </bean>
-			 *
-			 * 测试：
-			 * 	ClassPathXmlApplicationContext bf = new ClassPathXmlApplicationContext("testPropertytype.xml");
-			 * 	System.out.println(bf.getBean("testA"));
-			 *
-			 * 对于"singleton"作用域bean ,可以通过"setAlloCircularReferences(false)"来禁用循环引用。
-			 *
-			 *
-			 */
+
 			addSingletonFactory(beanName, new ObjectFactory<Object>() {
 				@Override
 				public Object getObject() throws BeansException {
@@ -735,6 +698,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 将Bean实例对象封装，并且将Bean定义占的配置属性值赋给实例对象,对bean属性进行依赖注入
 			// Bean实例对象的依赖注入完成后，开始对Bean实例对象进行初始化，为Bean实例对象应用BeanPostProcessor后置处理器
 			// 对 bean 进行填充，将各个属性值注入，其中可能存在依赖于其他的 bean 的属性，则会递归的初始依赖 bean
+			// |
+			// 为什么构造器注入的时候会出现循环依赖问题而属性注入不会出现循环依赖问题？
+			// 在使用构造器注入时，会在此处产生递归操作，在第四层创建A时DefaultSingletonBeanRegistry的beforeSingletonCreation方法中会报错
+			//		因为DefaultSingletonBeanRegistry的this.singletonFactories中没有A的bean缓存。所以在beforeSingletonCreation中便会报错。
+			//		那么为什么用属性注入时就不会报错呢？因为this.singletonFactories缓存发生在当前方法的addSingletonFactory行，而属性注入的递归发生在
+			// 这一行，也就是说 先进行了缓存。而构造器注入时 还没来得及缓存就已经递归到下一层了。
 			populateBean(beanName, mbd, instanceWrapper);
 			if (exposedObject != null) {
 				// 初始化Bean对象
@@ -756,86 +725,6 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// |
 			// earlySingletonReference 只有检测到你有循环依赖的情况下才会不为空
 			// |
-			// 5.6 循环依赖
-			// 实例化bean是一个非常复杂的过程，而其中比较难以理解的主不是对循环依赖的解决，不管是读者有没有对循环依赖方面的研究，这里有必要
-			// 对此知识稍作回顾的
-			// 5.6.1 什么是循环依赖
-			// 循环依赖就是循环引用，就是两人上或者多个bean之间的相互之间持有对方，比如CircleA引用CircleB，CircleB引用CircleC，ClircleC
-			// 引用CircleA ，它们之间最终反映成一个环境，此处不是循环调用，循环调用是方法之间的循环调用。
-			// 循环调用是无法解决的，除非有终结条件，否则就是死循环，最终导致内存溢出错误 。
-			// 5.6.2 Spring是如何解决循环依赖的呢？
-			// Spring 容器循环依赖包括构造器循环依赖和setter循环依赖，那Spring容器是如何解析的呢？首先让我们来循环引用类
-			/**
-			 * public class TestA{
-			 * 		private TestB testB ;
-			 * 		public void a (){
-			 * 			testB.b();
-			 * 		}
-			 * 		public TestB getTestB(){
-			 * 			return testB;
-			 * 		}
-			 * 	 	public void setTestB(TestB testB){
-			 * 	 		this.testB = testB;
-			 * 	 	}
-			 * }
-			 * public class TestB{
-			 * 		private TestC testC ;
-			 * 		public void b (){
-			 * 			testC.c();
-			 * 		}
-			 * 		public TestC getTestC(){
-			 * 			return testC;
-			 * 		}
-			 * 		public void setTestC(TestC testC){
-			 * 			this.testC = testC ;
-			 * 		}
-			 * }
-			 *
-			 * public class TestC{
-			 * 		private TestA testA ;
-			 * 		public void c(){
-			 * 			testA.a();
-			 * 		}
-			 * 		public   TestA getTestA(){
-			 * 			return testA;
-			 * 		}
-			 * 		public void setTestA(TestA testA){
-			 * 			this.testA = testA ;
-			 * 		}
-			 * }
-			 * 在Spring中将循环依赖处理分成三种情况
-			 * 1.构造器循环依赖
-			 * 表示经过构造器注入构成的循环依赖，此依赖是无法解决的，只能抛出BeanCurrentlyInCreationException异常表示循环依赖。
-			 * 如在创建TestA 类时，构造器需要TestB类，那么去创建TestB，在创建TestB类时双发现需要TestC类，则又去创建TestC ，最终
-			 * 在创建TestC 时发现又需要将TestA ,从而形成一个循环，没有办法创建
-			 * Spring 容器将每一个正在创建的bean标识放在一个当前的创建的bean池中，bean标识符创建过程中将一直保持在这个池中，因此
-			 * 如果在创建bean的过程中发现自己己经在当前创建bean池里时，抛出BeanCurrentlyInCreattionException异常表示循环依赖。
-			 * 而对于创建完毕的bean将从当前的"bean池"中清除掉。
-			 * 我们可以通过一个测试文件来进行分析
-			 * <bean id="testA" class="com.bean.testA">
-			 * 		<constructor-arg index="0" ref="testB"></constructor-arg>
-			 * </bean>
-			 *
-			 * <bean id="testB" class="com.bean.testB">
-			 * 		<constructor-arg index="0" ref="testC"></constructor-arg>
-			 * </bean>
-			 *
-			 * <bean id="testC" class="com.bean.testC">
-			 * 		<constructor-arg index="0" ref="testA"></constructor-arg>
-			 * </bean>
-			 *
-			 * 2.创建bean的测试用例
-			 * new ClassPathXmlApplicationContext("test.xml");
-			 * 针对以下的代码分析如下：
-			 * Spring 容器创建"testA" bean时，首先去当前创建bean池，查找是否当前bean正在创建，如果没有发现，则继续准备其需要的构造器
-			 * 参数testB，并将testA 标识放到当前创建的Bean池中
-			 * Spring容器创建testB的bean，首先去当前创建bean池，查找是否当前bean正在创建，如果没有发现，则继续准备其需要的构造器参数
-			 * "testC" ，并将"testB"标识符放到当前创建bean池
-			 * Spring 容器创建"testC" bean首先去创建bean池，查找是否当前的bean正在创建，如果没有发现，则继续准备其需要的构造器参数
-			 * testA，并将"testC"标识符放到当前创建的"bean池"
-			 * 到此为止，Spring容器要创建"testA"bean标识，发现bean标识符在当前创建的bean池中，因为循环依赖，抛出BeanCurrentlyInCreationException
-			 *
- 			 */
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
 				// 根据名称获取已经注册的Bean和正在实例化的Bean是不是同一个

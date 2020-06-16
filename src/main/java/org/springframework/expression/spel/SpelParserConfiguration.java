@@ -27,31 +27,34 @@ import org.springframework.core.SpringProperties;
  * @author Andy Clement
  * @since 3.0
  * @see org.springframework.expression.spel.standard.SpelExpressionParser#SpelExpressionParser(SpelParserConfiguration)
+ * 它是个public类，因为`StandardBeanExpressionResolver`也使用到了它~~~
  */
 public class SpelParserConfiguration {
 
 	private static final SpelCompilerMode defaultCompilerMode;
 
 	static {
+		// 它的值可由`spring.properties`里面的配置改变~~~~  所以你可以在你的类路径下放置一个文件，通过`spring.expression.compiler.mode=IMMEDIATE`来控制编译行为
 		String compilerMode = SpringProperties.getProperty("spring.expression.compiler.mode");
 		defaultCompilerMode = (compilerMode != null ?
 				SpelCompilerMode.valueOf(compilerMode.toUpperCase()) : SpelCompilerMode.OFF);
 	}
 
-
+	// 调用者若没指定，会使用上面的默认的~
 	private final SpelCompilerMode compilerMode;
 
 	private final ClassLoader compilerClassLoader;
-
+	// 碰到为null的，是否给自动new一个对象，比如new String()，new ArrayList()等等~
 	private final boolean autoGrowNullReferences;
-
+	// 专门针对于集合是否new
 	private final boolean autoGrowCollections;
-
+	// 集合能够自动增长到的最大值~~
 	private final int maximumAutoGrowSize;
 
 
 	/**
 	 * Create a new {@code SpelParserConfiguration} instance with default settings.
+	 *  省略get/set方法~~~后面会给一个自定义配置的示例~~~
 	 */
 	public SpelParserConfiguration() {
 		this(null, null, false, false, Integer.MAX_VALUE);

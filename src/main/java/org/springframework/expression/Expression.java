@@ -27,12 +27,14 @@ import org.springframework.core.convert.TypeDescriptor;
  * @author Andy Clement
  * @since 3.0
  */
+// @since 3.0   表达式计算的通用抽象。  该接口提供的方法非常非常之多~~~ 但不要怕大部分都是重载的
 public interface Expression {
 
 	/**
 	 * Evaluate this expression in the default standard context.
 	 * @return the evaluation result
 	 * @throws EvaluationException if there is a problem during evaluation
+	 * 使用一个默认的标准的context执行计算~~~
 	 */
 	Object getValue() throws EvaluationException;
 
@@ -41,6 +43,7 @@ public interface Expression {
 	 * @param rootObject the root object against which properties/etc will be resolved
 	 * @return the evaluation result
 	 * @throws EvaluationException if there is a problem during evaluation
+	 *
 	 */
 	Object getValue(Object rootObject) throws EvaluationException;
 
@@ -50,6 +53,7 @@ public interface Expression {
 	 * @param desiredResultType the class the caller would like the result to be
 	 * @return the evaluation result
 	 * @throws EvaluationException if there is a problem during evaluation
+	 * SpEL内部帮你转换~~~  使用的是默认的context
 	 */
 	<T> T getValue(Class<T> desiredResultType) throws EvaluationException;
 
@@ -69,6 +73,7 @@ public interface Expression {
 	 * @param context the context in which to evaluate the expression
 	 * @return the evaluation result
 	 * @throws EvaluationException if there is a problem during evaluation
+	 * 根据指定的上下文:EvaluationContext来计算值~~~  rootObject：跟对象
 	 */
 	Object getValue(EvaluationContext context) throws EvaluationException;
 
@@ -79,6 +84,8 @@ public interface Expression {
 	 * @param rootObject the root object against which properties/etc will be resolved
 	 * @return the evaluation result
 	 * @throws EvaluationException if there is a problem during evaluation
+	 *  以rootObject作为表达式的root对象来计算表达式的值。
+	 * root对象：比如parser.parseExpression("name").getValue(person);相当于去person里拿到name属性的值。这个person就叫root对象
 	 */
 	Object getValue(EvaluationContext context, Object rootObject) throws EvaluationException;
 
@@ -111,6 +118,7 @@ public interface Expression {
 	 * method using the default context.
 	 * @return the most general type of value that can be set on this context
 	 * @throws EvaluationException if there is a problem determining the type
+	 * 返回可传递给@link setvalue的最一般类型
 	 */
 	Class<?> getValueType() throws EvaluationException;
 
@@ -184,6 +192,7 @@ public interface Expression {
 	 * @return true if the expression is writable
 	 * @throws EvaluationException if there is a problem determining if it is writable
 	 */
+	// 确定是否可以写入表达式，即可以调用setValue（）
 	boolean isWritable(EvaluationContext context) throws EvaluationException;
 
 	/**
@@ -219,6 +228,7 @@ public interface Expression {
 	 * @param value the new value
 	 * @throws EvaluationException if there is a problem during evaluation
 	 */
+	// 在提供的上下文中将此表达式设置为提供的值。
 	void setValue(Object rootObject, Object value) throws EvaluationException;
 
 	/**

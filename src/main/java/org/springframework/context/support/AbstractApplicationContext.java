@@ -882,7 +882,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         //          <map>
         //              <entry key = "java.util.Date">
         //                  <bean class="com.test.DatePropertyEditor">
-        //                       <property name="format" value="yyyy-MM--dd"/>
+        //                       <property name="format" value="yyyy-MM-dd"/>
         //                  </bean>
         //              </entry>
         //          </map>

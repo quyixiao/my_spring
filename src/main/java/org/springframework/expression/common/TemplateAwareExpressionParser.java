@@ -69,24 +69,29 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 			context = NON_TEMPLATE_PARSER_CONTEXT;
 		}
 
+		// 若指定了上下文，并且是模版 就走parseTemplate
 		if (context.isTemplate()) {
 			return parseTemplate(expressionString, context);
 		}
 		else {
+			// 抽象方法 子类去实现~~~
 			return doParseExpression(expressionString, context);
 		}
 	}
 
 	private Expression parseTemplate(String expressionString, ParserContext context)
 			throws ParseException {
+		// 若解析字符串是空串~~~~~
 		if (expressionString.length() == 0) {
 			return new LiteralExpression("");
 		}
+		// 若只有一个模版表达式，直接返回。否则会返回一个CompositeStringExpression，聚合起来的表达式~
 		Expression[] expressions = parseExpressions(expressionString, context);
 		if (expressions.length == 1) {
 			return expressions[0];
 		}
 		else {
+			// ... parseExpressions的实现逻辑  还是稍显复杂的~ 因为支持的case太多了~~~
 			return new CompositeStringExpression(expressionString, expressions);
 		}
 	}
@@ -108,22 +113,32 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 	 * @param expressionString the expression string
 	 * @return the parsed expressions
 	 * @throws ParseException when the expressions cannot be parsed
+	 *使用配置的解析器解析给定表达式字符串的助手
 	 */
 	private Expression[] parseExpressions(String expressionString, ParserContext context)
 			throws ParseException {
 		List<Expression> expressions = new LinkedList<Expression>();
+		// 读取表达式前缀
 		String prefix = context.getExpressionPrefix();
+		// 读取表达式后缀
 		String suffix = context.getExpressionSuffix();
+		// 起始索引
 		int startIdx = 0;
+		// 起始索引 < 表达式长度
 		while (startIdx < expressionString.length()) {
+			// 计算前缀索引
 			int prefixIndex = expressionString.indexOf(prefix, startIdx);
+			// 前缀索引 > 起始索引
 			if (prefixIndex >= startIdx) {
+				// #{} 之前存在常量字符串，则创建字面值表达式并写入 expressions
 				// an inner expression was found - this is a composite
 				if (prefixIndex > startIdx) {
 					expressions.add(createLiteralExpression(context,
 							expressionString.substring(startIdx, prefixIndex)));
 				}
+				// 计算前缀之后的索引
 				int afterPrefixIndex = prefixIndex + prefix.length();
+				// 计算后缀索引
 				int suffixIndex = skipToCorrectEndSuffix(prefix, suffix,
 						expressionString, afterPrefixIndex);
 
@@ -140,9 +155,10 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 							"No expression defined within delimiter '" + prefix + suffix
 									+ "' at character " + prefixIndex);
 				}
-
+				// 去除前缀和后缀之后的字符串
 				String expr = expressionString.substring(prefixIndex + prefix.length(),
 						suffixIndex);
+				// 去除前后空格
 				expr = expr.trim();
 
 				if (expr.length() == 0) {
@@ -150,17 +166,20 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 							"No expression defined within delimiter '" + prefix + suffix
 									+ "' at character " + prefixIndex);
 				}
-
+				// 将截取的字符串在指定的上下文中解析成表达式
 				expressions.add(doParseExpression(expr, context));
+				// 计算新的后缀
 				startIdx = suffixIndex + suffix.length();
 			}
 			else {
 				// no more ${expressions} found in string, add rest as static text
+				// 在表达式字符串中没有发现 #{expressions}，则写入字面值表达式
 				expressions.add(createLiteralExpression(context,
 						expressionString.substring(startIdx)));
 				startIdx = expressionString.length();
 			}
 		}
+		// 返回解析成功的表达式
 		return expressions.toArray(new Expression[expressions.size()]);
 	}
 
@@ -174,14 +193,17 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 	 * @param expressionString the expression string which may contain the suffix
 	 * @param pos the start position at which to check for the suffix
 	 * @param suffix the suffix string
+	 * 特定的后缀 suffix 是否在 pos 索引处
 	 */
 	private boolean isSuffixHere(String expressionString, int pos, String suffix) {
 		int suffixPosition = 0;
+		// 从 pos 索引开始，逐个字符和 suffix 进行比较
 		for (int i = 0; i < suffix.length() && pos < expressionString.length(); i++) {
 			if (expressionString.charAt(pos++) != suffix.charAt(suffixPosition++)) {
 				return false;
 			}
 		}
+		// 表达式字符串在完全找到后缀之前就用完了
 		if (suffixPosition != suffix.length()) {
 			// the expressionString ran out before the suffix could entirely be found
 			return false;
@@ -198,38 +220,47 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 	 * @param afterPrefixIndex the most recently found prefix location for which the
 	 *        matching end suffix is being sought
 	 * @return the position of the correct matching nextSuffix or -1 if none can be found
+	 * 校验 () [] {} 是否一一配对，并读取 #{expressions} 正确的后缀索引
 	 */
 	private int skipToCorrectEndSuffix(String prefix, String suffix,
 			String expressionString, int afterPrefixIndex) throws ParseException {
 		// Chew on the expression text - relying on the rules:
 		// brackets must be in pairs: () [] {}
 		// string literals are "..." or '...' and these may contain unmatched brackets
+		// 前缀之后的字符索引
 		int pos = afterPrefixIndex;
+		// #{expressions} 的最大长度
 		int maxlen = expressionString.length();
+		// 读取下一个后缀索引
 		int nextSuffix = expressionString.indexOf(suffix, afterPrefixIndex);
 		if (nextSuffix == -1) {
 			return -1; // the suffix is missing
 		}
 		Stack<Bracket> stack = new Stack<Bracket>();
 		while (pos < maxlen) {
+			// 后缀索引是否在当前索引处 && 栈为空
 			if (isSuffixHere(expressionString, pos, suffix) && stack.isEmpty()) {
 				break;
 			}
+			// 如果 #{expressions} 内部存在 {} [] () 等子表达式
 			char ch = expressionString.charAt(pos);
 			switch (ch) {
 				case '{':
 				case '[':
 				case '(':
+					// 前缀 Bracket 入栈
 					stack.push(new Bracket(ch, pos));
 					break;
 				case '}':
 				case ']':
 				case ')':
+					// 遇到非法后缀字符
 					if (stack.isEmpty()) {
 						throw new ParseException(expressionString, pos, "Found closing '"
 								+ ch + "' at position " + pos + " without an opening '"
 								+ Bracket.theOpenBracketFor(ch) + "'");
 					}
+					// 弹出之前写入的前缀 Bracket
 					Bracket p = stack.pop();
 					if (!p.compatibleWithCloseBracket(ch)) {
 						throw new ParseException(expressionString, pos, "Found closing '"
@@ -240,6 +271,7 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 					break;
 				case '\'':
 				case '"':
+					// 读取 ' 或 " 的匹配字符索引
 					// jump to the end of the literal
 					int endLiteral = expressionString.indexOf(ch, pos + 1);
 					if (endLiteral == -1) {
@@ -247,20 +279,25 @@ public abstract class TemplateAwareExpressionParser implements ExpressionParser 
 								"Found non terminating string literal starting at position "
 										+ pos);
 					}
+					// 更新 pos
 					pos = endLiteral;
 					break;
 			}
+			// 处理下一个字符
 			pos++;
 		}
+		// 存在未配对的 { [ (
 		if (!stack.isEmpty()) {
 			Bracket p = stack.pop();
 			throw new ParseException(expressionString, p.pos, "Missing closing '"
 					+ Bracket.theCloseBracketFor(p.bracket) + "' for '" + p.bracket
 					+ "' at position " + p.pos);
 		}
+		// 当前索引处不是后缀
 		if (!isSuffixHere(expressionString, pos, suffix)) {
 			return -1;
 		}
+		// 返回后缀索引
 		return pos;
 	}
 
