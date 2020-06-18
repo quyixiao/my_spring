@@ -601,7 +601,12 @@ class TypeConverterDelegate {
 			}
 			return original;
 		}
-
+		// class.inInstance(obj)
+		//这个对象能不能被转化为这个类
+		//1.一个对象是本身类的一个对象
+		//2.一个对象能被转化为本身类所继承类（父类的父类等）和实现的接口（接口的父接口）强转
+		//3.所有对象都能被Object的强转
+		//4.凡是null有关的都是false   class.inInstance(null)
 		boolean originalAllowed = requiredType.isInstance(original);
 		TypeDescriptor keyType = typeDescriptor.getMapKeyTypeDescriptor();
 		TypeDescriptor valueType = typeDescriptor.getMapValueTypeDescriptor();

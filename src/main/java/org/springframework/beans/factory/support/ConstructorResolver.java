@@ -207,7 +207,7 @@ class ConstructorResolver {
 									"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 				}
 			}
-			// 排序给定的构造函数，public 构造函数优先参数数量降序，非 public  构造函数数量降序
+			// 排序给定的构造函数，首先public 排前面，非 public 排后，其次参数个数降序
 			AutowireUtils.sortConstructors(candidates);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Constructor<?>> ambiguousConstructors = null;

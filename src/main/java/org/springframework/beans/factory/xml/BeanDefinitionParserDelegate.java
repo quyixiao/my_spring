@@ -50,6 +50,8 @@ import java.util.*;
  * @see DefaultBeanDefinitionDocumentReader
  * @since 2.0
  * 定义解析Element的各种方法
+ *
+ *
  */
 public class BeanDefinitionParserDelegate {
 
@@ -829,7 +831,7 @@ public class BeanDefinitionParserDelegate {
      * (1)首先我我们创建一个类
      * package test.lookup.bean ;
      * public class User {
-     *     public class User{
+     *   public void showMe(){
      *         System.out.println("i am user");
      *     }
      * }
