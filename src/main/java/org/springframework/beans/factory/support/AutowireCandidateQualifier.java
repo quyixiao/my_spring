@@ -17,6 +17,7 @@
 package org.springframework.beans.factory.support;
 
 import org.springframework.beans.BeanMetadataAttributeAccessor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.util.Assert;
 
 /**
@@ -90,6 +91,7 @@ public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
 	 * type name provided to the constructor or the fully-qualified
 	 * class name if a Class instance was provided to the constructor.
 	 */
+
 	public String getTypeName() {
 		return this.typeName;
 	}

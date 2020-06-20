@@ -704,6 +704,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			//		因为DefaultSingletonBeanRegistry的this.singletonFactories中没有A的bean缓存。所以在beforeSingletonCreation中便会报错。
 			//		那么为什么用属性注入时就不会报错呢？因为this.singletonFactories缓存发生在当前方法的addSingletonFactory行，而属性注入的递归发生在
 			// 这一行，也就是说 先进行了缓存。而构造器注入时 还没来得及缓存就已经递归到下一层了。
+			// 属性填充
 			populateBean(beanName, mbd, instanceWrapper);
 			if (exposedObject != null) {
 				// 初始化Bean对象

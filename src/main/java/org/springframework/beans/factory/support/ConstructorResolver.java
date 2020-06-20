@@ -264,6 +264,7 @@ class ConstructorResolver {
 					if (paramTypes.length != explicitArgs.length) {
 						continue;
 					}
+					// 构造函数没有参数的情况
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
 				// 探测是否有不确定性构造函数存在，例如不同的构造函数的参数为父子关系
@@ -273,6 +274,7 @@ class ConstructorResolver {
 				// 如果它代表着当前最接近匹配则选择作为构造函数
 				if (typeDiffWeight < minTypeDiffWeight) {
 					constructorToUse = candidate;
+
 					argsHolderToUse = argsHolder;
 					argsToUse = argsHolder.arguments;
 					minTypeDiffWeight = typeDiffWeight;
