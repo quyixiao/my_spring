@@ -1909,7 +1909,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// work for the given bean: DestructionAwareBeanPostProcessors,
 				// DisposableBean interface, custom destroy method.
 				// 单例模式注册需要销毁的 bean ,此方法中会处理实现 DisposableBean 的 bean ,并且对所有的 bean 使用
-				// DestructionAwareBeanPostProcessors的处理，
+				// DestructionAwareBeanPostProcessors 的处理，
 				// DisposableBean DestructionAwareBeanPostProcessors
 
 				registerDisposableBean(beanName,

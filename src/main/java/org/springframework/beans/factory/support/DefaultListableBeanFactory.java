@@ -1070,6 +1070,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		 * 用于支持的 Spring 中新增的注解@Value
 		 */
 		Class<?> type = descriptor.getDependencyType();
+		// 在讲解脱根据类型自定义注入的时候，我们说过解析 autowire 类型时首先会调用方法
 		Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
 		if (value != null) {
 			if (value instanceof String) {
