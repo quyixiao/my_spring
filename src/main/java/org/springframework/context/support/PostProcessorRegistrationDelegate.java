@@ -172,7 +172,8 @@ class PostProcessorRegistrationDelegate {
      *
      *   记录后处理器主要使用三个List 来完成
      *   registryPostProcessors:记录通过硬编码的方式注册的BeanDefinitionRegistryPostProcessor 类型的处理器
-     *   regularPostProcessor:记录通过硬编码的方式注册的 BeanFactoryPostProcessor 类开处理器
+     *   regularPostProcessor:记录通过硬编码的方式注册的 BeanFactoryPostProcessor 类开处理
+     *
      *   registryPostProcessorBeans :  记录通过配置的方式注册 BeanDefinitionRegistryPostProcessor 类型的处理器
      *   对以上的 List记录的 List中后的处理器进行统一的调用 BeanFactoryPostProcessor 的 postProcessBeanFactory
      *   方法
@@ -213,10 +214,9 @@ class PostProcessorRegistrationDelegate {
             LogUtils.info("invokeBeanFactoryPostProcessors beanFactory name :" + beanFactory.getClass().getName());
 
             BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
-			// 用于存放普通的BeanFactoryPostProcessor
+            // 记录通过硬编码的方式注册的 BeanFactoryPostProcessor 类型的处理器
             List<BeanFactoryPostProcessor> regularPostProcessors = new LinkedList<BeanFactoryPostProcessor>();
-			// 用于存放BeanDefinitionRegistryPostProcessor.invokeBeanFactoryPostProcessors
-
+            // 记录通过硬编码的方式注册的 BeanDefinitionRegistryPostProcessor
             List<BeanDefinitionRegistryPostProcessor> registryPostProcessors = new LinkedList<BeanDefinitionRegistryPostProcessor>();
 			// 遍历所有的beanFactoryPostProcessors, 将BeanDefinitionRegistryPostProcessor和普通BeanFactoryPostProcessor区分开
             for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
@@ -280,14 +280,14 @@ class PostProcessorRegistrationDelegate {
             sortPostProcessors(beanFactory, orderedPostProcessors);
 
             registryPostProcessors.addAll(orderedPostProcessors);
-            //调用他的后置处理方法
+            // 调用他的后置处理方法
             invokeBeanDefinitionRegistryPostProcessors(orderedPostProcessors, registry);
 
             // Finally, invoke all other BeanDefinitionRegistryPostProcessors until no further ones appear.
-            //调用没有实现任何优先级接口的BeanDefinitionRegistryPostProcessor
-            //定义一个重复处理的开关变量 默认值为true
+            // 调用没有实现任何优先级接口的BeanDefinitionRegistryPostProcessor
+            // 定义一个重复处理的开关变量 默认值为true
             boolean reiterate = true;
-            //第一次就可以进来
+            // 第一次就可以进来
             while (reiterate) {
                 //进入循环马上把开关变量给改为false
                 reiterate = false;
@@ -310,7 +310,7 @@ class PostProcessorRegistrationDelegate {
                 }
             }
             // Now, invoke the postProcessBeanFactory callback of all processors handled so far.
-            //调用实现了BeanDefinitionRegistryPostProcessor的接口 他也同时实现了BeanFactoryPostProcessor的方法
+            // 调用实现了 BeanDefinitionRegistryPostProcessor 的接口 他也同时实现了BeanFactoryPostProcessor的方法
             // 激活 postProcessBeanFactory 方法，之前激活的是 postProcessBeanDefinitionRegistry
             // 硬编码设置 BeanDefinitionRegistryPostProcessor |  配置 BeanDefinitionRegistryPostProcessor
             invokeBeanFactoryPostProcessors(registryPostProcessors, beanFactory);

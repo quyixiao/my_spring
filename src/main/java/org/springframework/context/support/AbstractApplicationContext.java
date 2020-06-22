@@ -916,7 +916,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
         // 在 ResourceEditorRegistrar 中，我们最关心的方法就是  registerCustomEditors
         beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
-        // Configure the bean factory with context callbacks.
+        // Configure the bean factory with context callb
+        // acks.
         // 将当前的ApplicationContext对象交给ApplicationContextAwareProcessor类来处理，从而在Aware接口实现类中的注入applicationContext
         // 添加 BeanPostProcessor,
         // 对于这个方法的主要目的就是注册 BeanPostProcessor ，而真正的逻辑还是在 ApplicationContextAwareProcessor 中
