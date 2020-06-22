@@ -105,15 +105,15 @@ public class PropertyEditorRegistrySupport implements PropertyEditorRegistry {
 	private boolean defaultEditorsActive = false;
 
 	private boolean configValueEditorsActive = false;
-
+	//默认属性编辑器集合
 	private Map<Class<?>, PropertyEditor> defaultEditors;
-
+	//重写的默认属性编辑器集合
 	private Map<Class<?>, PropertyEditor> overriddenDefaultEditors;
-
+	//自定义的属性编辑器集合
 	private Map<Class<?>, PropertyEditor> customEditors;
-
+	//自定义路径属性编辑器集合
 	private Map<String, CustomEditorHolder> customEditorsForPath;
-
+	//自定义属性编辑器缓存
 	private Map<Class<?>, PropertyEditor> customEditorCache;
 
 

@@ -161,11 +161,13 @@ class TypeConverterDelegate {
 			Class<T> requiredType, TypeDescriptor typeDescriptor) throws IllegalArgumentException {
 
 		// Custom editor for this type?
+		// 根据类型找到自定义的属性编辑器
 		PropertyEditor editor = this.propertyEditorRegistry.findCustomEditor(requiredType, propertyName);
 
 		ConversionFailedException conversionAttemptEx = null;
 
 		// No custom editor but custom ConversionService specified?
+		// 没有自定义的属性编辑器但是有指定的conversionService
 		ConversionService conversionService = this.propertyEditorRegistry.getConversionService();
 		if (editor == null && conversionService != null && newValue != null && typeDescriptor != null) {
 			TypeDescriptor sourceTypeDesc = TypeDescriptor.forObject(newValue);
@@ -183,6 +185,7 @@ class TypeConverterDelegate {
 		Object convertedValue = newValue;
 
 		// Value not of required type?
+		// 值不是需要的类型
 		if (editor != null || (requiredType != null && !ClassUtils.isAssignableValue(requiredType, convertedValue))) {
 			if (requiredType != null && Collection.class.isAssignableFrom(requiredType) && convertedValue instanceof String) {
 				TypeDescriptor elementType = typeDescriptor.getElementTypeDescriptor();
@@ -190,9 +193,11 @@ class TypeConverterDelegate {
 					convertedValue = StringUtils.commaDelimitedListToStringArray((String) convertedValue);
 				}
 			}
+			//没有自定义的属性编辑器，则使用默认的属性编辑器
 			if (editor == null) {
 				editor = findDefaultEditor(requiredType);
 			}
+			//根据给定的属性编辑器将数据类型转换
 			convertedValue = doConvertValue(oldValue, convertedValue, requiredType, editor);
 		}
 
@@ -200,11 +205,13 @@ class TypeConverterDelegate {
 
 		if (requiredType != null) {
 			// Try to apply some standard type conversion rules if appropriate.
-
+			// 根据需要，按类型的标准进行转换
 			if (convertedValue != null) {
+				//需要转换成Object类型，结果直接返回
 				if (Object.class == requiredType) {
 					return (T) convertedValue;
 				}
+				//需要Array类型，进行相应转换
 				else if (requiredType.isArray()) {
 					// Array required -> apply appropriate conversion of elements.
 					if (convertedValue instanceof String && Enum.class.isAssignableFrom(requiredType.getComponentType())) {
@@ -212,12 +219,14 @@ class TypeConverterDelegate {
 					}
 					return (T) convertToTypedArray(convertedValue, propertyName, requiredType.getComponentType());
 				}
+				//转换成相应的collection类型
 				else if (convertedValue instanceof Collection) {
 					// Convert elements to target type, if determined.
 					convertedValue = convertToTypedCollection(
 							(Collection<?>) convertedValue, propertyName, requiredType, typeDescriptor);
 					standardConversion = true;
 				}
+				//转换成相应的map类型
 				else if (convertedValue instanceof Map) {
 					// Convert keys and values to respective target type, if determined.
 					convertedValue = convertToTypedMap(
@@ -258,6 +267,7 @@ class TypeConverterDelegate {
 					convertedValue = attemptToConvertStringToEnum(requiredType, trimmedValue, convertedValue);
 					standardConversion = true;
 				}
+				//number类型的数据转换成需要的int、short等类型
 				else if (convertedValue instanceof Number && Number.class.isAssignableFrom(requiredType)) {
 					convertedValue = NumberUtils.convertNumberToTargetClass(
 							(Number) convertedValue, (Class<Number>) requiredType);

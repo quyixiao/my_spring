@@ -596,6 +596,7 @@ public abstract class AbstractNestablePropertyAccessor extends AbstractPropertyA
 	private Object convertIfNecessary(String propertyName, Object oldValue, Object newValue, Class<?> requiredType,
 			TypeDescriptor td) throws TypeMismatchException {
 		try {
+			// 根据类型找到自定义的属性编辑器
 			return this.typeConverterDelegate.convertIfNecessary(propertyName, oldValue, newValue, requiredType, td);
 		}
 		catch (ConverterNotFoundException ex) {
