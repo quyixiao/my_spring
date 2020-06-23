@@ -50,6 +50,7 @@ public interface MessageSource {
 	 * @return the resolved message if the lookup was successful;
 	 * otherwise the default message passed as a parameter
 	 * @see java.text.MessageFormat
+	 *     * 尝试解决消息。 如果没有找到消息，返回默认消息。
 	 */
 	String getMessage(String code, Object[] args, String defaultMessage, Locale locale);
 
@@ -63,6 +64,7 @@ public interface MessageSource {
 	 * @return the resolved message
 	 * @throws NoSuchMessageException if the message wasn't found
 	 * @see java.text.MessageFormat
+	 *  * 尝试解决消息。 如果无法找到消息，则视为错误。
 	 */
 	String getMessage(String code, Object[] args, Locale locale) throws NoSuchMessageException;
 
@@ -77,6 +79,8 @@ public interface MessageSource {
 	 * @return the resolved message
 	 * @throws NoSuchMessageException if the message wasn't found
 	 * @see java.text.MessageFormat
+	 *  * 尝试使用传入的{@code MessageSourceResolvable}参数中包含的所有属性来解析消息。
+	 *      * <p>NOTE: 我们必须在此方法上抛出{@code NoSuchMessageException}，因为在调用此方法时，我们无法确定可解析的{@code defaultMessage}属性是否为空。
 	 */
 	String getMessage(MessageSourceResolvable resolvable, Locale locale) throws NoSuchMessageException;
 

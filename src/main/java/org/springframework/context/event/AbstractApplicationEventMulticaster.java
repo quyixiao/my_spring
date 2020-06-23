@@ -162,10 +162,12 @@ public abstract class AbstractApplicationEventMulticaster
 			ApplicationEvent event, ResolvableType eventType) {
 
 		Object source = event.getSource();
+		//  获取 事件源类型
 		Class<?> sourceType = (source != null ? source.getClass() : null);
 		ListenerCacheKey cacheKey = new ListenerCacheKey(eventType, sourceType);
 
 		// Quick check for existing entry on ConcurrentHashMap...
+		//从缓存中查找ListenerRetriever
 		ListenerRetriever retriever = this.retrieverCache.get(cacheKey);
 		if (retriever != null) {
 			return retriever.getApplicationListeners();
@@ -275,6 +277,7 @@ public abstract class AbstractApplicationEventMulticaster
 	 * @param sourceType the source type to check against
 	 * @return whether the given listener should be included in the candidates
 	 * for the given event type
+	 *  该方法主要的逻辑就是根据事件类型判断是否和监听器参数泛型的类型是否一致。
 	 */
 	protected boolean supportsEvent(ApplicationListener<?> listener, ResolvableType eventType, Class<?> sourceType) {
 		GenericApplicationListener smartListener = (listener instanceof GenericApplicationListener ?
@@ -335,6 +338,7 @@ public abstract class AbstractApplicationEventMulticaster
 
 		public Collection<ApplicationListener<?>> getApplicationListeners() {
 			LinkedList<ApplicationListener<?>> allListeners = new LinkedList<ApplicationListener<?>>();
+			//根据事件类型，事件源类型，获取所需要的监听事件
 			for (ApplicationListener<?> listener : this.applicationListeners) {
 				allListeners.add(listener);
 			}

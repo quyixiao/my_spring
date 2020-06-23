@@ -1126,11 +1126,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             // 如果配置文件中配置了messageSource，那么将messageSource 提取并记录在 this.messageSource 中
             this.messageSource = beanFactory.getBean(MESSAGE_SOURCE_BEAN_NAME, MessageSource.class);
             // Make MessageSource aware of parent MessageSource.
+            //messageSource是否有父消息源
             if (this.parent != null && this.messageSource instanceof HierarchicalMessageSource) {
                 HierarchicalMessageSource hms = (HierarchicalMessageSource) this.messageSource;
                 if (hms.getParentMessageSource() == null) {
                     // Only set parent context as parent MessageSource if no parent MessageSource
                     // registered already.
+                    // 父MessageSource未注册，则设置messageSource的parentMessageSource为“父上下文的‘MessageSource’ ”
                     hms.setParentMessageSource(getInternalParentMessageSource());
                 }
             }
@@ -1141,11 +1143,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
             LogUtils.info("initMessageSource else ");
             // Use empty MessageSource to be able to accept getMessage calls.
             // 如果用户并没有定义配置文件，那么使用临时的 DelegatingMessageSource 以便作为调用 getMessage 方法的返回
+            //没有对应的实例，则自己初始化一个
             DelegatingMessageSource dms = new DelegatingMessageSource();
+            //设置父消息源
             MessageSource messageSource = getInternalParentMessageSource();
             LogUtils.info("initMessageSource messageSource " + (messageSource == null ? messageSource : messageSource.getClass().getName()));
             dms.setParentMessageSource(messageSource);
+            //‘单例模式’注册到工厂中
             this.messageSource = dms;
+
             beanFactory.registerSingleton(MESSAGE_SOURCE_BEAN_NAME, this.messageSource);
             if (logger.isDebugEnabled()) {
                 logger.debug("Unable to locate MessageSource with name '" + MESSAGE_SOURCE_BEAN_NAME +
@@ -1213,17 +1219,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
      */
     protected void initApplicationEventMulticaster() {
         ConfigurableListableBeanFactory beanFactory = getBeanFactory();
-        LogUtils.info("initApplicationEventMulticaster beanFactory :" + beanFactory.getClass().getName());
         if (beanFactory.containsLocalBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME)) {
             this.applicationEventMulticaster =
                     beanFactory.getBean(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, ApplicationEventMulticaster.class);
-            LogUtils.info("initApplicationEventMulticaster Using ApplicationEventMulticaster [" + this.applicationEventMulticaster + "]");
         } else {
             this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
             beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
-            LogUtils.info("initApplicationEventMulticaster Unable to locate ApplicationEventMulticaster with name '" +
-                    APPLICATION_EVENT_MULTICASTER_BEAN_NAME +
-                    "': using default [" + this.applicationEventMulticaster + "]");
         }
     }
 
@@ -1813,6 +1814,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
     /**
      * Return the internal message source of the parent context if it is an
      * AbstractApplicationContext too; else, return the parent context itself.
+     *   获取父上下文的消息源
      */
     protected MessageSource getInternalParentMessageSource() {
         return (getParent() instanceof AbstractApplicationContext) ?
