@@ -6,14 +6,11 @@
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
 
-
     <context:annotation-config/>
 
     <context:component-scan base-package="com.test3"/>
     <context:component-scan base-package="com.test2"/>
     <context:component-scan base-package="com.test"/>
-
-
 
     <bean id="instrumentTest4" class="com.test3.InstrumentTest4"></bean>
 
