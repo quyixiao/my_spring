@@ -71,6 +71,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 	static {
 		CompoundComparator<Method> comparator = new CompoundComparator<Method>();
+		// 第一个比较器是根据注解的类型进行排序，排第一的是Around.class ... 依次类推
 		comparator.addComparator(new ConvertingComparator<Method, Annotation>(
 				new InstanceComparator<Annotation>(
 						Around.class, Before.class, After.class, AfterReturning.class, AfterThrowing.class),
@@ -81,6 +82,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 						return annotation == null ? null : annotation.getAnnotation();
 					}
 				}));
+		// 如果方法上含有相同的注解，那么就按照方法名称排序，方法名称越小的，排在前面，比如 有一个 a() ,b()方法，那么 a 方法先执行
 		comparator.addComparator(new ConvertingComparator<Method, String>(
 				new Converter<Method, String>() {
 					@Override

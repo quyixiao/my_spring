@@ -521,6 +521,8 @@ public abstract class AnnotationUtils {
 					return (A) ann;
 				}
 			}
+			// 这里主要是用来解析，继承 Before... 等  注解的注解解析, 也就是说，如果你写了一个注解，继承了Before ，其实是和 before
+			// 拥有一样的功能
 			for (Annotation ann : anns) {
 				if (!isInJavaLangAnnotationPackage(ann) && visited.add(ann)) {
 					A annotation = findAnnotation((AnnotatedElement) ann.annotationType(), annotationType, visited);

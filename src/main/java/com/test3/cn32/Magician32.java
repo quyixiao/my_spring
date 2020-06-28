@@ -17,6 +17,9 @@ public class Magician32 {
 
     @Before("method(args)")
     public void interceptThoughts(String args) {
+
+
+
         LogUtils.info("interceptThoughts volunteer thoughts : " + args);
     }
 
