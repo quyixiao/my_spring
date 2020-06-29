@@ -82,7 +82,7 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 						return annotation == null ? null : annotation.getAnnotation();
 					}
 				}));
-		// 如果方法上含有相同的注解，那么就按照方法名称排序，方法名称越小的，排在前面，比如 有一个 a() ,b()方法，那么 a 方法先执行
+		// 如果方法上含有相同的注解，那么就按照方法名称排序，方法名称越小的，排在前面，比如 有一个 a() ,b()方法，那么 b 方法排在前面
 		comparator.addComparator(new ConvertingComparator<Method, String>(
 				new Converter<Method, String>() {
 					@Override

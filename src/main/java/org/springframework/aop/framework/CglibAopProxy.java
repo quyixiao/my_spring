@@ -418,6 +418,7 @@ class CglibAopProxy implements AopProxy, Serializable {
 			retVal = proxy;
 		}
 		Class<?> returnType = method.getReturnType();
+		// 此方法主要用来判断Class是否为原始类型（boolean、char、byte、short、int、long、float、double）
 		if (retVal == null && returnType != Void.TYPE && returnType.isPrimitive()) {
 			throw new AopInvocationException(
 					"Null return value from advice does not match primitive return type for: " + method);
@@ -675,11 +676,6 @@ class CglibAopProxy implements AopProxy, Serializable {
 	 * 这个方法中实现也 JDK 方法实现代理中的 invoke 方法大同小异，都是首先构造链，然后封装此链进行串联调用，稍有区别的就是 JDK 中直接构造
 	 * RelectiveMethodInvocation ,然而在 cglib 中使用了 CglibMethodInvocation ,CglibMethodInvocation 继承自
 	 * ReflectiveMethodInvocation ,但是 proceed 方法并没有重写
-	 *
-	 *
-	 *
-	 *
-	 *
 	 */
 	private static class DynamicAdvisedInterceptor implements MethodInterceptor, Serializable {
 
