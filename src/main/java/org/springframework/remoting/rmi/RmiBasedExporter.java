@@ -51,7 +51,11 @@ public abstract class RmiBasedExporter extends RemoteInvocationBasedExporter {
 	 */
 	protected Remote getObjectToExport() {
 		// determine remote object
-		// 如果配置的service属性对应的的类实现了Remote接口且没有配置serviceInterface属性
+		// 如果配置的service属性对应的的类实现了Remote接口且没有配置serviceInterface属性, 那么直接使用 service 作为处理类，否则使用
+		// RMIInvocationWrapper 对 service 的代理类和当前类也就是 RMIServiceExporter 进行封装
+		// 经过这样的封装，客户端与服务端便可以达成一致的协义，当客户端检测到的 RMIInvocationWrapper 类型 stub 的时候便会直接调用其
+		// invoke方法，使得调用与服务端很好的连接在一起了，而 RMIInvocationWrapper 封装了用于处理请求的代理类，在 invoke 中便会使用
+		// 代理类进行进一步的处理
 		if (getService() instanceof Remote &&
 				(getServiceInterface() == null || Remote.class.isAssignableFrom(getServiceInterface()))) {
 			// conventional RMI service

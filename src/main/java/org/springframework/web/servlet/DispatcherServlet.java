@@ -896,9 +896,12 @@ public class DispatcherServlet extends FrameworkServlet {
 	/**
 	 * Initialize the RequestToViewNameTranslator used by this servlet instance.
 	 * <p>If no implementation is configured then we default to DefaultRequestToViewNameTranslator.
+	 * 如果逻辑视图名称跟请求的路径相同或者相关关系都是一样的，那么我们就采用 Spring 为我们事先约定好的逻辑视图名称返回，这可以大大的简化
+	 * 我们的开发工作，而以上的功能实现的关键属性 viewNameTranslator ，则是在 initRequestToViewNameTranslator
 	 */
 	private void initRequestToViewNameTranslator(ApplicationContext context) {
 		try {
+			// viewNameTranslator
 			this.viewNameTranslator =
 					context.getBean(REQUEST_TO_VIEW_NAME_TRANSLATOR_BEAN_NAME, RequestToViewNameTranslator.class);
 			if (logger.isDebugEnabled()) {
@@ -936,6 +939,7 @@ public class DispatcherServlet extends FrameworkServlet {
 		}
 		else {
 			try {
+				// viewResolver
 				ViewResolver vr = context.getBean(VIEW_RESOLVER_BEAN_NAME, ViewResolver.class);
 				this.viewResolvers = Collections.singletonList(vr);
 			}
@@ -958,6 +962,13 @@ public class DispatcherServlet extends FrameworkServlet {
 	 * Initialize the {@link FlashMapManager} used by this servlet instance.
 	 * <p>If no implementation is configured then we default to
 	 * {@code org.springframework.web.servlet.support.DefaultFlashMapManager}.
+	 * (9)初始化 FlashMapManager
+	 * Spring MVC Flash Attributes提供了一个请求存储属性，可借其他的请求使用，在使用重定向的时候非常必要，例如 Post/Redirect/Get
+	 * 模式，FlashAttributes 在重定向之前暂存，就像存在 session中，以便重定向之后还能使用，并立即删除，
+	 * Spring MVC 有两个主要的抽象来支持 flash attributes ,Flash Map  用于保持 flash attributes 而 flashMapManager  用于存储
+	 * 检索，管理 flashMap 实例
+	 * flashMapManager 在初始化 initFlashMapManager 中完成
+	 *
 	 */
 	private void initFlashMapManager(ApplicationContext context) {
 		try {

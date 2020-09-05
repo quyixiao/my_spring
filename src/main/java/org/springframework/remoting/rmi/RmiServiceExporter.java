@@ -85,9 +85,11 @@ public class RmiServiceExporter extends RmiBasedExporter implements Initializing
 	private RMIClientSocketFactory registryClientSocketFactory;
 
 	private RMIServerSocketFactory registryServerSocketFactory;
-
+	// 如果并不是从另外的服务器上获取 Registry 连接，那么就需要在本地创建 RMI的 Registry实例也，当然，这里有一个关键的参数 alwaysCreateRegistry
+	//  如果此参数配置为 true,那么在获取 Registry 实例时会首先测试是否己经建立了对指定端口的连接，如果己经创建立则利用己经创建的实例，否则
+	// 重新创建
 	private boolean alwaysCreateRegistry = false;
-
+	//
 	private boolean replaceExistingBinding = true;
 
 	private Remote exportedObject;

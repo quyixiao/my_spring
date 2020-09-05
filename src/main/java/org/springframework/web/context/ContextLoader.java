@@ -305,7 +305,7 @@ public class ContextLoader {
 	 * Spring 时使用的classPathXmlApplicatoinContext 类提供以功能，继续跟踪代码
 	 * initWebApplicationContext 函数主要体现了创建webApplicationContext 实例的一个功能构架，从函数中我们可以看到初始化的大致步骤
 	 * （1） WebApplicationContext 存在性验证
-	 *  在配置中只允许声明一次ServletContextListener ,多冷声明会扰乱Spring 的执行逻辑，所以这里首先要做的就是对此验证，在Spring 中
+	 *  在配置中只允许声明一次ServletContextListener ,声明会扰乱Spring 的执行逻辑，所以这里首先要做的就是对此验证，在Spring 中
 	 *  如果创建WebApplicationContext 实例会记录在ServletContext 中以方便全局调用，而使用的key 就是WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE
 	 *  所以验证的方式就是查看ServletContext 实例中是否有对应的key 的属性
 	 */

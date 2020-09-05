@@ -52,24 +52,34 @@ import org.springframework.web.util.UrlPathHelper;
  * @since 2.0
  * @see org.springframework.web.servlet.RequestToViewNameTranslator
  * @see org.springframework.web.servlet.ViewResolver
+ * 当我们没有在 Spring mvc 的配置中手动定义一个名为 viewNameTranslator 的 bean 的时候，Spring就会为我们提供一个默认的 viewName
+ * Translator，即 DefaultRequestToViewNameTranslator 会获得到请求的 URI,然后根据提供的属性做一些改造，把改造后的结果作为视图名称返回
+ * 这里以请求的路径 http://locahost/app/test/index.html 为例，来说明一下 DefaultRequestToViewNameTranslator 是如何工作的，该请求
+ * 的路径对应的请求 URI为 index.html，我们来看以下的几种情况，它分别是对应的逻辑视图的名称是什么
+ * prefix 和 suffix 如果都存在，其他的为默认值，那么对应的返回的逻辑视图名称应该是 prefixtest/indexsuffix
+ * stripLeadingSlash 和 stripExtension 都为 false, 其他的为默认值，这个时候对应的逻辑视图名称就是不去前缀 /，也不去后缀.html
+ * 如果采用默认的配置时，返回的逻辑视图名称应该是 product/index
+ *
+ *
+ *
  */
 public class DefaultRequestToViewNameTranslator implements RequestToViewNameTranslator {
 
 	private static final String SLASH = "/";
 
-
+	// 前缀，表示约定好的视图名称需要加上的前缀，默认的是空串
 	private String prefix = "";
-
+	// 后缀，表示约定好的视图名称需要加上的后缀，默认是空串
 	private String suffix = "";
-
+	//  分隔符，默认是斜杠，"/"
 	private String separator = SLASH;
-
+	// 如果首字符是分隔符，是否需要去掉，默认 true
 	private boolean stripLeadingSlash = true;
-
+	// 如果最后一个字符是分隔符，是否需要去除，默认是 true
 	private boolean stripTrailingSlash = true;
-
+	// 如果请求路径包含扩展名，是否需要去除，默认是 true
 	private boolean stripExtension = true;
-
+	//
 	private UrlPathHelper urlPathHelper = new UrlPathHelper();
 
 
@@ -170,6 +180,7 @@ public class DefaultRequestToViewNameTranslator implements RequestToViewNameTran
 	 * into the view name based on the configured parameters.
 	 * @see UrlPathHelper#getLookupPathForRequest
 	 * @see #transformPath
+	 * prefix 和 suffix 如果都存在，其他的为默认值，那么对应的返回的逻辑视图名称应该是 prifix+path+suffix
 	 */
 	@Override
 	public String getViewName(HttpServletRequest request) {

@@ -995,7 +995,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * <p>The actual event handling is performed by the abstract
 	 * {@link #doService} template method.
 	 * 函数中已经开始对请求的处理，虽然把细节转移到了doService()函数中实现，但是我们不难看出处理请求前后所做的准备与处理工作
-	 * （1） 为了保证当前线程的LocaleContext 以及RequestAttributes 可以在当前请求后不能恢复，提取当前线程的两个属性
+	 * （1） 为了保证当前线程的LocaleContext 以及RequestAttributes 可以在当前请求后还能恢复，提取当前线程的两个属性
 	 * （2） 根据当前的request创建对应的LocaleContext 和RequestAttributes,并绑定到当前线程中
 	 *  (3) 委托给doService方法进一步的处理
 	 *  (4) 请求处理结束后恢复线程的原始状态
@@ -1006,7 +1006,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		// 记录当前时间，用于计算web 请求的处理时间
 		long startTime = System.currentTimeMillis();
 		Throwable failureCause = null;
+		// 为了保证当前线程的LocaleContext 以及RequestAttributes 可以在当前请求后还能恢复，提取当前线程的两个属性
 		LocaleContext previousLocaleContext = LocaleContextHolder.getLocaleContext();
+		//  根据当前的request创建对应的LocaleContext 和RequestAttributes,并绑定到当前线程中
 		LocaleContext localeContext = buildLocaleContext(request);
 
 		RequestAttributes previousAttributes = RequestContextHolder.getRequestAttributes();
@@ -1018,6 +1020,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {
+			// 委托给doService方法进一步的处理
 			doService(request, response);
 		}
 		catch (ServletException ex) {
@@ -1034,6 +1037,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 
 		finally {
+			// 请求处理结束后恢复线程到原始状态
 			resetContextHolders(request, previousLocaleContext, previousAttributes);
 			if (requestAttributes != null) {
 				requestAttributes.requestCompleted();
@@ -1052,7 +1056,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 					}
 				}
 			}
-
+			// 请求处理结束后，无论成功与否发布事件通知。
 			publishRequestHandledEvent(request, response, startTime, failureCause);
 		}
 	}

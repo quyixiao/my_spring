@@ -181,21 +181,31 @@ public class AntPathMatcher implements PathMatcher {
 	 * @param fullMatch whether a full pattern match is required (else a pattern match
 	 * as far as the given base path goes is sufficient)
 	 * @return {@code true} if the supplied {@code path} matched, {@code false} if it didn't
+	 *
 	 */
+	//有4个步骤
+	//	    1. 分解模式字符串, 分解路径字符串
+	//	      2. 第一个while 循环, 用来判断绝对匹配   /xxx/abc ==> /xxx/abc
+	//	      3. 第二个while循环两个字符串数组都从最后的下标开始匹配, 直到遇到pattDir为'**'时结束
+	//	      4. 第三个while循环, 主要解决有多个'**'字符串.    /**/djdjdjd/**, /a/**/**/b/**/c/**/*.class等
 	protected boolean doMatch(String pattern, String path, boolean fullMatch, Map<String, String> uriTemplateVariables) {
 		if (path.startsWith(this.pathSeparator) != pattern.startsWith(this.pathSeparator)) {
 			return false;
 		}
-
+		//  1.1. 分解模式字符串
 		String[] pattDirs = tokenizePattern(pattern);
+		// 1.2 分解路径字符串
 		String[] pathDirs = tokenizePath(path);
-
+		// pattern的可分配下标 pattIdxStart ~ pattIdxEnd
+		// path的可分配下标	pathIdxStart ~ pathIdxEnd
 		int pattIdxStart = 0;
 		int pattIdxEnd = pattDirs.length - 1;
 		int pathIdxStart = 0;
 		int pathIdxEnd = pathDirs.length - 1;
 
 		// Match all elements up to the first **
+		// 2. 第一个while 循环, 用来判断绝对匹配的   /xxx/abc ==> /xxx/abc
+		// 两个字符串都从下标0开始, 直到模式字符串遇到**结束
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			String pattDir = pattDirs[pattIdxStart];
 			if ("**".equals(pattDir)) {
@@ -207,7 +217,7 @@ public class AntPathMatcher implements PathMatcher {
 			pattIdxStart++;
 			pathIdxStart++;
 		}
-
+		// pathIdxStart > pathIdEnd, 表示文件路径(path), 已经逐一的匹配到了
 		if (pathIdxStart > pathIdxEnd) {
 			// Path is exhausted, only match if rest of pattern is * or **'s
 			if (pattIdxStart > pattIdxEnd) {
@@ -237,6 +247,7 @@ public class AntPathMatcher implements PathMatcher {
 		}
 
 		// up to last '**'
+		// 3. 两个字符串数组都从最后的下标开始匹配, 直到遇到pattDir为'**'时结束
 		while (pattIdxStart <= pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			String pattDir = pattDirs[pattIdxEnd];
 			if (pattDir.equals("**")) {
@@ -255,9 +266,18 @@ public class AntPathMatcher implements PathMatcher {
 					return false;
 				}
 			}
+			// 这里返回true 一般字符串为
+			// /xxxx/abcd/**/*.class => /xxxx/abcd /xxx.class
+			// 即只有一个**, 而且**没发挥到什么作用
+			// 测试
+			// AntPathMatcher ant = new AntPathMatcher("/");
+			//String pattern = "/abc/**/*.class";
+			//String path = "/abc/ddd.class";
+			//System.out.println(ant.match(pattern, path));
 			return true;
 		}
-
+		// 4. 第3个while循环, 主要解决有多个'**'字符串.	/**/djdjdjd/**, /a/**/**/b/**/c/**/*.class等
+		// 每次下标又从pattIdxStart+1开始
 		while (pattIdxStart != pattIdxEnd && pathIdxStart <= pathIdxEnd) {
 			int patIdxTmp = -1;
 			for (int i = pattIdxStart + 1; i <= pattIdxEnd; i++) {
@@ -268,16 +288,28 @@ public class AntPathMatcher implements PathMatcher {
 			}
 			if (patIdxTmp == pattIdxStart + 1) {
 				// '**/**' situation, so skip one
+				// '**/**' 遇到连续的/**/**就跳过, 因为这没有意义, 一个/**也可以表达多条路径
 				pattIdxStart++;
 				continue;
 			}
 			// Find the pattern between padIdxStart & padIdxTmp in str between
 			// strIdxStart & strIdxEnd
+			// patLength: 两个'**'之间的字符串的长度  /**/a/b/** = 2
+			// strLength: 路径还剩多少个没匹配 	/a/b/c/d	如果/a/b都匹配了, 就只剩下/b/c = 2
 			int patLength = (patIdxTmp - pattIdxStart - 1);
 			int strLength = (pathIdxEnd - pathIdxStart + 1);
 			int foundIdx = -1;
 
 			strLoop:
+			// 因为已经确定了有 /**/a/b/**这样的模式字符串存在, 中间2长度
+			// 如果存在/q/a/b/c/d 有5个长度, 那么就要循环3次
+			// 第一次匹配 /a/b => /q/a
+			// 第二次	 /a/b => /a/b	=> 这里已经匹配到了, 所以就break了
+			// 			 /a/b => /b/c
+			// 			 /a/b => /c/d
+			// 当然, 如果存在更复杂的如: /**/a/b/**/a/b/**/a/b/**, 外层的while循环就会做3次判断,
+			//String pattern = "/**/a/b/**/a/b/**/a/b/**";
+			//String path = "/q/q/q/a/b/q/q/q/a/b/q/q/q/a/b/q/q/q/a/b";
 			for (int i = 0; i <= strLength - patLength; i++) {
 				for (int j = 0; j < patLength; j++) {
 					String subPat = pattDirs[pattIdxStart + j + 1];
@@ -303,7 +335,8 @@ public class AntPathMatcher implements PathMatcher {
 				return false;
 			}
 		}
-
+		//如果上面的都没有返回值 /** => /sdjdd/djkd/.....就会在此处返回
+		// 当然还有更多的
 		return true;
 	}
 

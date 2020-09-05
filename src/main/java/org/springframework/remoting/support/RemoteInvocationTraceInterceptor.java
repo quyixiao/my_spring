@@ -66,7 +66,7 @@ public class RemoteInvocationTraceInterceptor implements MethodInterceptor {
 		this.exporterNameClause = exporterName + " ";
 	}
 
-
+	// 使用代理的目的就是为了打印日志
 	@Override
 	public Object invoke(MethodInvocation invocation) throws Throwable {
 		Method method = invocation.getMethod();

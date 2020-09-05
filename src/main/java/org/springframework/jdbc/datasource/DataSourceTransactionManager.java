@@ -213,12 +213,6 @@ public class DataSourceTransactionManager extends AbstractPlatformTransactionMan
 	 * 设置隔离级别的prepareConnectionForTransaction 函数用于负责对底层数据库连接的设置，当然，只是包含只读标识和隔离级别的设置，
 	 * 由于强大的日志及异常处理，显得函数代码量比较大，但是单从业务的角度去看，关键代码其实不多的
 	 *
-	 *
-	 *
-	 *
-	 *
-	 *
-	 *
 	 */
 	@Override
 	protected void doBegin(Object transaction, TransactionDefinition definition) {
