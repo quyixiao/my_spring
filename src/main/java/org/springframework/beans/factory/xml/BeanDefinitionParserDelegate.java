@@ -751,21 +751,6 @@ public class BeanDefinitionParserDelegate {
 
     /**
      * Parse constructor-arg sub-elements of the given bean element.
-     * 6.解析子元素constructor-arg
-     *  对构造函数是是非常常用的，同时也是非常复杂的，也相信大家对构造函数的配置都不阳生 ，举个简单的例子来说
-     *  ...
-     *  <beans>
-     *      <!--默认的情况下是按照参数的顺序注入的，当指定的index索引后就可以改变了-->
-     *      <bean id="helloBean" class="com.HelloBean">
-     *          <constructor-arg index = "0">
-     *              <value>郝佳</value>
-     *          </constructor-arg>
-     *          <constructor-arg index="1">
-     *              <value>你好</value>
-     *         </constructor-arg>
-     *      </bean>
-     *  </beans>
-     *  上面的配置是Spring构造函数配置中最佳的基础配置，实现功能就是对HelloBean自动寻找对的函数，并在初始化的时候将设置参数传入进去
      *  ，那么让我们来看具体的XML解析过程
      */
     public void parseConstructorArgElements(Element beanEle, BeanDefinition bd) {
@@ -1004,7 +989,6 @@ public class BeanDefinitionParserDelegate {
      * 的genericArgumentValues属性中
      * 可以看到，对于是否制定的index属性来讲，Spring处理流程是不同的，关键在于属性信息被保存的位置
      * 那么整个流程后，我们尝试着进一步了解解析构造函数配置中子元素的过程，进入parsePropertyValue:
-     *
      */
     public void parseConstructorArgElement(Element ele, BeanDefinition bd) {
         // 提取index 属性
@@ -1015,6 +999,23 @@ public class BeanDefinitionParserDelegate {
         String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
         if (StringUtils.hasLength(indexAttr)) {
             try {
+                /**
+                 * 6.解析子元素constructor-arg
+                 *  对构造函数是是非常常用的，同时也是非常复杂的，也相信大家对构造函数的配置都不陌生 ，举个简单的例子来说
+                 *  ...
+                 *  <beans>
+                 *      <!--默认的情况下是按照参数的顺序注入的，当指定的index索引后就可以改变了-->
+                 *      <bean id="helloBean" class="com.HelloBean">
+                 *          <constructor-arg index = "0">
+                 *              <value>郝佳</value>
+                 *          </constructor-arg>
+                 *          <constructor-arg index="1">
+                 *              <value>你好</value>
+                 *         </constructor-arg>
+                 *      </bean>
+                 *  </beans>
+                 *  上面的配置是Spring构造函数配置中最佳的基础配置，实现功能就是对HelloBean自动寻找对的函数，并在初始化的时候将设置参数传入进去
+                 */
                 int index = Integer.parseInt(indexAttr);
                 if (index < 0) {
                     error("'index' cannot be lower than 0", ele);
@@ -1046,6 +1047,12 @@ public class BeanDefinitionParserDelegate {
             }
         } else {
             // 如果没有index属性则忽略去属性，自动寻找
+            /**
+             <bean id="user" class="com.spring_1_100.test_41_50.test41.User">
+                <constructor-arg value="2"></constructor-arg>
+                <constructor-arg value="1"></constructor-arg>
+             </bean>
+             */
             try {
                 this.parseState.push(new ConstructorArgumentEntry());
                 Object value = parsePropertyValue(ele, bd, null);
@@ -1159,7 +1166,6 @@ public class BeanDefinitionParserDelegate {
      *
      * |
      *
-     *
      * 从代码上来看，对函数的属性元素的解析，经历了以下的几个过程
      * 1.略过description或者meta
      * 2.提取constructor-arg上的ref和value属性，以便于根据规则验证正确性，其规则为在constructor-arg 上不存在以下的情况
@@ -1202,10 +1208,11 @@ public class BeanDefinitionParserDelegate {
                 }
             }
         }
-        // 判断属性值是ref还是value，不允许既是ref 又是value | 解析constructor-arg 的ref 属性
+        // 解析constructor-arg 的ref 属性
         boolean hasRefAttribute = ele.hasAttribute(REF_ATTRIBUTE);
         // 解析constructor-arg 上的value属性
         boolean hasValueAttribute = ele.hasAttribute(VALUE_ATTRIBUTE);
+        // 判断属性值是ref还是value，不允许既是ref 又是value
         if ((hasRefAttribute && hasValueAttribute) ||
                 ((hasRefAttribute || hasValueAttribute) && subElement != null)) {
             /**
@@ -1228,7 +1235,6 @@ public class BeanDefinitionParserDelegate {
             ref.setSource(extractSource(ele));
             return ref;
             // 如果属性值是value,创建一个value数据对象，typedStringValue，这个对象封装了value
-            // | value属性的处理，使用TypedStringValue封装
         } else if (hasValueAttribute) {
             // 一个持有String类型的对象
             TypedStringValue valueHolder = new TypedStringValue(ele.getAttribute(VALUE_ATTRIBUTE));
@@ -1685,7 +1691,7 @@ public class BeanDefinitionParserDelegate {
         }
         // 调用自定义的 NamespaceHandler  进行解析
         // 得到了解析器以及要分析的元素后，Spring 就可以将解析工作委托给自定义的解析器去解析，在 Spring 中的代码为
-        //  return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
+        // return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
         // 以前提到的示例进行分析，此时的 Handler 已经被实例化成为我们自定义的 MyNameSpaceHandler 了，而 MyNamespaceHandler
         // 已经完成了初始化的工作，但是我们实现自定义的命名空间处理器并没有实现 parse 方法，所以推断，这个方法是父类中实现的
         return handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));

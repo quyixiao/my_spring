@@ -617,12 +617,14 @@ public abstract class StringUtils {
 		if (path == null) {
 			return null;
 		}
+		//首先将“\”全部替换存 “/”
 		String pathToUse = replace(path, WINDOWS_FOLDER_SEPARATOR, FOLDER_SEPARATOR);
 
 		// Strip prefix from path to analyze, to not treat it as part of the
 		// first path element. This is necessary to correctly parse paths like
 		// "file:core/../core/io/Resource.class", where the ".." should just
 		// strip the first "core" directory while keeping the "file:" prefix.
+		// 2.然后将前缀(classpath:,file:,xxx)拿出来（如果classpath:/ ,file:/ ,这种也要把”/”一起算到前缀），取出除前缀外的url单独分析
 		int prefixIndex = pathToUse.indexOf(":");
 		String prefix = "";
 		if (prefixIndex != -1) {
@@ -638,11 +640,11 @@ public abstract class StringUtils {
 			prefix = prefix + FOLDER_SEPARATOR;
 			pathToUse = pathToUse.substring(1);
 		}
-
+		// 3.按照 “/” ，把url分割数组
 		String[] pathArray = delimitedListToStringArray(pathToUse, FOLDER_SEPARATOR);
 		List<String> pathElements = new LinkedList<String>();
 		int tops = 0;
-
+		// 反向循环，处理”..”,和 “.”这种情况，抵消上一个url节点
 		for (int i = pathArray.length - 1; i >= 0; i--) {
 			String element = pathArray[i];
 			if (CURRENT_PATH.equals(element)) {
@@ -665,10 +667,11 @@ public abstract class StringUtils {
 		}
 
 		// Remaining top paths need to be retained.
+		// 5.处理当”..”不能完全抵消时，在url前面添加”..”
 		for (int i = 0; i < tops; i++) {
 			pathElements.add(0, TOP_PATH);
 		}
-
+		// 6.拼好前缀返回
 		return prefix + collectionToDelimitedString(pathElements, FOLDER_SEPARATOR);
 	}
 

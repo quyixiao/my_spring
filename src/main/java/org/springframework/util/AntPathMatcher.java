@@ -202,7 +202,6 @@ public class AntPathMatcher implements PathMatcher {
 		int pattIdxEnd = pattDirs.length - 1;
 		int pathIdxStart = 0;
 		int pathIdxEnd = pathDirs.length - 1;
-
 		// Match all elements up to the first **
 		// 2. 第一个while 循环, 用来判断绝对匹配的   /xxx/abc ==> /xxx/abc
 		// 两个字符串都从下标0开始, 直到模式字符串遇到**结束
@@ -219,30 +218,34 @@ public class AntPathMatcher implements PathMatcher {
 		}
 		// pathIdxStart > pathIdEnd, 表示文件路径(path), 已经逐一的匹配到了
 		if (pathIdxStart > pathIdxEnd) {
-			// Path is exhausted, only match if rest of pattern is * or **'s
+			//// 数组中第一个值是pattern，第二个值是path ，后面所有注释都是如此 [/xxx/abc,/xxx/abc]  , [ /xxx/*,/xxx/abc]
 			if (pattIdxStart > pattIdxEnd) {
 				return (pattern.endsWith(this.pathSeparator) ? path.endsWith(this.pathSeparator) :
 						!path.endsWith(this.pathSeparator));
 			}
 			if (!fullMatch) {
+				// [/xxx/abc/*,/xxx/abc] , [/xxx/abc/ddd,/xxx/abc] && fullMatch = false
 				return true;
 			}
 			if (pattIdxStart == pattIdxEnd && pattDirs[pattIdxStart].equals("*") && path.endsWith(this.pathSeparator)) {
+				// [/*/*/,/abc/] , [/abc/*,/abc/]    &&   fullMatch == true
 				return true;
 			}
 			for (int i = pattIdxStart; i <= pattIdxEnd; i++) {
 				if (!pattDirs[i].equals("**")) {
+					// [/*/*/,/abc/] , [/abc/*,/abc ]    &&   fullMatch == true 注意 第二个数组中abc后面没有【/】
 					return false;
 				}
 			}
+			// [/abc/**,/abc]  && fullMatch == true
 			return true;
 		}
 		else if (pattIdxStart > pattIdxEnd) {
-			// String not exhausted, but pattern is. Failure.
+			// [/abc/def , /abc/def/ccc ] , [/abc/* , /abc/def/ccc ]
 			return false;
 		}
 		else if (!fullMatch && "**".equals(pattDirs[pattIdxStart])) {
-			// Path start definitely matches due to "**" part in pattern.
+			// [/abc/** , /abc/def/ccc ] && fullMatch == false
 			return true;
 		}
 
@@ -254,6 +257,7 @@ public class AntPathMatcher implements PathMatcher {
 				break;
 			}
 			if (!matchStrings(pattDir, pathDirs[pathIdxEnd], uriTemplateVariables)) {
+				// [/**/xxx/bb, /bb]  && fullMatch == true
 				return false;
 			}
 			pattIdxEnd--;
@@ -267,13 +271,8 @@ public class AntPathMatcher implements PathMatcher {
 				}
 			}
 			// 这里返回true 一般字符串为
-			// /xxxx/abcd/**/*.class => /xxxx/abcd /xxx.class
+			// [/xxxx/abcd/**/*.class, /xxxx/abcd/xxx.class]  && fullMatch == true
 			// 即只有一个**, 而且**没发挥到什么作用
-			// 测试
-			// AntPathMatcher ant = new AntPathMatcher("/");
-			//String pattern = "/abc/**/*.class";
-			//String path = "/abc/ddd.class";
-			//System.out.println(ant.match(pattern, path));
 			return true;
 		}
 		// 4. 第3个while循环, 主要解决有多个'**'字符串.	/**/djdjdjd/**, /a/**/**/b/**/c/**/*.class等
@@ -323,11 +322,13 @@ public class AntPathMatcher implements PathMatcher {
 			}
 
 			if (foundIdx == -1) {
+				// [/**/a/b/c/**/c,/q/a/b/c ] &&  fullMatch == true
 				return false;
 			}
 
 			pattIdxStart = patIdxTmp;
-			pathIdxStart = foundIdx + patLength;
+			pathIdxStart = foundId
+		x + patLength;
 		}
 
 		for (int i = pattIdxStart; i <= pattIdxEnd; i++) {

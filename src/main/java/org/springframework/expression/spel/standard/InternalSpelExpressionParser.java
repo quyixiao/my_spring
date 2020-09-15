@@ -192,6 +192,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	//logicalOrExpression : logicalAndExpression (OR^ logicalAndExpression)*;
+	//  吃逻辑或表达式or
 	private SpelNodeImpl eatLogicalOrExpression() {
 		SpelNodeImpl expr = eatLogicalAndExpression();
 		while (peekIdentifierToken("or") || peekToken(TokenKind.SYMBOLIC_OR)) {
@@ -204,6 +205,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// logicalAndExpression : relationalExpression (AND^ relationalExpression)*;
+	// 吃逻辑and
 	private SpelNodeImpl eatLogicalAndExpression() {
 		SpelNodeImpl expr = eatRelationalExpression();
 		while (peekIdentifierToken("and") || peekToken(TokenKind.SYMBOLIC_AND)) {
@@ -216,6 +218,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// relationalExpression : sumExpression (relationalOperator^ sumExpression)?;
+	// 吃关系(>,>=,<,<=,==,!=,instanceof,matches, between)
 	private SpelNodeImpl eatRelationalExpression() {
 		SpelNodeImpl expr = eatSumExpression();
 		Token relationalOperatorToken = maybeEatRelationalOperator();
@@ -261,6 +264,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	//sumExpression: productExpression ( (PLUS^ | MINUS^) productExpression)*;
+	// 吃统计(+-)
 	private SpelNodeImpl eatSumExpression() {
 		SpelNodeImpl expr = eatProductExpression();
 		while (peekToken(TokenKind.PLUS, TokenKind.MINUS, TokenKind.INC)) {
@@ -278,6 +282,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// productExpression: powerExpr ((STAR^ | DIV^| MOD^) powerExpr)* ;
+	// 吃产品*/%
 	private SpelNodeImpl eatProductExpression() {
 		SpelNodeImpl expr = eatPowerIncDecExpression();
 		while (peekToken(TokenKind.STAR, TokenKind.DIV, TokenKind.MOD)) {
@@ -299,6 +304,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// powerExpr  : unaryExpression (POWER^ unaryExpression)? (INC || DEC) ;
+	// 吃power^
 	private SpelNodeImpl eatPowerIncDecExpression() {
 		SpelNodeImpl expr = eatUnaryExpression();
 		if (peekToken(TokenKind.POWER)) {
@@ -320,6 +326,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// unaryExpression: (PLUS^ | MINUS^ | BANG^ | INC^ | DEC^) unaryExpression | primaryExpression ;
+	// 号+-!
 	private SpelNodeImpl eatUnaryExpression() {
 		if (peekToken(TokenKind.PLUS, TokenKind.MINUS, TokenKind.NOT)) {
 			Token t = nextToken();
@@ -348,6 +355,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	}
 
 	// primaryExpression : startNode (node)? -> ^(EXPRESSION startNode (node)?);
+	// 吃主体
 	private SpelNodeImpl eatPrimaryExpression() {
 		List<SpelNodeImpl> nodes = new ArrayList<SpelNodeImpl>();
 		SpelNodeImpl start = eatStartNode();  // always a start node
@@ -507,6 +515,7 @@ class InternalSpelExpressionParser extends TemplateAwareExpressionParser {
 	//	    | lastSelection
 	//	    | indexer
 	//	    | constructor
+	// 开始吃节点
 	private SpelNodeImpl eatStartNode() {
 		if (maybeEatLiteral()) {
 			return pop();
