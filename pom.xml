@@ -555,7 +555,7 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>9.3.2.v20150730</version>
+            <version>10.0.10</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
